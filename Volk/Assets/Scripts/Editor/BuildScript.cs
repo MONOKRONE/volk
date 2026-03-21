@@ -14,7 +14,7 @@ public class BuildScript
 
         var buildOptions = new BuildPlayerOptions
         {
-            scenes = new[] { "Assets/Scenes/CombatTest.unity" },
+            scenes = new[] { "Assets/Scenes/MainMenu.unity", "Assets/Scenes/CombatTest.unity" },
             locationPathName = outputPath,
             target = BuildTarget.Android,
             options = BuildOptions.None
