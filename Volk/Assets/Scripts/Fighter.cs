@@ -99,7 +99,7 @@ public class Fighter : MonoBehaviour
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
         Vector3 rawDir = new Vector3(h, 0, v);
         float inputMag = rawDir.magnitude;
-        Vector3 dir = inputMag > 0.1f ? rawDir.normalized : Vector3.zero;
+        Vector3 dir = inputMag > 0.15f ? rawDir.normalized : Vector3.zero;
         bool run = mobile ? inputMag > 0.8f : Input.GetKey(KeyCode.LeftShift);
 
         // Touch flick detection
@@ -125,7 +125,7 @@ public class Fighter : MonoBehaviour
             return;
         }
 
-        if (inputMag > 0.1f)
+        if (inputMag > 0.15f)
         {
             float speed = run ? runSpeed : walkSpeed;
             Vector3 move = dir * speed;

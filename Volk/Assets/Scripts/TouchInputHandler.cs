@@ -55,7 +55,8 @@ public class TouchInputHandler : MonoBehaviour
                 {
                     Vector2 delta = touch.position - joystickStartPos;
                     Vector2 clamped = Vector2.ClampMagnitude(delta, joystickRadius);
-                    MoveInput = clamped / joystickRadius;
+                    Vector2 raw = clamped / joystickRadius;
+                    MoveInput = raw.magnitude > 0.15f ? raw : Vector2.zero;
 
                     if (joystickKnob)
                         joystickKnob.position = joystickStartPos + clamped;
@@ -63,6 +64,8 @@ public class TouchInputHandler : MonoBehaviour
                 }
                 else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                 {
+                    MoveInput = Vector2.zero;
+
                     // Flick detection
                     float touchDuration = Time.time - touchStartTime;
                     Vector2 totalDelta = touch.position - joystickStartPos;
