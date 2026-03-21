@@ -44,7 +44,7 @@ public class Fighter : MonoBehaviour
     private float crouchHeight;
 
     // Knockback
-    public float knockbackForce = 4f;
+    public float knockbackForce = 2f;
     public float knockbackDuration = 0.2f;
     private Vector3 knockbackVelocity;
     private float knockbackTimer;
@@ -112,10 +112,14 @@ public class Fighter : MonoBehaviour
     {
         if (knockbackTimer > 0f)
         {
-            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 10f * Time.deltaTime);
-            cc.Move((knockbackVelocity + new Vector3(0, yVelocity, 0)) * Time.deltaTime);
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 8f * Time.deltaTime);
+            cc.Move(knockbackVelocity * Time.deltaTime);
             knockbackTimer -= Time.deltaTime;
             return;
+        }
+        else
+        {
+            knockbackVelocity = Vector3.zero;
         }
 
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
@@ -182,10 +186,14 @@ public class Fighter : MonoBehaviour
     {
         if (knockbackTimer > 0f)
         {
-            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 10f * Time.deltaTime);
-            cc.Move((knockbackVelocity + new Vector3(0, yVelocity, 0)) * Time.deltaTime);
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 8f * Time.deltaTime);
+            cc.Move(knockbackVelocity * Time.deltaTime);
             knockbackTimer -= Time.deltaTime;
             return;
+        }
+        else
+        {
+            knockbackVelocity = Vector3.zero;
         }
 
         if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
