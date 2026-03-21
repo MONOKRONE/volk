@@ -288,6 +288,7 @@ public class Fighter : MonoBehaviour
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         bool isKick = (animHash == hKick);
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, isKick);
+                        VibrationManager.Instance?.VibrateLight();
                         break;
                     }
                 }
@@ -350,6 +351,7 @@ public class Fighter : MonoBehaviour
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
         StartCoroutine(ShakeCamera(0.1f, 0.05f));
         AudioManager.Instance?.PlayHit();
+        VibrationManager.Instance?.VibrateLight();
 
         // Knockback
         if (attackerPos != default)
@@ -366,6 +368,7 @@ public class Fighter : MonoBehaviour
             currentHP = 0;
             anim.SetTrigger(hDeath);
             AudioManager.Instance?.PlayFall();
+            VibrationManager.Instance?.VibrateHeavy();
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
