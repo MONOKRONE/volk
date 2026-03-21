@@ -14,11 +14,24 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI restartHintText;
 
     private bool gameOver = false;
+    private bool waitingForRestart = false;
 
     void Awake()
     {
         Instance = this;
         if (gameOverPanel) gameOverPanel.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (!waitingForRestart) return;
+
+        // Restart on any tap, click, or R key
+        if (Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(0) || Input.touchCount > 0)
+        {
+            if (Input.touchCount > 0 && Input.GetTouch(0).phase != TouchPhase.Began) return;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     public void OnFighterDied(bool isPlayer)
@@ -30,17 +43,12 @@ public class GameManager : MonoBehaviour
 
     IEnumerator GameOverSequence(bool playerDied)
     {
-        // Wait for death animation
         yield return new WaitForSeconds(1.5f);
 
         if (gameOverPanel) gameOverPanel.SetActive(true);
         if (resultText) resultText.text = playerDied ? "YOU LOSE" : "YOU WIN";
-        if (restartHintText) restartHintText.text = "Press R to restart";
+        if (restartHintText) restartHintText.text = "Tap to restart";
 
-        // Wait for R key
-        while (!Input.GetKeyDown(KeyCode.R))
-            yield return null;
-
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        waitingForRestart = true;
     }
 }
