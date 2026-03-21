@@ -49,10 +49,15 @@ public class Fighter : MonoBehaviour
     private Vector3 knockbackVelocity;
     private float knockbackTimer;
 
+    // Combo
+    [HideInInspector] public bool comboWindowOpen;
+    public float comboWindowDuration = 0.4f;
+    private float comboWindowTimer;
+
     // Private
     private CharacterController cc;
     private Animator anim;
-    private bool isAttacking;
+    public bool isAttacking { get; private set; }
     private bool isDead;
     private float yVelocity;
     private float aiAttackTimer;
@@ -86,6 +91,13 @@ public class Fighter : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        if (comboWindowOpen)
+        {
+            comboWindowTimer -= Time.deltaTime;
+            if (comboWindowTimer <= 0f)
+                comboWindowOpen = false;
+        }
 
         if (postAttackCooldown > 0f)
         {
@@ -145,11 +157,12 @@ public class Fighter : MonoBehaviour
         anim.SetBool(hCrouch, isCrouching);
 
         // Check attack input FIRST - before any movement
-        if (!isAttacking)
+        bool canAttack = !isAttacking || comboWindowOpen;
+        if (canAttack)
         {
-            if (Input.GetKeyDown(KeyCode.J)) { StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
-            if (Input.GetKeyDown(KeyCode.K)) { StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
-            if (Input.GetKeyDown(KeyCode.L)) { StartCoroutine(DoBlock()); return; }
+            if (Input.GetKeyDown(KeyCode.J)) { comboWindowOpen = false; StopAllCoroutines(); StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
+            if (Input.GetKeyDown(KeyCode.K)) { comboWindowOpen = false; StopAllCoroutines(); StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
+            if (!isAttacking && Input.GetKeyDown(KeyCode.L)) { StartCoroutine(DoBlock()); return; }
         }
 
         if (isAttacking)
@@ -261,6 +274,8 @@ public class Fighter : MonoBehaviour
                     {
                         target.TakeDamage(attackDamage, transform.position);
                         hitLanded = true;
+                        comboWindowOpen = true;
+                        comboWindowTimer = comboWindowDuration;
                         StartCoroutine(HitStop(0.08f));
                         target.StartCoroutine(target.HitStop(0.08f));
                         break;
@@ -362,7 +377,9 @@ public class Fighter : MonoBehaviour
 
     public void DoAttack(AttackType type, AttackVariant variant)
     {
-        if (isAttacking || isDead) return;
+        bool canAttack = !isAttacking || comboWindowOpen;
+        if (!canAttack || isDead) return;
+        if (comboWindowOpen) { comboWindowOpen = false; StopAllCoroutines(); }
 
         int animHash = type == AttackType.Punch ? hPunch : hKick;
         Transform hitPoint = type == AttackType.Punch ? rightHandPoint : rightFootPoint;
