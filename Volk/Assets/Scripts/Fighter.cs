@@ -95,8 +95,10 @@ public class Fighter : MonoBehaviour
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
         float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
-        Vector3 dir = new Vector3(h, 0, v).normalized;
-        bool run = mobile ? dir.magnitude > 0.8f : Input.GetKey(KeyCode.LeftShift);
+        Vector3 rawDir = new Vector3(h, 0, v);
+        float inputMag = rawDir.magnitude;
+        Vector3 dir = inputMag > 0.1f ? rawDir.normalized : Vector3.zero;
+        bool run = mobile ? inputMag > 0.8f : Input.GetKey(KeyCode.LeftShift);
 
         // Touch flick detection
         if (mobile && touchHandler != null)
@@ -121,17 +123,26 @@ public class Fighter : MonoBehaviour
             return;
         }
 
-        float speed = run ? runSpeed : walkSpeed;
-        Vector3 move = dir * speed;
-        move.y = yVelocity;
-        cc.Move(move * Time.deltaTime);
+        if (inputMag > 0.1f)
+        {
+            float speed = run ? runSpeed : walkSpeed;
+            Vector3 move = dir * speed;
+            move.y = yVelocity;
+            cc.Move(move * Time.deltaTime);
 
-        if (dir.magnitude > 0.1f)
             transform.rotation = Quaternion.Slerp(transform.rotation,
                 Quaternion.LookRotation(dir), rotSpeed * Time.deltaTime);
 
-        anim.SetBool(hWalk, dir.magnitude > 0.1f && !run);
-        anim.SetBool(hRun, dir.magnitude > 0.1f && run);
+            anim.SetBool(hWalk, !run);
+            anim.SetBool(hRun, run);
+        }
+        else
+        {
+            // No input — only gravity, zero XZ
+            cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+            anim.SetBool(hWalk, false);
+            anim.SetBool(hRun, false);
+        }
     }
 
     void UpdateAI()
