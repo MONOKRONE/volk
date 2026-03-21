@@ -83,8 +83,10 @@ public class Fighter : MonoBehaviour
         anim.applyRootMotion = false;
 
         // Gravity
-        if (cc.isGrounded) yVelocity = -1f;
-        else yVelocity -= 9.81f * Time.deltaTime;
+        if (cc.isGrounded && yVelocity < 0)
+            yVelocity = -2f;
+        else
+            yVelocity += Physics.gravity.y * Time.deltaTime;
 
         if (isAI) UpdateAI();
         else UpdatePlayer();
