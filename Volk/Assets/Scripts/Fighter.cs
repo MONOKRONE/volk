@@ -21,6 +21,7 @@ public class Fighter : MonoBehaviour
     public float walkSpeed = 4f;
     public float runSpeed = 7f;
     public float rotSpeed = 10f;
+    public float jumpHeight = 1.8f;
 
     [Header("AI - leave null for player")]
     public Transform aiTarget;
@@ -36,6 +37,11 @@ public class Fighter : MonoBehaviour
     // Parry
     private bool isParrying;
     private float parryTimer;
+
+    // Jump & Crouch
+    [HideInInspector] public bool isCrouching;
+    private float normalHeight;
+    private float crouchHeight;
 
     // Private
     private CharacterController cc;
@@ -55,6 +61,8 @@ public class Fighter : MonoBehaviour
     static int hHit1 = Animator.StringToHash("TakingPunch");
     static int hHit2 = Animator.StringToHash("ReceivingUppercut");
     static int hDeath = Animator.StringToHash("Death");
+    static int hJump = Animator.StringToHash("IsJumping");
+    static int hCrouch = Animator.StringToHash("IsCrouching");
 
     void Awake()
     {
@@ -62,6 +70,8 @@ public class Fighter : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
         anim.applyRootMotion = false;
         currentHP = maxHP;
+        normalHeight = cc.height;
+        crouchHeight = cc.height * 0.55f;
 
         if (Application.isMobilePlatform || useTouchMovement)
             touchHandler = FindFirstObjectByType<TouchInputHandler>();
@@ -102,12 +112,19 @@ public class Fighter : MonoBehaviour
         Vector3 dir = inputMag > 0.15f ? rawDir.normalized : Vector3.zero;
         bool run = false;
 
-        // Touch flick detection
-        if (mobile && touchHandler != null)
+        // Jump
+        if (touchHandler != null && touchHandler.JumpTriggered && cc.isGrounded)
+            yVelocity = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+        anim.SetBool(hJump, !cc.isGrounded);
+
+        // Crouch toggle
+        if (touchHandler != null && touchHandler.CrouchTriggered)
         {
-            if (touchHandler.JumpTriggered) Debug.Log("[Fighter] Jump triggered (placeholder)");
-            if (touchHandler.CrouchTriggered) Debug.Log("[Fighter] Crouch triggered (placeholder)");
+            isCrouching = !isCrouching;
+            cc.height = isCrouching ? crouchHeight : normalHeight;
+            cc.center = new Vector3(0, cc.height / 2f, 0);
         }
+        anim.SetBool(hCrouch, isCrouching);
 
         // Check attack input FIRST - before any movement
         if (!isAttacking)
