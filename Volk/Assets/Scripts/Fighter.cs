@@ -278,6 +278,11 @@ public class Fighter : MonoBehaviour
                         comboWindowTimer = comboWindowDuration;
                         StartCoroutine(HitStop(0.08f));
                         target.StartCoroutine(target.HitStop(0.08f));
+
+                        // Spawn hit effect
+                        Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                        bool isKick = (animHash == hKick);
+                        HitEffectManager.Instance?.SpawnHitEffect(hitPos, isKick);
                         break;
                     }
                 }
@@ -446,6 +451,8 @@ public class Fighter : MonoBehaviour
                         target.TakeDamage(heavyDamage, transform.position);
                         hitLanded = true;
                         StartCoroutine(Hitstop());
+                        Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                        HitEffectManager.Instance?.SpawnHitEffect(hitPos, animHash == hKick);
                         break;
                     }
                 }
