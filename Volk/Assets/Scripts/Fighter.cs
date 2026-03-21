@@ -58,7 +58,7 @@ public class Fighter : MonoBehaviour
     private CharacterController cc;
     private Animator anim;
     public bool isAttacking { get; private set; }
-    private bool isDead;
+    public bool isDead { get; private set; }
     private float yVelocity;
     private float aiAttackTimer;
     private float postAttackCooldown;
@@ -371,6 +371,25 @@ public class Fighter : MonoBehaviour
     {
         yield return new WaitForSeconds(0.4f);
         isAttacking = false;
+    }
+
+    public void ResetForRound()
+    {
+        StopAllCoroutines();
+        currentHP = maxHP;
+        isAttacking = false;
+        isDead = false;
+        knockbackTimer = 0f;
+        knockbackVelocity = Vector3.zero;
+        comboWindowOpen = false;
+        isCrouching = false;
+        isParrying = false;
+        postAttackCooldown = 0f;
+        cc.height = normalHeight;
+        cc.center = new Vector3(0, normalHeight / 2f, 0);
+        anim.Rebind();
+        anim.Update(0f);
+        anim.applyRootMotion = false;
     }
 
     // --- Touch combat API ---

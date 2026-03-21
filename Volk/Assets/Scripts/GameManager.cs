@@ -1,54 +1,138 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using UnityEngine.UI;
-using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("UI")]
-    public GameObject gameOverPanel;
-    public TextMeshProUGUI resultText;
-    public TextMeshProUGUI restartHintText;
+    [Header("Round Settings")]
+    public int totalRounds = 3;
+    public float roundDuration = 99f;
+    public float roundStartDelay = 1.5f;
+    public float roundEndDelay = 2.0f;
 
-    private bool gameOver = false;
-    private bool waitingForRestart = false;
+    [Header("References")]
+    public Fighter playerFighter;
+    public Fighter enemyFighter;
+    public RoundUI roundUI;
 
-    void Awake()
+    private int currentRound = 1;
+    private int playerRoundWins = 0;
+    private int enemyRoundWins = 0;
+    private float roundTimer;
+    private bool roundActive = false;
+    private bool matchOver = false;
+
+    public enum RoundState { Intro, Fighting, RoundEnd, MatchEnd }
+    public RoundState CurrentState { get; private set; }
+
+    void Awake() { Instance = this; }
+
+    void Start() { StartCoroutine(StartRound()); }
+
+    IEnumerator StartRound()
     {
-        Instance = this;
-        if (gameOverPanel) gameOverPanel.SetActive(false);
+        roundActive = false;
+        CurrentState = RoundState.Intro;
+        roundTimer = roundDuration;
+
+        // Reset fighters
+        if (playerFighter != null) playerFighter.ResetForRound();
+        if (enemyFighter != null) enemyFighter.ResetForRound();
+
+        // Show "ROUND X"
+        if (roundUI != null)
+        {
+            roundUI.ShowRoundIntro(currentRound);
+            yield return new WaitForSeconds(roundStartDelay);
+
+            roundUI.ShowFight();
+            yield return new WaitForSeconds(0.8f);
+
+            roundUI.HideIntro();
+        }
+        else
+        {
+            yield return new WaitForSeconds(roundStartDelay + 0.8f);
+        }
+
+        roundActive = true;
+        CurrentState = RoundState.Fighting;
     }
 
     void Update()
     {
-        if (!waitingForRestart) return;
-
-        // Restart on any tap, click, or R key
-        if (Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(0) || Input.touchCount > 0)
+        if (matchOver)
         {
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase != TouchPhase.Began) return;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            if (Input.GetKeyDown(KeyCode.R) || IsTouchTap())
+                RestartMatch();
+            return;
         }
+
+        if (!roundActive) return;
+
+        roundTimer -= Time.deltaTime;
+        if (roundUI != null) roundUI.UpdateTimer(roundTimer);
+
+        if (roundTimer <= 0f)
+            StartCoroutine(EndRound(null));
     }
 
     public void OnFighterDied(bool isPlayer)
     {
-        if (gameOver) return;
-        gameOver = true;
-        StartCoroutine(GameOverSequence(isPlayer));
+        if (!roundActive) return;
+        roundActive = false;
+        StartCoroutine(EndRound(isPlayer ? enemyFighter : playerFighter));
     }
 
-    IEnumerator GameOverSequence(bool playerDied)
+    IEnumerator EndRound(Fighter winner)
     {
-        yield return new WaitForSeconds(1.5f);
+        roundActive = false;
+        CurrentState = RoundState.RoundEnd;
 
-        if (gameOverPanel) gameOverPanel.SetActive(true);
-        if (resultText) resultText.text = playerDied ? "YOU LOSE" : "YOU WIN";
-        if (restartHintText) restartHintText.text = "Tap to restart";
+        bool playerWon;
+        if (winner == null)
+            playerWon = playerFighter.currentHP > enemyFighter.currentHP;
+        else
+            playerWon = winner == playerFighter;
 
-        waitingForRestart = true;
+        if (playerWon) playerRoundWins++;
+        else enemyRoundWins++;
+
+        bool matchDone = playerRoundWins >= 2 || enemyRoundWins >= 2 || currentRound >= totalRounds;
+
+        if (roundUI != null)
+        {
+            roundUI.ShowRoundResult(playerWon, winner == null);
+            roundUI.UpdateRoundWins(playerRoundWins, enemyRoundWins);
+        }
+
+        yield return new WaitForSeconds(roundEndDelay);
+
+        if (matchDone)
+        {
+            matchOver = true;
+            CurrentState = RoundState.MatchEnd;
+            if (roundUI != null)
+                roundUI.ShowMatchResult(playerRoundWins > enemyRoundWins);
+        }
+        else
+        {
+            currentRound++;
+            StartCoroutine(StartRound());
+        }
+    }
+
+    void RestartMatch()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    bool IsTouchTap()
+    {
+        foreach (Touch t in Input.touches)
+            if (t.phase == TouchPhase.Began) return true;
+        return false;
     }
 }
