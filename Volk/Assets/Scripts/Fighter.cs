@@ -173,6 +173,7 @@ public class Fighter : MonoBehaviour
         else
         {
             anim.SetBool(hWalk, false);
+            anim.SetBool(hRun, false);
             cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
 
             if (!isAttacking && aiAttackTimer <= 0f)
