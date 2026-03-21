@@ -231,7 +231,8 @@ public class Fighter : MonoBehaviour
                     {
                         target.TakeDamage(attackDamage);
                         hitLanded = true;
-                        StartCoroutine(Hitstop());
+                        StartCoroutine(HitStop(0.08f));
+                        target.StartCoroutine(target.HitStop(0.08f));
                         break;
                     }
                 }
@@ -261,6 +262,30 @@ public class Fighter : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    public IEnumerator HitStop(float duration)
+    {
+        anim.speed = 0f;
+        yield return new WaitForSecondsRealtime(duration);
+        anim.speed = 1f;
+    }
+
+    private IEnumerator ShakeCamera(float duration, float magnitude)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) yield break;
+        Vector3 originalPos = cam.transform.localPosition;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float x = Random.Range(-1f, 1f) * magnitude;
+            float y = Random.Range(-1f, 1f) * magnitude;
+            cam.transform.localPosition = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+        cam.transform.localPosition = originalPos;
+    }
+
     public void TakeDamage(float amount)
     {
         if (isDead) return;
@@ -268,6 +293,7 @@ public class Fighter : MonoBehaviour
         if (amount <= 0f) return;
         currentHP -= amount;
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
+        StartCoroutine(ShakeCamera(0.1f, 0.05f));
 
         if (currentHP <= 0)
         {
