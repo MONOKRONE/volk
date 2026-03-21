@@ -251,10 +251,6 @@ public class Fighter : MonoBehaviour
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
 
-        // Play attack sound
-        if (animHash == hKick) AudioManager.Instance?.PlayKick();
-        else AudioManager.Instance?.PlayPunch();
-
         // Wait longer for animator to enter the attack state
         yield return new WaitForSeconds(0.15f);
 
@@ -280,6 +276,11 @@ public class Fighter : MonoBehaviour
                         hitLanded = true;
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
+
+                        // Sound only on confirmed hit
+                        if (animHash == hKick) AudioManager.Instance?.PlayKick();
+                        else AudioManager.Instance?.PlayPunch();
+
                         StartCoroutine(HitStop(0.08f));
                         target.StartCoroutine(target.HitStop(0.08f));
 

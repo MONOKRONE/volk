@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class AudioManager : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)] public float sfxVolume = 1f;
 
     private AudioSource sfxSource;
+    private Coroutine roundStartCoroutine;
 
     void Awake()
     {
@@ -25,12 +27,28 @@ public class AudioManager : MonoBehaviour
         sfxSource.spatialBlend = 0f;
     }
 
-    public void PlayPunch()      => PlayRandom(punchSounds);
-    public void PlayKick()       => PlayRandom(kickSounds);
-    public void PlayHit()        => PlayRandom(hitReceiveSounds);
-    public void PlayFall()       => PlayOneShot(bodyFallSound);
-    public void PlayCheer()      => PlayOneShot(crowdCheerSound);
-    public void PlayRoundStart() => PlayOneShot(roundStartSound);
+    public void PlayPunch()  => PlayRandom(punchSounds);
+    public void PlayKick()   => PlayRandom(kickSounds);
+    public void PlayHit()    => PlayRandom(hitReceiveSounds);
+    public void PlayFall()   => PlayOneShot(bodyFallSound);
+    public void PlayCheer()  => PlayOneShot(crowdCheerSound);
+
+    public void PlayRoundStart()
+    {
+        if (roundStartSound == null) return;
+        if (roundStartCoroutine != null) StopCoroutine(roundStartCoroutine);
+        roundStartCoroutine = StartCoroutine(PlayClipLimited(roundStartSound, 3f));
+    }
+
+    IEnumerator PlayClipLimited(AudioClip clip, float maxDuration)
+    {
+        sfxSource.clip = clip;
+        sfxSource.volume = sfxVolume;
+        sfxSource.Play();
+        yield return new WaitForSeconds(maxDuration);
+        sfxSource.Stop();
+        sfxSource.clip = null;
+    }
 
     void PlayRandom(AudioClip[] clips)
     {
