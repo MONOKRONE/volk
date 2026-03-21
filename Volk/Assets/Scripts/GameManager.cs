@@ -48,6 +48,7 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(roundStartDelay);
 
             roundUI.ShowFight();
+            AudioManager.Instance?.PlayRoundStart();
             yield return new WaitForSeconds(0.8f);
 
             roundUI.HideIntro();

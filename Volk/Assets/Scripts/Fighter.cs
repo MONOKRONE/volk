@@ -251,6 +251,10 @@ public class Fighter : MonoBehaviour
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
 
+        // Play attack sound
+        if (animHash == hKick) AudioManager.Instance?.PlayKick();
+        else AudioManager.Instance?.PlayPunch();
+
         // Wait longer for animator to enter the attack state
         yield return new WaitForSeconds(0.15f);
 
@@ -344,6 +348,7 @@ public class Fighter : MonoBehaviour
         currentHP -= amount;
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
         StartCoroutine(ShakeCamera(0.1f, 0.05f));
+        AudioManager.Instance?.PlayHit();
 
         // Knockback
         if (attackerPos != default)
@@ -359,6 +364,7 @@ public class Fighter : MonoBehaviour
             isDead = true;
             currentHP = 0;
             anim.SetTrigger(hDeath);
+            AudioManager.Instance?.PlayFall();
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
