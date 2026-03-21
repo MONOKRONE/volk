@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+public enum AttackType { Punch, Kick }
+public enum AttackVariant { Normal, Heavy, Special }
+
 public class Fighter : MonoBehaviour
 {
     [Header("Stats")]
@@ -24,6 +27,14 @@ public class Fighter : MonoBehaviour
     public bool isAI = false;
     public float aiAttackRange = 2.5f;
     public float aiAttackCooldown = 2.5f;
+
+    // Touch input (set by TouchCombatBridge)
+    [HideInInspector] public Vector2 touchMoveInput;
+    [HideInInspector] public bool useTouchMovement;
+
+    // Parry
+    private bool isParrying;
+    private float parryTimer;
 
     // Private
     private CharacterController cc;
@@ -77,10 +88,10 @@ public class Fighter : MonoBehaviour
 
     void UpdatePlayer()
     {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        float h = useTouchMovement ? touchMoveInput.x : Input.GetAxisRaw("Horizontal");
+        float v = useTouchMovement ? touchMoveInput.y : Input.GetAxisRaw("Vertical");
         Vector3 dir = new Vector3(h, 0, v).normalized;
-        bool run = Input.GetKey(KeyCode.LeftShift);
+        bool run = useTouchMovement ? dir.magnitude > 0.8f : Input.GetKey(KeyCode.LeftShift);
 
         // Check attack input FIRST - before any movement
         if (!isAttacking)
@@ -210,6 +221,8 @@ public class Fighter : MonoBehaviour
     public void TakeDamage(float amount)
     {
         if (isDead) return;
+        CheckParryOnDamage(ref amount);
+        if (amount <= 0f) return;
         currentHP -= amount;
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
 
@@ -235,6 +248,110 @@ public class Fighter : MonoBehaviour
     {
         yield return new WaitForSeconds(0.4f);
         isAttacking = false;
+    }
+
+    // --- Touch combat API ---
+
+    public void DoAttack(AttackType type, AttackVariant variant)
+    {
+        if (isAttacking || isDead) return;
+
+        int animHash = type == AttackType.Punch ? hPunch : hKick;
+        Transform hitPoint = type == AttackType.Punch ? rightHandPoint : rightFootPoint;
+
+        switch (variant)
+        {
+            case AttackVariant.Normal:
+                StartCoroutine(DoAttack(animHash, hitPoint));
+                break;
+            case AttackVariant.Heavy:
+                StartCoroutine(DoHeavyAttack(animHash, hitPoint));
+                break;
+            case AttackVariant.Special:
+                Debug.Log($"[Fighter] Special {type} (placeholder)");
+                break;
+        }
+    }
+
+    IEnumerator DoHeavyAttack(int animHash, Transform hitPoint)
+    {
+        isAttacking = true;
+        anim.applyRootMotion = false;
+        anim.SetTrigger(animHash);
+
+        yield return new WaitForSeconds(0.2f);
+
+        float hitWindowDuration = 0.45f;
+        float hitTimer = 0f;
+        bool hitLanded = false;
+        float heavyDamage = attackDamage * 2f;
+
+        while (hitTimer < hitWindowDuration)
+        {
+            hitTimer += Time.deltaTime;
+            anim.applyRootMotion = false;
+
+            if (!hitLanded && hitPoint != null)
+            {
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
+                foreach (var hit in hits)
+                {
+                    Fighter target = hit.GetComponentInParent<Fighter>();
+                    if (target != null && target != this && hit.CompareTag(enemyTag))
+                    {
+                        target.TakeDamage(heavyDamage);
+                        hitLanded = true;
+                        StartCoroutine(Hitstop());
+                        break;
+                    }
+                }
+            }
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.9f); // 1.5x duration
+        anim.applyRootMotion = false;
+        isAttacking = false;
+        postAttackCooldown = 0.2f;
+    }
+
+    public void AttemptParry()
+    {
+        if (isAttacking || isDead || isParrying) return;
+        StartCoroutine(ParryWindow());
+    }
+
+    IEnumerator ParryWindow()
+    {
+        isParrying = true;
+        anim.SetTrigger(hBlock);
+        parryTimer = 0.25f;
+
+        while (parryTimer > 0f)
+        {
+            parryTimer -= Time.deltaTime;
+            yield return null;
+        }
+
+        isParrying = false;
+    }
+
+    public void UseSkill(int skillIndex)
+    {
+        Debug.Log($"[Fighter] UseSkill({skillIndex}) - placeholder");
+    }
+
+    // Override TakeDamage to check parry
+    private void CheckParryOnDamage(ref float amount)
+    {
+        if (isParrying)
+        {
+            amount = 0f;
+            isParrying = false;
+            StopCoroutine(nameof(ParryWindow));
+            Debug.Log($"{gameObject.name} PARRIED!");
+            // Could trigger counter animation here
+        }
     }
 
     void OnDrawGizmosSelected()
