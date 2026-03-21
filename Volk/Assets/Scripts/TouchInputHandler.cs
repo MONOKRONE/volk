@@ -10,7 +10,7 @@ public class TouchInputHandler : MonoBehaviour, IPointerDownHandler, IDragHandle
     public float joystickRange = 50f;
 
     [Header("Flick Detection")]
-    public float flickThreshold = 200f; // pixels per second
+    public float flickThreshold = 200f;
 
     // Output
     public Vector2 MoveInput { get; private set; }
@@ -18,21 +18,23 @@ public class TouchInputHandler : MonoBehaviour, IPointerDownHandler, IDragHandle
     public bool FlickDown { get; private set; }
 
     private int activePointerId = -1;
-    private Vector2 touchStartPos;
-    private Vector2 lastTouchPos;
-    private float lastTouchTime;
+    private Vector2 touchOrigin;
+    private Vector2 lastPos;
+    private float touchStartTime;
     private bool isActive;
-    private Canvas parentCanvas;
+    private RectTransform canvasRect;
 
     void Awake()
     {
-        parentCanvas = GetComponentInParent<Canvas>();
-        if (joystickBackground) joystickBackground.gameObject.SetActive(false);
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+            canvasRect = canvas.transform as RectTransform;
+        if (joystickBackground)
+            joystickBackground.gameObject.SetActive(false);
     }
 
     void LateUpdate()
     {
-        // Clear one-frame flags
         FlickUp = false;
         FlickDown = false;
     }
@@ -43,21 +45,19 @@ public class TouchInputHandler : MonoBehaviour, IPointerDownHandler, IDragHandle
 
         activePointerId = eventData.pointerId;
         isActive = true;
-        touchStartPos = eventData.position;
-        lastTouchPos = eventData.position;
-        lastTouchTime = Time.unscaledTime;
+        touchOrigin = eventData.position;
+        lastPos = eventData.position;
+        touchStartTime = Time.unscaledTime;
 
-        // Show joystick at touch position
-        if (joystickBackground && parentCanvas)
+        if (joystickBackground && canvasRect)
         {
             joystickBackground.gameObject.SetActive(true);
+            // For Screen Space Overlay, camera is null
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parentCanvas.transform as RectTransform,
-                eventData.position,
-                parentCanvas.worldCamera,
-                out Vector2 localPoint);
+                canvasRect, eventData.position, null, out Vector2 localPoint);
             joystickBackground.anchoredPosition = localPoint;
-            joystickKnob.anchoredPosition = Vector2.zero;
+            if (joystickKnob)
+                joystickKnob.anchoredPosition = Vector2.zero;
         }
     }
 
@@ -65,37 +65,42 @@ public class TouchInputHandler : MonoBehaviour, IPointerDownHandler, IDragHandle
     {
         if (eventData.pointerId != activePointerId) return;
 
-        Vector2 delta = eventData.position - touchStartPos;
+        Vector2 delta = eventData.position - touchOrigin;
         Vector2 clamped = Vector2.ClampMagnitude(delta, joystickRange);
         MoveInput = clamped / joystickRange;
 
         if (joystickKnob)
             joystickKnob.anchoredPosition = clamped;
 
-        // Track for flick detection
-        lastTouchPos = eventData.position;
-        lastTouchTime = Time.unscaledTime;
+        lastPos = eventData.position;
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         if (eventData.pointerId != activePointerId) return;
 
-        // Flick detection
-        float dt = Time.unscaledTime - lastTouchTime;
-        if (dt > 0f && dt < 0.3f)
+        // Flick detection based on total gesture
+        float totalTime = Time.unscaledTime - touchStartTime;
+        if (totalTime > 0f && totalTime < 0.25f)
         {
-            Vector2 velocity = (eventData.position - touchStartPos) / Mathf.Max(dt, 0.01f);
-            if (velocity.y > flickThreshold) FlickUp = true;
-            else if (velocity.y < -flickThreshold) FlickDown = true;
+            Vector2 totalDelta = eventData.position - touchOrigin;
+            float speed = totalDelta.magnitude / totalTime;
+            if (speed > flickThreshold)
+            {
+                if (totalDelta.y > 0 && Mathf.Abs(totalDelta.y) > Mathf.Abs(totalDelta.x))
+                    FlickUp = true;
+                else if (totalDelta.y < 0 && Mathf.Abs(totalDelta.y) > Mathf.Abs(totalDelta.x))
+                    FlickDown = true;
+            }
         }
 
-        // Reset
         isActive = false;
         activePointerId = -1;
         MoveInput = Vector2.zero;
 
-        if (joystickBackground) joystickBackground.gameObject.SetActive(false);
-        if (joystickKnob) joystickKnob.anchoredPosition = Vector2.zero;
+        if (joystickBackground)
+            joystickBackground.gameObject.SetActive(false);
+        if (joystickKnob)
+            joystickKnob.anchoredPosition = Vector2.zero;
     }
 }
