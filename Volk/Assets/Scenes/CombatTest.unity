@@ -2851,8 +2851,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystickBackground: {fileID: 133139564}
   joystickKnob: {fileID: 1777329953}
-  joystickRange: 50
-  flickThreshold: 200
+  joystickRadius: 60
+  flickSpeedThreshold: 800
 --- !u!1 &1324710974
 GameObject:
   m_ObjectHideFlags: 0

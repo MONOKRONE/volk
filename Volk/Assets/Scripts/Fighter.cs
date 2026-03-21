@@ -28,9 +28,10 @@ public class Fighter : MonoBehaviour
     public float aiAttackRange = 2.5f;
     public float aiAttackCooldown = 2.5f;
 
-    // Touch input (set by TouchCombatBridge)
+    // Touch input
     [HideInInspector] public Vector2 touchMoveInput;
     [HideInInspector] public bool useTouchMovement;
+    private TouchInputHandler touchHandler;
 
     // Parry
     private bool isParrying;
@@ -61,6 +62,9 @@ public class Fighter : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
         anim.applyRootMotion = false;
         currentHP = maxHP;
+
+        if (Application.isMobilePlatform || useTouchMovement)
+            touchHandler = FindFirstObjectByType<TouchInputHandler>();
     }
 
     void Update()
@@ -88,10 +92,18 @@ public class Fighter : MonoBehaviour
 
     void UpdatePlayer()
     {
-        float h = useTouchMovement ? touchMoveInput.x : Input.GetAxisRaw("Horizontal");
-        float v = useTouchMovement ? touchMoveInput.y : Input.GetAxisRaw("Vertical");
+        bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
+        float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
+        float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
         Vector3 dir = new Vector3(h, 0, v).normalized;
-        bool run = useTouchMovement ? dir.magnitude > 0.8f : Input.GetKey(KeyCode.LeftShift);
+        bool run = mobile ? dir.magnitude > 0.8f : Input.GetKey(KeyCode.LeftShift);
+
+        // Touch flick detection
+        if (mobile && touchHandler != null)
+        {
+            if (touchHandler.JumpTriggered) Debug.Log("[Fighter] Jump triggered (placeholder)");
+            if (touchHandler.CrouchTriggered) Debug.Log("[Fighter] Crouch triggered (placeholder)");
+        }
 
         // Check attack input FIRST - before any movement
         if (!isAttacking)

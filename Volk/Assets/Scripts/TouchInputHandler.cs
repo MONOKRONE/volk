@@ -1,106 +1,86 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class TouchInputHandler : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+public class TouchInputHandler : MonoBehaviour
 {
     [Header("Joystick UI")]
     public RectTransform joystickBackground;
     public RectTransform joystickKnob;
-    public float joystickRange = 50f;
+    public float joystickRadius = 60f;
+    public float flickSpeedThreshold = 800f;
 
-    [Header("Flick Detection")]
-    public float flickThreshold = 200f;
-
-    // Output
     public Vector2 MoveInput { get; private set; }
-    public bool FlickUp { get; private set; }
-    public bool FlickDown { get; private set; }
+    public bool JumpTriggered { get; private set; }
+    public bool CrouchTriggered { get; private set; }
 
-    private int activePointerId = -1;
-    private Vector2 touchOrigin;
-    private Vector2 lastPos;
+    private int joystickFingerId = -1;
+    private Vector2 joystickStartPos;
+    private Vector2 prevTouchPos;
     private float touchStartTime;
-    private bool isActive;
-    private RectTransform canvasRect;
 
-    void Awake()
+    void Start()
     {
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas != null)
-            canvasRect = canvas.transform as RectTransform;
-        if (joystickBackground)
-            joystickBackground.gameObject.SetActive(false);
+        if (joystickBackground) joystickBackground.gameObject.SetActive(false);
     }
 
-    void LateUpdate()
+    void Update()
     {
-        FlickUp = false;
-        FlickDown = false;
-    }
+        JumpTriggered = false;
+        CrouchTriggered = false;
 
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        if (isActive) return;
-
-        activePointerId = eventData.pointerId;
-        isActive = true;
-        touchOrigin = eventData.position;
-        lastPos = eventData.position;
-        touchStartTime = Time.unscaledTime;
-
-        if (joystickBackground && canvasRect)
+        foreach (Touch touch in Input.touches)
         {
-            joystickBackground.gameObject.SetActive(true);
-            // For Screen Space Overlay, camera is null
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRect, eventData.position, null, out Vector2 localPoint);
-            joystickBackground.anchoredPosition = localPoint;
-            if (joystickKnob)
-                joystickKnob.anchoredPosition = Vector2.zero;
-        }
-    }
+            // Only track touches on LEFT half of screen
+            bool isLeftSide = touch.position.x < Screen.width * 0.5f;
+            if (!isLeftSide && joystickFingerId != touch.fingerId) continue;
 
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (eventData.pointerId != activePointerId) return;
-
-        Vector2 delta = eventData.position - touchOrigin;
-        Vector2 clamped = Vector2.ClampMagnitude(delta, joystickRange);
-        MoveInput = clamped / joystickRange;
-
-        if (joystickKnob)
-            joystickKnob.anchoredPosition = clamped;
-
-        lastPos = eventData.position;
-    }
-
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        if (eventData.pointerId != activePointerId) return;
-
-        // Flick detection based on total gesture
-        float totalTime = Time.unscaledTime - touchStartTime;
-        if (totalTime > 0f && totalTime < 0.25f)
-        {
-            Vector2 totalDelta = eventData.position - touchOrigin;
-            float speed = totalDelta.magnitude / totalTime;
-            if (speed > flickThreshold)
+            if (touch.phase == TouchPhase.Began && isLeftSide && joystickFingerId == -1)
             {
-                if (totalDelta.y > 0 && Mathf.Abs(totalDelta.y) > Mathf.Abs(totalDelta.x))
-                    FlickUp = true;
-                else if (totalDelta.y < 0 && Mathf.Abs(totalDelta.y) > Mathf.Abs(totalDelta.x))
-                    FlickDown = true;
+                joystickFingerId = touch.fingerId;
+                joystickStartPos = touch.position;
+                prevTouchPos = touch.position;
+                touchStartTime = Time.time;
+
+                // Show joystick at touch position
+                if (joystickBackground)
+                {
+                    joystickBackground.gameObject.SetActive(true);
+                    joystickBackground.position = touch.position;
+                    joystickKnob.position = touch.position;
+                }
+            }
+            else if (touch.fingerId == joystickFingerId)
+            {
+                if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+                {
+                    Vector2 delta = touch.position - joystickStartPos;
+                    Vector2 clamped = Vector2.ClampMagnitude(delta, joystickRadius);
+                    MoveInput = clamped / joystickRadius;
+
+                    if (joystickKnob)
+                        joystickKnob.position = joystickStartPos + clamped;
+                    prevTouchPos = touch.position;
+                }
+                else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                {
+                    // Flick detection
+                    float touchDuration = Time.time - touchStartTime;
+                    Vector2 totalDelta = touch.position - joystickStartPos;
+                    float speed = totalDelta.magnitude / touchDuration;
+
+                    if (speed > flickSpeedThreshold)
+                    {
+                        if (totalDelta.y > Mathf.Abs(totalDelta.x) * 1.5f)
+                            JumpTriggered = true;
+                        else if (-totalDelta.y > Mathf.Abs(totalDelta.x) * 1.5f)
+                            CrouchTriggered = true;
+                    }
+
+                    joystickFingerId = -1;
+                    MoveInput = Vector2.zero;
+                    if (joystickBackground) joystickBackground.gameObject.SetActive(false);
+                }
             }
         }
-
-        isActive = false;
-        activePointerId = -1;
-        MoveInput = Vector2.zero;
-
-        if (joystickBackground)
-            joystickBackground.gameObject.SetActive(false);
-        if (joystickKnob)
-            joystickKnob.anchoredPosition = Vector2.zero;
     }
 }

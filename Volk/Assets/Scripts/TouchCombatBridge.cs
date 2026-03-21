@@ -60,9 +60,9 @@ public class TouchCombatBridge : MonoBehaviour
         fighter.touchMoveInput = joystick.MoveInput;
         fighter.useTouchMovement = true;
 
-        if (joystick.FlickUp)
+        if (joystick.JumpTriggered)
             Debug.Log("[Touch] Flick Up - Jump (placeholder)");
-        if (joystick.FlickDown)
+        if (joystick.CrouchTriggered)
             Debug.Log("[Touch] Flick Down - Crouch (placeholder)");
     }
 
