@@ -43,6 +43,12 @@ public class Fighter : MonoBehaviour
     private float normalHeight;
     private float crouchHeight;
 
+    // Knockback
+    public float knockbackForce = 4f;
+    public float knockbackDuration = 0.2f;
+    private Vector3 knockbackVelocity;
+    private float knockbackTimer;
+
     // Private
     private CharacterController cc;
     private Animator anim;
@@ -104,6 +110,14 @@ public class Fighter : MonoBehaviour
 
     void UpdatePlayer()
     {
+        if (knockbackTimer > 0f)
+        {
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 10f * Time.deltaTime);
+            cc.Move((knockbackVelocity + new Vector3(0, yVelocity, 0)) * Time.deltaTime);
+            knockbackTimer -= Time.deltaTime;
+            return;
+        }
+
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
         float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
@@ -166,6 +180,14 @@ public class Fighter : MonoBehaviour
 
     void UpdateAI()
     {
+        if (knockbackTimer > 0f)
+        {
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 10f * Time.deltaTime);
+            cc.Move((knockbackVelocity + new Vector3(0, yVelocity, 0)) * Time.deltaTime);
+            knockbackTimer -= Time.deltaTime;
+            return;
+        }
+
         if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
         if (aiTarget == null) return;
 
@@ -229,7 +251,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(attackDamage);
+                        target.TakeDamage(attackDamage, transform.position);
                         hitLanded = true;
                         StartCoroutine(HitStop(0.08f));
                         target.StartCoroutine(target.HitStop(0.08f));
@@ -286,7 +308,7 @@ public class Fighter : MonoBehaviour
         cam.transform.localPosition = originalPos;
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, Vector3 attackerPos = default)
     {
         if (isDead) return;
         CheckParryOnDamage(ref amount);
@@ -294,6 +316,15 @@ public class Fighter : MonoBehaviour
         currentHP -= amount;
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
         StartCoroutine(ShakeCamera(0.1f, 0.05f));
+
+        // Knockback
+        if (attackerPos != default)
+        {
+            Vector3 dir = (transform.position - attackerPos).normalized;
+            dir.y = 0;
+            knockbackVelocity = dir * knockbackForce;
+            knockbackTimer = knockbackDuration;
+        }
 
         if (currentHP <= 0)
         {
@@ -368,7 +399,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(heavyDamage);
+                        target.TakeDamage(heavyDamage, transform.position);
                         hitLanded = true;
                         StartCoroutine(Hitstop());
                         break;
