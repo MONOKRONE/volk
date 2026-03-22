@@ -169,22 +169,11 @@ public class Fighter : MonoBehaviour
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
         float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
-        // Camera-relative movement
-        Transform cam = Camera.main != null ? Camera.main.transform : null;
-        Vector3 rawDir;
-        if (cam != null)
-        {
-            Vector3 camForward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
-            Vector3 camRight = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
-            rawDir = camForward * v + camRight * h;
-        }
-        else
-        {
-            rawDir = new Vector3(h, 0, v);
-        }
+        // Movement relative to player's own facing direction
+        Vector3 rawDir = transform.forward * v + transform.right * h;
+        rawDir.y = 0;
         float inputMag = rawDir.magnitude;
         Vector3 dir = inputMag > 0.15f ? rawDir.normalized : Vector3.zero;
-        bool run = false;
 
         // Jump
         if (touchHandler != null && touchHandler.JumpTriggered && cc.isGrounded)
@@ -219,33 +208,27 @@ public class Fighter : MonoBehaviour
 
         if (inputMag > 0.15f)
         {
-            float speed = run ? runSpeed : walkSpeed;
-            Vector3 move = dir * speed;
+            Vector3 move = dir * walkSpeed;
             move.y = yVelocity;
             cc.Move(move * Time.deltaTime);
-
-            transform.rotation = Quaternion.Slerp(transform.rotation,
-                Quaternion.LookRotation(dir), rotSpeed * Time.deltaTime);
-
-            anim.SetBool(hWalk, !run);
-            anim.SetBool(hRun, run);
+            anim.SetBool(hWalk, true);
+            anim.SetBool(hRun, false);
         }
         else
         {
-            // No input — only gravity, zero XZ
             cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
             anim.SetBool(hWalk, false);
             anim.SetBool(hRun, false);
+        }
 
-            // Auto face enemy when idle
-            if (!isAttacking && aiTarget != null)
-            {
-                Vector3 lookDir = (aiTarget.position - transform.position).normalized;
-                lookDir.y = 0;
-                if (lookDir.sqrMagnitude > 0.01f)
-                    transform.rotation = Quaternion.Slerp(transform.rotation,
-                        Quaternion.LookRotation(lookDir), 8f * Time.deltaTime);
-            }
+        // Always face enemy smoothly
+        if (aiTarget != null && !isAttacking)
+        {
+            Vector3 lookDir = (aiTarget.position - transform.position).normalized;
+            lookDir.y = 0;
+            if (lookDir.sqrMagnitude > 0.01f)
+                transform.rotation = Quaternion.Slerp(transform.rotation,
+                    Quaternion.LookRotation(lookDir), 8f * Time.deltaTime);
         }
     }
 
