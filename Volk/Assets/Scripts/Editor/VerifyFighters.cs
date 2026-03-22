@@ -20,7 +20,7 @@ public class VerifyFighters
 
         var f = go.GetComponent<Fighter>();
         if (f != null)
-            Debug.Log($"  Fighter: isAI={f.isAI}, enemyTag='{f.enemyTag}', aiAttackRange={f.aiAttackRange}, rightHand={f.rightHandPoint?.name ?? "NULL"}, rightFoot={f.rightFootPoint?.name ?? "NULL"}");
+            Debug.Log($"  Fighter: isAI={f.isAI}, enemyTag='{f.enemyTag}', difficulty={f.difficulty}, rightHand={f.rightHandPoint?.name ?? "NULL"}, rightFoot={f.rightFootPoint?.name ?? "NULL"}");
         else
             Debug.LogError("  NO Fighter component!");
 

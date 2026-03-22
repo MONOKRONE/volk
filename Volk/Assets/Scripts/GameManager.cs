@@ -12,6 +12,9 @@ public class GameManager : MonoBehaviour
     public float roundStartDelay = 1.5f;
     public float roundEndDelay = 2.0f;
 
+    [Header("Difficulty")]
+    public AIDifficulty selectedDifficulty = AIDifficulty.Normal;
+
     [Header("References")]
     public Fighter playerFighter;
     public Fighter enemyFighter;
@@ -39,7 +42,12 @@ public class GameManager : MonoBehaviour
 
         // Reset fighters
         if (playerFighter != null) playerFighter.ResetForRound();
-        if (enemyFighter != null) enemyFighter.ResetForRound();
+        if (enemyFighter != null)
+        {
+            enemyFighter.ResetForRound();
+            enemyFighter.difficulty = selectedDifficulty;
+            enemyFighter.InitAIDifficulty();
+        }
 
         // Show "ROUND X"
         if (roundUI != null)

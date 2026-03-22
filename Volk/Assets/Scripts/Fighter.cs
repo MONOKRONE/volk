@@ -3,6 +3,8 @@ using System.Collections;
 
 public enum AttackType { Punch, Kick }
 public enum AttackVariant { Normal, Heavy, Special }
+public enum AIDifficulty { Easy, Normal, Hard }
+public enum AIState { Idle, Approach, Combat, Retreat, Stunned }
 
 public class Fighter : MonoBehaviour
 {
@@ -26,8 +28,19 @@ public class Fighter : MonoBehaviour
     [Header("AI - leave null for player")]
     public Transform aiTarget;
     public bool isAI = false;
-    public float aiAttackRange = 2.5f;
-    public float aiAttackCooldown = 2.5f;
+    public AIDifficulty difficulty = AIDifficulty.Normal;
+    public AIState currentAIState = AIState.Idle;
+
+    // AI internals
+    private float aiAttackCooldown;
+    private float aiRetreatTimer;
+    private float aiStunnedTimer;
+    private float aiDecisionTimer;
+    private float reactionTime;
+    private float parryChance;
+    private float retreatHPThreshold;
+    private float aiAttackRange = 1.8f;
+    private float aiApproachStop = 1.4f;
 
     // Touch input
     [HideInInspector] public Vector2 touchMoveInput;
@@ -60,7 +73,6 @@ public class Fighter : MonoBehaviour
     public bool isAttacking { get; private set; }
     public bool isDead { get; private set; }
     private float yVelocity;
-    private float aiAttackTimer;
     private float postAttackCooldown;
 
     // Animator hashes
@@ -86,6 +98,22 @@ public class Fighter : MonoBehaviour
 
         if (Application.isMobilePlatform || useTouchMovement)
             touchHandler = FindFirstObjectByType<TouchInputHandler>();
+
+        if (isAI) InitAIDifficulty();
+    }
+
+    public void InitAIDifficulty()
+    {
+        switch (difficulty)
+        {
+            case AIDifficulty.Easy:
+                reactionTime = 1.2f; parryChance = 0.08f; retreatHPThreshold = 0.4f; break;
+            case AIDifficulty.Normal:
+                reactionTime = 0.7f; parryChance = 0.28f; retreatHPThreshold = 0.25f; break;
+            case AIDifficulty.Hard:
+                reactionTime = 0.22f; parryChance = 0.55f; retreatHPThreshold = 0.1f; break;
+        }
+        aiAttackCooldown = reactionTime;
     }
 
     void Update()
@@ -197,11 +225,17 @@ public class Fighter : MonoBehaviour
 
     void UpdateAI()
     {
+        if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
+        if (aiTarget == null) return;
+
+        // Knockback override
         if (knockbackTimer > 0f)
         {
             knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 8f * Time.deltaTime);
             cc.Move(knockbackVelocity * Time.deltaTime);
             knockbackTimer -= Time.deltaTime;
+            currentAIState = AIState.Stunned;
+            aiStunnedTimer = 0.4f;
             return;
         }
         else
@@ -209,39 +243,109 @@ public class Fighter : MonoBehaviour
             knockbackVelocity = Vector3.zero;
         }
 
-        if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
-        if (aiTarget == null) return;
+        float distToTarget = Vector3.Distance(transform.position, aiTarget.position);
+        float hpRatio = currentHP / maxHP;
 
-        float dist = Vector3.Distance(transform.position, aiTarget.position);
-        aiAttackTimer -= Time.deltaTime;
-
-        if (dist > aiAttackRange)
+        switch (currentAIState)
         {
-            if (!isAttacking)
-            {
-                Vector3 dir = (aiTarget.position - transform.position).normalized;
-                dir.y = 0;
-                Vector3 move = dir * walkSpeed;
-                move.y = yVelocity;
-                cc.Move(move * Time.deltaTime);
+            case AIState.Idle:
+                anim.SetBool(hWalk, false);
+                anim.SetBool(hRun, false);
+                cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+                aiDecisionTimer -= Time.deltaTime;
+                if (aiDecisionTimer <= 0f)
+                    currentAIState = AIState.Approach;
+                break;
+
+            case AIState.Approach:
+                if (hpRatio < retreatHPThreshold)
+                { currentAIState = AIState.Retreat; aiRetreatTimer = 1.5f; break; }
+
+                if (distToTarget <= aiAttackRange)
+                { currentAIState = AIState.Combat; aiAttackCooldown = reactionTime; break; }
+
+                if (!isAttacking)
+                {
+                    Vector3 approachDir = (aiTarget.position - transform.position).normalized;
+                    approachDir.y = 0;
+                    if (distToTarget > aiApproachStop)
+                    {
+                        Vector3 move = approachDir * walkSpeed;
+                        move.y = yVelocity;
+                        cc.Move(move * Time.deltaTime);
+                    }
+                    else
+                    {
+                        cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+                    }
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(approachDir), rotSpeed * Time.deltaTime);
+                    anim.SetBool(hWalk, distToTarget > aiApproachStop);
+                    anim.SetBool(hRun, false);
+                }
+                break;
+
+            case AIState.Combat:
+                // Face target
+                Vector3 faceDir = (aiTarget.position - transform.position).normalized;
+                faceDir.y = 0;
+                if (faceDir.sqrMagnitude > 0.01f)
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(faceDir), rotSpeed * Time.deltaTime);
+
+                if (distToTarget > aiAttackRange + 0.5f)
+                { currentAIState = AIState.Approach; break; }
+
+                if (hpRatio < retreatHPThreshold)
+                { currentAIState = AIState.Retreat; aiRetreatTimer = 1.5f; break; }
+
+                // Try parry if target is attacking
+                Fighter targetFighter = aiTarget.GetComponent<Fighter>();
+                if (targetFighter != null && targetFighter.isAttacking && !isAttacking)
+                {
+                    if (Random.value < parryChance * Time.deltaTime * 10f)
+                        AttemptParry();
+                }
+
+                // Attack on cooldown
+                aiAttackCooldown -= Time.deltaTime;
+                if (aiAttackCooldown <= 0f && !isAttacking)
+                {
+                    bool usePunch = Random.value < 0.6f;
+                    StartCoroutine(DoAttack(usePunch ? hPunch : hKick,
+                        usePunch ? rightHandPoint : rightFootPoint));
+                    aiAttackCooldown = reactionTime + Random.Range(-0.1f, 0.3f);
+                }
+
+                anim.SetBool(hWalk, false);
+                anim.SetBool(hRun, false);
+                cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+                break;
+
+            case AIState.Retreat:
+                aiRetreatTimer -= Time.deltaTime;
+                if (aiRetreatTimer <= 0f)
+                { currentAIState = AIState.Approach; break; }
+
+                Vector3 retreatDir = (transform.position - aiTarget.position).normalized;
+                retreatDir.y = 0;
+                Vector3 retreatMove = retreatDir * walkSpeed;
+                retreatMove.y = yVelocity;
+                cc.Move(retreatMove * Time.deltaTime);
                 transform.rotation = Quaternion.Slerp(transform.rotation,
-                    Quaternion.LookRotation(dir), rotSpeed * Time.deltaTime);
+                    Quaternion.LookRotation(-retreatDir), rotSpeed * Time.deltaTime);
                 anim.SetBool(hWalk, true);
                 anim.SetBool(hRun, false);
-            }
-        }
-        else
-        {
-            anim.SetBool(hWalk, false);
-            anim.SetBool(hRun, false);
-            cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+                break;
 
-            if (!isAttacking && aiAttackTimer <= 0f)
-            {
-                aiAttackTimer = aiAttackCooldown + Random.Range(0f, 1f);
-                bool usePunch = Random.value > 0.5f;
-                StartCoroutine(DoAttack(usePunch ? hPunch : hKick, usePunch ? rightHandPoint : rightFootPoint));
-            }
+            case AIState.Stunned:
+                aiStunnedTimer -= Time.deltaTime;
+                anim.SetBool(hWalk, false);
+                anim.SetBool(hRun, false);
+                cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+                if (aiStunnedTimer <= 0f)
+                    currentAIState = AIState.Approach;
+                break;
         }
     }
 
@@ -362,6 +466,13 @@ public class Fighter : MonoBehaviour
             knockbackTimer = knockbackDuration;
         }
 
+        // AI state transition on hit
+        if (isAI)
+        {
+            currentAIState = AIState.Stunned;
+            aiStunnedTimer = 0.35f;
+        }
+
         if (currentHP <= 0)
         {
             isDead = true;
@@ -400,6 +511,11 @@ public class Fighter : MonoBehaviour
         isCrouching = false;
         isParrying = false;
         postAttackCooldown = 0f;
+        currentAIState = AIState.Idle;
+        aiAttackCooldown = 0f;
+        aiStunnedTimer = 0f;
+        aiRetreatTimer = 0f;
+        aiDecisionTimer = 0.5f;
         cc.height = normalHeight;
         cc.center = new Vector3(0, normalHeight / 2f, 0);
         anim.Rebind();
