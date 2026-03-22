@@ -18,6 +18,13 @@ public class PauseMenu : MonoBehaviour
     public Button soundToggleButton;
     public Button vibrationToggleButton;
 
+    [Header("Difficulty")]
+    public Button easyButton;
+    public Button normalButton;
+    public Button hardButton;
+    public Color activeColor = new Color(1f, 0.8f, 0f, 1f);
+    public Color inactiveColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+
     [Header("Labels")]
     public TextMeshProUGUI soundLabel;
     public TextMeshProUGUI vibrationLabel;
@@ -38,7 +45,15 @@ public class PauseMenu : MonoBehaviour
         restartButton.onClick.AddListener(Restart);
         soundToggleButton.onClick.AddListener(ToggleSound);
         vibrationToggleButton.onClick.AddListener(ToggleVibration);
+        if (easyButton) easyButton.onClick.AddListener(() => SetDifficulty(0));
+        if (normalButton) normalButton.onClick.AddListener(() => SetDifficulty(1));
+        if (hardButton) hardButton.onClick.AddListener(() => SetDifficulty(2));
         ApplySoundSetting();
+
+        int saved = PlayerPrefs.GetInt("AIDifficulty", 1);
+        if (GameManager.Instance != null)
+            GameManager.Instance.selectedDifficulty = (AIDifficulty)saved;
+        UpdateDifficultyUI((AIDifficulty)saved);
     }
 
     void Update()
@@ -81,6 +96,22 @@ public class PauseMenu : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    public void SetDifficulty(int level)
+    {
+        AIDifficulty diff = (AIDifficulty)level;
+        if (GameManager.Instance != null)
+            GameManager.Instance.selectedDifficulty = diff;
+        PlayerPrefs.SetInt("AIDifficulty", level);
+        UpdateDifficultyUI(diff);
+    }
+
+    void UpdateDifficultyUI(AIDifficulty diff)
+    {
+        if (easyButton) easyButton.GetComponent<Image>().color = diff == AIDifficulty.Easy ? activeColor : inactiveColor;
+        if (normalButton) normalButton.GetComponent<Image>().color = diff == AIDifficulty.Normal ? activeColor : inactiveColor;
+        if (hardButton) hardButton.GetComponent<Image>().color = diff == AIDifficulty.Hard ? activeColor : inactiveColor;
+    }
+
     public void ToggleSound()
     {
         soundEnabled = !soundEnabled;
@@ -111,26 +142,15 @@ public class PauseMenu : MonoBehaviour
 
     IEnumerator FadeIn(CanvasGroup cg, float duration)
     {
-        cg.alpha = 0;
-        float t = 0;
-        while (t < duration)
-        {
-            t += Time.unscaledDeltaTime;
-            cg.alpha = t / duration;
-            yield return null;
-        }
+        cg.alpha = 0; float t = 0;
+        while (t < duration) { t += Time.unscaledDeltaTime; cg.alpha = t / duration; yield return null; }
         cg.alpha = 1;
     }
 
     IEnumerator FadeOut(CanvasGroup cg, float duration)
     {
         float t = 0;
-        while (t < duration)
-        {
-            t += Time.unscaledDeltaTime;
-            cg.alpha = 1 - (t / duration);
-            yield return null;
-        }
+        while (t < duration) { t += Time.unscaledDeltaTime; cg.alpha = 1 - (t / duration); yield return null; }
         cg.alpha = 0;
     }
 }

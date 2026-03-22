@@ -100,6 +100,10 @@ public class Fighter : MonoBehaviour
             touchHandler = FindFirstObjectByType<TouchInputHandler>();
 
         if (isAI) InitAIDifficulty();
+
+        // Auto-find target for both player and AI
+        if (aiTarget == null)
+            aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
     }
 
     public void InitAIDifficulty()
@@ -220,6 +224,16 @@ public class Fighter : MonoBehaviour
             cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
             anim.SetBool(hWalk, false);
             anim.SetBool(hRun, false);
+
+            // Auto face enemy when idle
+            if (!isAttacking && aiTarget != null)
+            {
+                Vector3 lookDir = (aiTarget.position - transform.position).normalized;
+                lookDir.y = 0;
+                if (lookDir.sqrMagnitude > 0.01f)
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(lookDir), 8f * Time.deltaTime);
+            }
         }
     }
 

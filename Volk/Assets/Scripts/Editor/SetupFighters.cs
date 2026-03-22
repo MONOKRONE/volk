@@ -93,7 +93,7 @@ public class SetupFighters
         if (cam != null)
         {
             var cf = cam.GetComponent<CameraFollow>();
-            if (cf != null) { cf.target = playerRoot.transform; EditorUtility.SetDirty(cf); }
+            if (cf != null) { cf.player = playerRoot.transform; EditorUtility.SetDirty(cf); }
         }
 
         Debug.Log("Fighter setup complete!");
