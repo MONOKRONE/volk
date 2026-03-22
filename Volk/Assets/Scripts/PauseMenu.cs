@@ -28,6 +28,8 @@ public class PauseMenu : MonoBehaviour
     [Header("Labels")]
     public TextMeshProUGUI soundLabel;
     public TextMeshProUGUI vibrationLabel;
+    public TextMeshProUGUI soundBadge;
+    public TextMeshProUGUI vibrationBadge;
 
     private bool isPaused = false;
     private bool soundEnabled = true;
@@ -138,6 +140,8 @@ public class PauseMenu : MonoBehaviour
         bool vib = VibrationManager.Instance != null && VibrationManager.Instance.IsEnabled;
         if (soundLabel) soundLabel.text = soundEnabled ? "SES AÇIK" : "SES KAPALI";
         if (vibrationLabel) vibrationLabel.text = vib ? "TİTREŞİM AÇIK" : "TİTREŞİM KAPALI";
+        if (soundBadge) soundBadge.text = soundEnabled ? "AÇIK" : "KAPALI";
+        if (vibrationBadge) vibrationBadge.text = vib ? "AÇIK" : "KAPALI";
     }
 
     IEnumerator FadeIn(CanvasGroup cg, float duration)

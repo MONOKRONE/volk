@@ -78,6 +78,7 @@ public class Fighter : MonoBehaviour
     // Animator hashes
     static int hWalk = Animator.StringToHash("IsWalking");
     static int hRun = Animator.StringToHash("IsRunning");
+    static int hWalkSpeed = Animator.StringToHash("WalkSpeed");
     static int hPunch = Animator.StringToHash("HookPunch");
     static int hKick = Animator.StringToHash("MMAKick");
     static int hBlock = Animator.StringToHash("BodyBlock");
@@ -211,12 +212,16 @@ public class Fighter : MonoBehaviour
             Vector3 move = dir * walkSpeed;
             move.y = yVelocity;
             cc.Move(move * Time.deltaTime);
+
+            bool movingBackward = v < -0.15f;
+            anim.SetFloat(hWalkSpeed, movingBackward ? -1f : 1f);
             anim.SetBool(hWalk, true);
             anim.SetBool(hRun, false);
         }
         else
         {
             cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+            anim.SetFloat(hWalkSpeed, 1f);
             anim.SetBool(hWalk, false);
             anim.SetBool(hRun, false);
         }

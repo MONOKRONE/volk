@@ -10,6 +10,15 @@ public class MainMenuController : MonoBehaviour
     public CanvasGroup menuGroup;
     public string combatSceneName = "CombatTest";
 
+    void Awake()
+    {
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
+        Screen.autorotateToPortrait = false;
+        Screen.autorotateToPortraitUpsideDown = false;
+        Screen.autorotateToLandscapeLeft = true;
+        Screen.autorotateToLandscapeRight = true;
+    }
+
     void Start()
     {
         playButton.onClick.AddListener(OnPlayPressed);
