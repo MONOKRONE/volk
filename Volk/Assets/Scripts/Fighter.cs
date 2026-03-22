@@ -242,6 +242,17 @@ public class Fighter : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(transform.rotation,
                     Quaternion.LookRotation(lookDir), 8f * Time.deltaTime);
         }
+        else if (!lockOnEnabled && !isAttacking)
+        {
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
+                if (camForward.sqrMagnitude > 0.01f)
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(camForward), 6f * Time.deltaTime);
+            }
+        }
     }
 
     void UpdateAI()
