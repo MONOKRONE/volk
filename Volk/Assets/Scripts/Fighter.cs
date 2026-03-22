@@ -25,6 +25,9 @@ public class Fighter : MonoBehaviour
     public float rotSpeed = 10f;
     public float jumpHeight = 1.8f;
 
+    [Header("Lock-On")]
+    public bool lockOnEnabled = true;
+
     [Header("AI - leave null for player")]
     public Transform aiTarget;
     public bool isAI = false;
@@ -230,8 +233,8 @@ public class Fighter : MonoBehaviour
             anim.SetBool(hRun, false);
         }
 
-        // Always face enemy smoothly
-        if (aiTarget != null && !isAttacking)
+        // Auto face enemy when locked on
+        if (lockOnEnabled && aiTarget != null && !isAttacking)
         {
             Vector3 lookDir = (aiTarget.position - transform.position).normalized;
             lookDir.y = 0;
