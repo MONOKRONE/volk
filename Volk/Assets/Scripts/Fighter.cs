@@ -169,7 +169,19 @@ public class Fighter : MonoBehaviour
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
         float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
-        Vector3 rawDir = new Vector3(h, 0, v);
+        // Camera-relative movement
+        Transform cam = Camera.main != null ? Camera.main.transform : null;
+        Vector3 rawDir;
+        if (cam != null)
+        {
+            Vector3 camForward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+            Vector3 camRight = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
+            rawDir = camForward * v + camRight * h;
+        }
+        else
+        {
+            rawDir = new Vector3(h, 0, v);
+        }
         float inputMag = rawDir.magnitude;
         Vector3 dir = inputMag > 0.15f ? rawDir.normalized : Vector3.zero;
         bool run = false;
