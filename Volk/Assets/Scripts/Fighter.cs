@@ -170,8 +170,12 @@ public class Fighter : MonoBehaviour
         bool mobile = touchHandler != null && (Application.isMobilePlatform || useTouchMovement);
         float h = mobile ? touchHandler.MoveInput.x : Input.GetAxisRaw("Horizontal");
         float v = mobile ? touchHandler.MoveInput.y : Input.GetAxisRaw("Vertical");
-        // Movement relative to player's own facing direction
-        Vector3 rawDir = transform.forward * v + transform.right * h;
+        // Forward/backward along facing direction, strafe perpendicular (world-horizontal)
+        Vector3 forwardDir = transform.forward;
+        forwardDir.y = 0;
+        forwardDir.Normalize();
+        Vector3 strafeDir = Vector3.Cross(Vector3.up, forwardDir);
+        Vector3 rawDir = forwardDir * v + strafeDir * h;
         rawDir.y = 0;
         float inputMag = rawDir.magnitude;
         Vector3 dir = inputMag > 0.15f ? rawDir.normalized : Vector3.zero;
