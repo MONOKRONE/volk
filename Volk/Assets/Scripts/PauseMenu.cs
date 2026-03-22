@@ -8,30 +8,25 @@ public class PauseMenu : MonoBehaviour
 {
     public static PauseMenu Instance;
 
-    [Header("Panel")]
-    public CanvasGroup pausePanel;
-    public GameObject pauseContainer;
-
-    [Header("Buttons")]
+    [Header("UI - set by PauseMenuBuilder")]
+    public GameObject overlayObj;
     public Button resumeButton;
     public Button restartButton;
     public Button soundToggleButton;
     public Button vibrationToggleButton;
-
-    [Header("Difficulty")]
     public Button easyButton;
     public Button normalButton;
     public Button hardButton;
-    public Color activeColor = new Color(1f, 0.8f, 0f, 1f);
-    public Color inactiveColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-
-    [Header("Labels")]
     public TextMeshProUGUI soundLabel;
     public TextMeshProUGUI vibrationLabel;
     public TextMeshProUGUI soundBadge;
     public TextMeshProUGUI vibrationBadge;
 
-    private bool isPaused = false;
+    [Header("Difficulty Colors")]
+    public Color activeColor = new Color(0.9f, 0.72f, 0f);
+    public Color inactiveColor = new Color(0.16f, 0.16f, 0.16f);
+
+    private bool isPaused;
     private bool soundEnabled = true;
 
     void Awake()
@@ -42,16 +37,15 @@ public class PauseMenu : MonoBehaviour
 
     void Start()
     {
-        pauseContainer.SetActive(false);
-        resumeButton.onClick.AddListener(Resume);
-        restartButton.onClick.AddListener(Restart);
-        soundToggleButton.onClick.AddListener(ToggleSound);
-        vibrationToggleButton.onClick.AddListener(ToggleVibration);
+        if (resumeButton) resumeButton.onClick.AddListener(Resume);
+        if (restartButton) restartButton.onClick.AddListener(Restart);
+        if (soundToggleButton) soundToggleButton.onClick.AddListener(ToggleSound);
+        if (vibrationToggleButton) vibrationToggleButton.onClick.AddListener(ToggleVibration);
         if (easyButton) easyButton.onClick.AddListener(() => SetDifficulty(0));
         if (normalButton) normalButton.onClick.AddListener(() => SetDifficulty(1));
         if (hardButton) hardButton.onClick.AddListener(() => SetDifficulty(2));
-        ApplySoundSetting();
 
+        ApplySoundSetting();
         int saved = PlayerPrefs.GetInt("AIDifficulty", 1);
         if (GameManager.Instance != null)
             GameManager.Instance.selectedDifficulty = (AIDifficulty)saved;
@@ -74,20 +68,13 @@ public class PauseMenu : MonoBehaviour
     {
         isPaused = true;
         Time.timeScale = 0f;
-        pauseContainer.SetActive(true);
-        StartCoroutine(FadeIn(pausePanel, 0.2f));
+        if (overlayObj) overlayObj.SetActive(true);
         UpdateToggleUI();
     }
 
     public void Resume()
     {
-        StartCoroutine(ResumeCoroutine());
-    }
-
-    IEnumerator ResumeCoroutine()
-    {
-        yield return StartCoroutine(FadeOut(pausePanel, 0.15f));
-        pauseContainer.SetActive(false);
+        if (overlayObj) overlayObj.SetActive(false);
         Time.timeScale = 1f;
         isPaused = false;
     }
@@ -138,23 +125,9 @@ public class PauseMenu : MonoBehaviour
     void UpdateToggleUI()
     {
         bool vib = VibrationManager.Instance != null && VibrationManager.Instance.IsEnabled;
-        if (soundLabel) soundLabel.text = soundEnabled ? "SES AÇIK" : "SES KAPALI";
-        if (vibrationLabel) vibrationLabel.text = vib ? "TİTREŞİM AÇIK" : "TİTREŞİM KAPALI";
-        if (soundBadge) soundBadge.text = soundEnabled ? "AÇIK" : "KAPALI";
-        if (vibrationBadge) vibrationBadge.text = vib ? "AÇIK" : "KAPALI";
-    }
-
-    IEnumerator FadeIn(CanvasGroup cg, float duration)
-    {
-        cg.alpha = 0; float t = 0;
-        while (t < duration) { t += Time.unscaledDeltaTime; cg.alpha = t / duration; yield return null; }
-        cg.alpha = 1;
-    }
-
-    IEnumerator FadeOut(CanvasGroup cg, float duration)
-    {
-        float t = 0;
-        while (t < duration) { t += Time.unscaledDeltaTime; cg.alpha = 1 - (t / duration); yield return null; }
-        cg.alpha = 0;
+        if (soundBadge) soundBadge.text = soundEnabled ? "A\u00c7IK" : "KAPALI";
+        if (vibrationBadge) vibrationBadge.text = vib ? "A\u00c7IK" : "KAPALI";
+        if (soundBadge) soundBadge.color = soundEnabled ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.6f, 0.3f, 0.3f);
+        if (vibrationBadge) vibrationBadge.color = vib ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.6f, 0.3f, 0.3f);
     }
 }
