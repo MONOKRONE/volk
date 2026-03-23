@@ -82,12 +82,16 @@ namespace Volk.Meta
 
                     // Find player rank
                     PlayerRank = -1;
-                    if (SupabaseManager.Instance != null)
+                    if (SupabaseManager.Instance != null && !string.IsNullOrEmpty(SupabaseManager.Instance.PlayerId))
                     {
+                        string myId = SupabaseManager.Instance.PlayerId;
                         for (int i = 0; i < CachedEntries.Count; i++)
                         {
-                            // Can't compare player_id without knowing it from SupabaseManager
-                            // so rank is position in list + 1
+                            if (CachedEntries[i].player_id == myId)
+                            {
+                                PlayerRank = i + 1;
+                                break;
+                            }
                         }
                     }
                 }

@@ -28,7 +28,7 @@ namespace Volk.Story
         private int currentLineIndex;
         private bool isTyping;
         private bool skipRequested;
-        private bool isIntro = true;
+        private bool isIntro;
         private Coroutine typeCoroutine;
 
         void Start()
@@ -41,17 +41,15 @@ namespace Volk.Story
             }
 
             var chapter = StoryManager.Instance.CurrentChapter;
+            isIntro = !StoryManager.Instance.ShowOutroDialogue;
 
-            // Determine if showing intro or outro
-            // If we haven't started the fight yet, show intro. Otherwise show outro.
-            if (chapter.introDialogue != null && chapter.introDialogue.Length > 0 && isIntro)
+            if (isIntro && chapter.introDialogue != null && chapter.introDialogue.Length > 0)
             {
                 currentDialogue = chapter.introDialogue;
             }
-            else if (chapter.outroDialogue != null && chapter.outroDialogue.Length > 0)
+            else if (!isIntro && chapter.outroDialogue != null && chapter.outroDialogue.Length > 0)
             {
                 currentDialogue = chapter.outroDialogue;
-                isIntro = false;
             }
 
             if (currentDialogue == null || currentDialogue.Length == 0)

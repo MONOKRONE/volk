@@ -12,6 +12,7 @@ namespace Volk.Story
         public ChapterData CurrentChapter { get; private set; }
         public int CurrentChapterIndex { get; private set; }
         public bool IsStoryMode { get; private set; }
+        public bool ShowOutroDialogue { get; set; }
 
         void Awake()
         {
@@ -41,6 +42,7 @@ namespace Volk.Story
             }
 
             // If chapter has intro dialogue, go to dialogue scene first
+            ShowOutroDialogue = false;
             if (CurrentChapter.introDialogue != null && CurrentChapter.introDialogue.Length > 0)
             {
                 SceneManager.LoadScene("Dialogue");
@@ -71,6 +73,7 @@ namespace Volk.Story
             // Show outro dialogue or advance
             if (CurrentChapter.outroDialogue != null && CurrentChapter.outroDialogue.Length > 0)
             {
+                ShowOutroDialogue = true;
                 SceneManager.LoadScene("Dialogue");
             }
             else

@@ -19,6 +19,8 @@ namespace Volk.Meta
         private string playerId;
         private string deviceId;
 
+        public string PlayerId => playerId;
+
         public bool IsAuthenticated => !string.IsNullOrEmpty(accessToken);
         public event Action OnAuthSuccess;
         public event Action<string> OnAuthFailed;

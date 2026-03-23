@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 using System.Collections;
 
@@ -8,6 +9,7 @@ public class MainMenuController : MonoBehaviour
 {
     public Button playButton;
     public CanvasGroup menuGroup;
+    [FormerlySerializedAs("combatSceneName")]
     public string nextSceneName = "CharacterSelect";
 
     void Awake()

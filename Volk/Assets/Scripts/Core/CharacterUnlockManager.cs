@@ -16,6 +16,11 @@ namespace Volk.Core
         public bool IsUnlocked(CharacterData data)
         {
             if (data.unlockedByDefault) return true;
+
+            // Prefer SaveManager, fallback to PlayerPrefs
+            if (SaveManager.Instance != null)
+                return SaveManager.Instance.IsCharacterUnlocked(data.characterName);
+
             return PlayerPrefs.GetInt(GetKey(data), 0) == 1;
         }
 
@@ -26,22 +31,23 @@ namespace Volk.Core
             switch (data.unlockType)
             {
                 case UnlockCondition.WinCount:
-                    int wins = PlayerPrefs.GetInt("total_wins", 0);
+                    int wins = SaveManager.Instance != null ? SaveManager.Instance.Data.totalWins : PlayerPrefs.GetInt("total_wins", 0);
                     if (wins >= data.unlockValue) { Unlock(data); return true; }
                     break;
 
                 case UnlockCondition.StoryProgress:
-                    int chapter = PlayerPrefs.GetInt("completed_chapter", 0);
+                    int chapter = SaveManager.Instance != null ? SaveManager.Instance.Data.completedChapter : PlayerPrefs.GetInt("completed_chapter", 0);
                     if (chapter >= data.unlockValue) { Unlock(data); return true; }
                     break;
 
                 case UnlockCondition.Currency:
-                    int coins = PlayerPrefs.GetInt("currency", 0);
-                    if (coins >= data.unlockValue)
+                    if (SaveManager.Instance != null)
                     {
-                        PlayerPrefs.SetInt("currency", coins - data.unlockValue);
-                        Unlock(data);
-                        return true;
+                        if (SaveManager.Instance.SpendCurrency(data.unlockValue))
+                        {
+                            Unlock(data);
+                            return true;
+                        }
                     }
                     break;
             }
@@ -50,8 +56,15 @@ namespace Volk.Core
 
         public void Unlock(CharacterData data)
         {
-            PlayerPrefs.SetInt(GetKey(data), 1);
-            PlayerPrefs.Save();
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.UnlockCharacter(data.characterName);
+            }
+            else
+            {
+                PlayerPrefs.SetInt(GetKey(data), 1);
+                PlayerPrefs.Save();
+            }
             Debug.Log($"[Unlock] {data.characterName} unlocked!");
         }
 
@@ -69,6 +82,18 @@ namespace Volk.Core
         public float GetUnlockProgress(CharacterData data)
         {
             if (data.unlockValue <= 0) return 1f;
+
+            if (SaveManager.Instance != null)
+            {
+                return data.unlockType switch
+                {
+                    UnlockCondition.WinCount => (float)SaveManager.Instance.Data.totalWins / data.unlockValue,
+                    UnlockCondition.StoryProgress => (float)SaveManager.Instance.Data.completedChapter / data.unlockValue,
+                    UnlockCondition.Currency => (float)SaveManager.Instance.Data.currency / data.unlockValue,
+                    _ => 0f
+                };
+            }
+
             return data.unlockType switch
             {
                 UnlockCondition.WinCount => (float)PlayerPrefs.GetInt("total_wins", 0) / data.unlockValue,
