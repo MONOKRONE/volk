@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Volk.Core;
 
 public enum AttackType { Punch, Kick }
 public enum AttackVariant { Normal, Heavy, Special }
@@ -8,6 +9,9 @@ public enum AIState { Idle, Approach, Combat, Retreat, Stunned }
 
 public class Fighter : MonoBehaviour
 {
+    [Header("Character Data (optional - overrides stats below)")]
+    public CharacterData characterData;
+
     [Header("Stats")]
     public float maxHP = 100f;
     public float currentHP;
@@ -96,6 +100,11 @@ public class Fighter : MonoBehaviour
         cc = GetComponent<CharacterController>();
         anim = GetComponentInChildren<Animator>();
         anim.applyRootMotion = false;
+
+        // Apply CharacterData SO if assigned
+        if (characterData != null)
+            ApplyCharacterData(characterData);
+
         currentHP = maxHP;
         normalHeight = cc.height;
         crouchHeight = cc.height * 0.55f;
@@ -108,6 +117,20 @@ public class Fighter : MonoBehaviour
         // Auto-find target for both player and AI
         if (aiTarget == null)
             aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
+    }
+
+    public void ApplyCharacterData(CharacterData data)
+    {
+        characterData = data;
+        maxHP = data.maxHP;
+        attackDamage = data.attackDamage;
+        attackRange = data.attackRange;
+        walkSpeed = data.walkSpeed;
+        runSpeed = data.runSpeed;
+        knockbackForce = data.knockbackForce;
+
+        if (data.animController != null)
+            anim.runtimeAnimatorController = data.animController;
     }
 
     public void InitAIDifficulty()
