@@ -205,6 +205,12 @@ public class GameManager : MonoBehaviour
 
             // Submit leaderboard score
             LeaderboardManager.Instance?.SubmitScore();
+
+            // Auto-return to MainMenu via GameFlowManager after delay
+            if (Volk.Core.GameFlowManager.Instance != null)
+            {
+                StartCoroutine(ReturnToMainMenuDelayed(playerWonMatch, 2.5f));
+            }
         }
         else
         {
@@ -215,7 +221,24 @@ public class GameManager : MonoBehaviour
 
     void RestartMatch()
     {
+        // If GameFlowManager exists, go back to MainMenu with match result
+        if (Volk.Core.GameFlowManager.Instance != null)
+        {
+            bool playerWonMatch = playerRoundWins > enemyRoundWins;
+            Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
+            Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWonMatch;
+            SceneManager.LoadScene("MainMenu");
+            return;
+        }
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    IEnumerator ReturnToMainMenuDelayed(bool playerWon, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
+        Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWon;
+        SceneManager.LoadScene("MainMenu");
     }
 
     bool IsTouchTap()

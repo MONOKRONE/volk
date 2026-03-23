@@ -29,6 +29,25 @@ namespace Volk.Story
             LoadChapter(CurrentChapterIndex);
         }
 
+        /// <summary>
+        /// Start a specific chapter by index (used by GameFlowManager).
+        /// Sets up story mode state without immediately loading a scene.
+        /// </summary>
+        public void StartChapter(int index)
+        {
+            if (chapters == null || index < 0 || index >= chapters.Length) return;
+            IsStoryMode = true;
+            CurrentChapterIndex = index;
+            CurrentChapter = chapters[index];
+
+            if (GameSettings.Instance != null)
+            {
+                GameSettings.Instance.enemyCharacter = CurrentChapter.enemyCharacter;
+                GameSettings.Instance.selectedArena = CurrentChapter.arenaData;
+                GameSettings.Instance.currentMode = GameSettings.GameMode.Story;
+            }
+        }
+
         public void LoadChapter(int index)
         {
             if (index < 0 || index >= chapters.Length) return;
@@ -95,15 +114,19 @@ namespace Volk.Story
             // XP for chapter
             LevelSystem.Instance?.AddChapterXP();
 
-            // Show outro dialogue or advance
-            if (CurrentChapter.outroDialogue != null && CurrentChapter.outroDialogue.Length > 0)
+            // When using GameFlowManager, match result is shown there
+            // Otherwise fallback to old dialogue/scene flow
+            if (GameFlowManager.Instance == null)
             {
-                ShowOutroDialogue = true;
-                SceneManager.LoadScene("Dialogue");
-            }
-            else
-            {
-                AdvanceToNextChapter();
+                if (CurrentChapter.outroDialogue != null && CurrentChapter.outroDialogue.Length > 0)
+                {
+                    ShowOutroDialogue = true;
+                    SceneManager.LoadScene("Dialogue");
+                }
+                else
+                {
+                    AdvanceToNextChapter();
+                }
             }
         }
 
@@ -112,8 +135,9 @@ namespace Volk.Story
             if (SaveManager.Instance != null)
                 SaveManager.Instance.AddLoss();
 
-            // Retry or go back to story menu
-            SceneManager.LoadScene("StoryMenu");
+            // When using GameFlowManager, match result is shown there
+            if (GameFlowManager.Instance == null)
+                SceneManager.LoadScene("StoryMenu");
         }
 
         int GradeRank(string grade)

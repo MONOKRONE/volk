@@ -1,17 +1,13 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.Serialization;
 using TMPro;
 using System.Collections;
+using Volk.Core;
+using Volk.UI;
 
 public class MainMenuController : MonoBehaviour
 {
-    public Button playButton;
-    public CanvasGroup menuGroup;
-    [FormerlySerializedAs("combatSceneName")]
-    public string nextSceneName = "CharacterSelect";
-
     void Awake()
     {
         Screen.orientation = ScreenOrientation.LandscapeLeft;
@@ -23,44 +19,55 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
-        playButton.onClick.AddListener(OnPlayPressed);
-        StartCoroutine(FadeIn(menuGroup, 1.2f));
-    }
+        // Ensure singletons exist
+        EnsureSingleton<RuntimeUIBuilder>("RuntimeUIBuilder");
+        EnsureSingleton<GameFlowManager>("GameFlowManager");
+        EnsureSingleton<SaveManager>("SaveManager");
+        EnsureSingleton<CurrencyManager>("CurrencyManager");
+        EnsureSingleton<LevelSystem>("LevelSystem");
+        EnsureSingleton<StarRatingSystem>("StarRatingSystem");
+        EnsureSingleton<CharacterUnlockManager>("CharacterUnlockManager");
+        EnsureSingleton<GameSettings>("GameSettings");
 
-    void OnPlayPressed()
-    {
-        StartCoroutine(FadeOutAndLoad());
-    }
+        // Disable any old UI elements on this GameObject
+        DisableOldUI();
 
-    IEnumerator FadeOutAndLoad()
-    {
-        playButton.interactable = false;
-        yield return StartCoroutine(FadeOut(menuGroup, 0.4f));
-        SceneManager.LoadScene(nextSceneName);
-    }
-
-    IEnumerator FadeIn(CanvasGroup cg, float duration)
-    {
-        cg.alpha = 0;
-        float t = 0;
-        while (t < duration)
+        // Check if returning from combat
+        if (GameFlowManager.Instance != null && GameFlowManager.Instance.returnFromCombat)
         {
-            t += Time.deltaTime;
-            cg.alpha = t / duration;
-            yield return null;
+            GameFlowManager.Instance.returnFromCombat = false;
+            GameFlowManager.Instance.ChangeState(GameState.MatchResult);
         }
-        cg.alpha = 1;
+        else
+        {
+            GameFlowManager.Instance.ChangeState(GameState.Splash);
+        }
     }
 
-    IEnumerator FadeOut(CanvasGroup cg, float duration)
+    void EnsureSingleton<T>(string name) where T : MonoBehaviour
     {
-        float t = 0;
-        while (t < duration)
+        if (FindAnyObjectByType<T>() == null)
         {
-            t += Time.deltaTime;
-            cg.alpha = 1 - (t / duration);
-            yield return null;
+            var go = new GameObject(name);
+            go.AddComponent<T>();
         }
-        cg.alpha = 0;
+    }
+
+    void DisableOldUI()
+    {
+        // Disable old Canvas/buttons on the MainMenu scene that might conflict
+        var canvases = GetComponentsInChildren<Canvas>(true);
+        foreach (var c in canvases)
+        {
+            if (c.gameObject != gameObject)
+                c.gameObject.SetActive(false);
+        }
+
+        // Disable old buttons/UI on this object
+        var buttons = GetComponentsInChildren<Button>(true);
+        foreach (var b in buttons) b.gameObject.SetActive(false);
+
+        var groups = GetComponentsInChildren<CanvasGroup>(true);
+        foreach (var g in groups) g.alpha = 0;
     }
 }
