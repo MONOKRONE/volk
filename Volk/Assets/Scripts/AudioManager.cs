@@ -9,14 +9,17 @@ public class AudioManager : MonoBehaviour
     public AudioClip[] punchSounds;
     public AudioClip[] kickSounds;
     public AudioClip[] hitReceiveSounds;
+    public AudioClip[] blockSounds;
     public AudioClip bodyFallSound;
     public AudioClip crowdCheerSound;
     public AudioClip roundStartSound;
 
     [Header("Settings")]
     [Range(0f, 1f)] public float sfxVolume = 1f;
+    [Range(0f, 0.3f)] public float pitchVariation = 0.1f;
 
     private AudioSource sfxSource;
+    private AudioSource pitchSource; // separate source for pitch-varied sounds
     private Coroutine roundStartCoroutine;
 
     void Awake()
@@ -25,11 +28,16 @@ public class AudioManager : MonoBehaviour
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.spatialBlend = 0f;
+
+        pitchSource = gameObject.AddComponent<AudioSource>();
+        pitchSource.playOnAwake = false;
+        pitchSource.spatialBlend = 0f;
     }
 
-    public void PlayPunch()  => PlayRandom(punchSounds);
-    public void PlayKick()   => PlayRandom(kickSounds);
-    public void PlayHit()    => PlayRandom(hitReceiveSounds);
+    public void PlayPunch()  => PlayRandomWithPitch(punchSounds);
+    public void PlayKick()   => PlayRandomWithPitch(kickSounds);
+    public void PlayHit()    => PlayRandomWithPitch(hitReceiveSounds);
+    public void PlayBlock()  => PlayRandomWithPitch(blockSounds);
     public void PlayFall()   => PlayOneShot(bodyFallSound);
     public void PlayCheer()  => PlayOneShot(crowdCheerSound);
 
@@ -44,21 +52,28 @@ public class AudioManager : MonoBehaviour
     {
         sfxSource.clip = clip;
         sfxSource.volume = sfxVolume;
+        sfxSource.pitch = 1f;
         sfxSource.Play();
         yield return new WaitForSeconds(maxDuration);
         sfxSource.Stop();
         sfxSource.clip = null;
     }
 
-    void PlayRandom(AudioClip[] clips)
+    void PlayRandomWithPitch(AudioClip[] clips)
     {
         if (clips == null || clips.Length == 0) return;
-        PlayOneShot(clips[Random.Range(0, clips.Length)]);
+        var clip = clips[Random.Range(0, clips.Length)];
+        if (clip == null) return;
+
+        // Apply pitch variation for more natural feel
+        pitchSource.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
+        pitchSource.PlayOneShot(clip, sfxVolume);
     }
 
     public void PlayOneShot(AudioClip clip)
     {
         if (clip == null) return;
+        sfxSource.pitch = 1f;
         sfxSource.PlayOneShot(clip, sfxVolume);
     }
 }
