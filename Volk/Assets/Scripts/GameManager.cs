@@ -191,6 +191,9 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            // XP reward
+            LevelSystem.Instance?.AddMatchXP(playerWonMatch);
+
             // Submit leaderboard score
             LeaderboardManager.Instance?.SubmitScore();
         }
