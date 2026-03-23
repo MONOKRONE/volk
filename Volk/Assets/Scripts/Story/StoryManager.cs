@@ -72,16 +72,23 @@ namespace Volk.Story
                     SaveManager.Instance.UnlockCharacter(CurrentChapter.characterUnlockReward.characterName);
             }
 
-            // Save chapter grade for level map stars
+            // Save chapter grade and star rating
             if (MatchStatsTracker.Instance != null)
             {
-                string grade = MatchStatsTracker.Instance.Current.Grade;
+                var stats = MatchStatsTracker.Instance.Current;
+                string grade = stats.Grade;
                 string existing = PlayerPrefs.GetString($"chapter_{CurrentChapterIndex}_grade", "D");
-                // Keep the better grade
                 if (GradeRank(grade) > GradeRank(existing))
                 {
                     PlayerPrefs.SetString($"chapter_{CurrentChapterIndex}_grade", grade);
                     PlayerPrefs.Save();
+                }
+
+                // Star rating
+                if (StarRatingSystem.Instance != null)
+                {
+                    int stars = StarRatingSystem.Instance.CalculateStars(true, stats.remainingHPPercent, stats.matchDuration);
+                    StarRatingSystem.Instance.SaveChapterStars(CurrentChapterIndex, stars);
                 }
             }
 
