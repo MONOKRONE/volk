@@ -160,8 +160,13 @@ public class GameManager : MonoBehaviour
             if (roundUI != null)
                 roundUI.ShowMatchResult(playerRoundWins > enemyRoundWins);
 
-            // Save match result
+            // Finalize match stats
             bool playerWonMatch = playerRoundWins > enemyRoundWins;
+            if (MatchStatsTracker.Instance != null)
+            {
+                float hpPercent = playerFighter.maxHP > 0 ? playerFighter.currentHP / playerFighter.maxHP : 0;
+                MatchStatsTracker.Instance.FinalizeMatch(playerWonMatch, hpPercent);
+            }
             if (StoryManager.Instance != null && StoryManager.Instance.IsStoryMode)
             {
                 if (playerWonMatch)

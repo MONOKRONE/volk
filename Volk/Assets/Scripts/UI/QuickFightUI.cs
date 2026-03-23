@@ -70,7 +70,7 @@ namespace Volk.UI
             if (arenaPrevButton) arenaPrevButton.onClick.AddListener(() => ChangeArena(-1));
             if (arenaNextButton) arenaNextButton.onClick.AddListener(() => ChangeArena(1));
             if (fightButton) fightButton.onClick.AddListener(StartFight);
-            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
+            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
 
             // Difficulty buttons
             if (difficultyButtons != null)

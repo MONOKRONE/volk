@@ -72,6 +72,22 @@ namespace Volk.Story
                     SaveManager.Instance.UnlockCharacter(CurrentChapter.characterUnlockReward.characterName);
             }
 
+            // Save chapter grade for level map stars
+            if (MatchStatsTracker.Instance != null)
+            {
+                string grade = MatchStatsTracker.Instance.Current.Grade;
+                string existing = PlayerPrefs.GetString($"chapter_{CurrentChapterIndex}_grade", "D");
+                // Keep the better grade
+                if (GradeRank(grade) > GradeRank(existing))
+                {
+                    PlayerPrefs.SetString($"chapter_{CurrentChapterIndex}_grade", grade);
+                    PlayerPrefs.Save();
+                }
+            }
+
+            // XP for chapter
+            LevelSystem.Instance?.AddChapterXP();
+
             // Show outro dialogue or advance
             if (CurrentChapter.outroDialogue != null && CurrentChapter.outroDialogue.Length > 0)
             {
@@ -91,6 +107,11 @@ namespace Volk.Story
 
             // Retry or go back to story menu
             SceneManager.LoadScene("StoryMenu");
+        }
+
+        int GradeRank(string grade)
+        {
+            return grade switch { "S" => 5, "A" => 4, "B" => 3, "C" => 2, "D" => 1, _ => 0 };
         }
 
         public void AdvanceToNextChapter()

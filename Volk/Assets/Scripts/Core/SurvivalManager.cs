@@ -113,6 +113,9 @@ namespace Volk.Core
 
             Debug.Log($"[Survival] Game Over! Round: {CurrentRound}, Score: {Score}, High: {HighScore}");
 
+            // XP reward
+            LevelSystem.Instance?.AddSurvivalXP(CurrentRound);
+
             // Save stats
             if (SaveManager.Instance != null)
             {

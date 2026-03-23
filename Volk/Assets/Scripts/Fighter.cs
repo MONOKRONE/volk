@@ -452,6 +452,10 @@ public class Fighter : MonoBehaviour
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
 
+                        // Track stats
+                        if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
+                            Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(attackDamage);
+
                         // Sound only on confirmed hit
                         if (animHash == hKick) AudioManager.Instance?.PlayKick();
                         else AudioManager.Instance?.PlayPunch();
@@ -525,6 +529,11 @@ public class Fighter : MonoBehaviour
         if (amount <= 0f) return;
         currentHP -= amount;
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
+
+        // Track stats (player receiving damage)
+        if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
+            Volk.Core.MatchStatsTracker.Instance.RecordHitReceived(amount);
+
         StartCoroutine(ShakeCamera(0.1f, 0.05f));
         AudioManager.Instance?.PlayHit();
         VibrationManager.Instance?.VibrateLight();

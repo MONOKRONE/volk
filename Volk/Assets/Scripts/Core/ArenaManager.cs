@@ -63,12 +63,18 @@ namespace Volk.Core
         void ApplyWalls(ArenaData arena)
         {
             if (wallRenderers == null) return;
-            foreach (var wall in wallRenderers)
+
+            // Cleanup old wall materials
+            if (wallMats != null)
+                foreach (var m in wallMats) if (m != null) Destroy(m);
+
+            wallMats = new Material[wallRenderers.Length];
+            for (int i = 0; i < wallRenderers.Length; i++)
             {
-                if (wall == null) continue;
-                var mat = new Material(wall.sharedMaterial);
-                mat.color = arena.wallColor;
-                wall.material = mat;
+                if (wallRenderers[i] == null) continue;
+                wallMats[i] = new Material(wallRenderers[i].sharedMaterial);
+                wallMats[i].color = arena.wallColor;
+                wallRenderers[i].material = wallMats[i];
             }
         }
 
