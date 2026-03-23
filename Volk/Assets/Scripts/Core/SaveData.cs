@@ -11,10 +11,17 @@ namespace Volk.Core
         public int totalWins;
         public int totalMatches;
         public int currency;
+        public int gems;
 
         // Unlocks
         public List<string> unlockedCharacters = new List<string>();
         public List<string> discoveredCombos = new List<string>();
+
+        // Equipment & Achievements
+        public List<string> ownedEquipment = new List<string>();
+        public List<string> equippedItems = new List<string>(); // slot:itemId
+        public List<string> completedAchievements = new List<string>();
+        public int totalStars;
 
         // Settings
         public bool soundOn = true;

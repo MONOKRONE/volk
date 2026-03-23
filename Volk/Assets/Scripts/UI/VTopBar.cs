@@ -14,6 +14,7 @@ namespace Volk.UI
         public Slider xpBar;
         public Image xpBarFill;
         public TextMeshProUGUI coinText;
+        public TextMeshProUGUI gemText;
 
         void Start()
         {
@@ -32,7 +33,12 @@ namespace Volk.UI
                 if (xpBar) xpBar.value = LevelSystem.Instance.XPProgress;
             }
 
-            if (SaveManager.Instance != null)
+            if (CurrencyManager.Instance != null)
+            {
+                if (coinText) coinText.text = $"{CurrencyManager.Instance.Coins}";
+                if (gemText) gemText.text = $"{CurrencyManager.Instance.Gems}";
+            }
+            else if (SaveManager.Instance != null)
             {
                 if (coinText) coinText.text = $"{SaveManager.Instance.Data.currency}";
             }

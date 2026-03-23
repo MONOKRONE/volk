@@ -65,8 +65,16 @@ namespace Volk.Core
                 Debug.Log($"[XP] LEVEL UP! Now level {CurrentLevel}");
 
                 // Level rewards
-                if (SaveManager.Instance != null)
+                if (CurrencyManager.Instance != null)
+                {
+                    CurrencyManager.Instance.AddCoins(coinsPerLevel + (CurrentLevel * 10));
+                    int gemReward = CurrentLevel % 5 == 0 ? 10 : 5;
+                    CurrencyManager.Instance.AddGems(gemReward);
+                }
+                else if (SaveManager.Instance != null)
+                {
                     SaveManager.Instance.AddCurrency(coinsPerLevel + (CurrentLevel * 10));
+                }
             }
 
             SaveProgress();
