@@ -109,6 +109,9 @@ Tum dosyalar basdan sona okundu. Kontrol edilen noktalar:
 | K10 | AchievementPopup.cs:31 | Singleton guard eksik | Duplicate guard eklendi |
 | K11 | SplashScreen.cs:138-148 | Cift TransitionOut touch'ta | Tek if blogu |
 
+| K12 | SaveManager.cs:59 | DateTime.Parse FormatException crash | TryParse ile degistirildi |
+| K13 | ArenaManager.cs:113 | Shader.Find null -> ArgumentNullException | Null check eklendi |
+
 ### ORTA HATALAR (Duzeltildi)
 
 | # | Dosya | Sorun | Duzeltme |
@@ -120,6 +123,9 @@ Tum dosyalar basdan sona okundu. Kontrol edilen noktalar:
 | O5 | CharacterSelectManager.cs:64 | allCharacters null check eksik | Null/length check eklendi |
 | O6 | StarRatingSystem.cs:74 | RecalculateTotalStars premature break | zeroStreak>5 pattern |
 | O7 | ShopManager.cs:19 | DontDestroyOnLoad eksik | Eklendi |
+| O8 | ComboTracker.cs:97 | VFX Instantiate leak | Destroy(fx, 3f) eklendi |
+| O9 | MatchStatsTracker.cs:101 | Singleton guard eksik | Duplicate guard eklendi |
+| O10 | GameFlowManager.cs:66 | Overlapping coroutine risk | activeCoroutine tracking eklendi |
 
 ### DUSUK HATALAR (Listelendi, Duzeltilmedi)
 
@@ -166,10 +172,10 @@ Tum dosyalar basdan sona okundu. Kontrol edilen noktalar:
 | Kritik hata | 45 |
 | Orta hata | 65 |
 | Dusuk hata | 43 |
-| **Duzeltilen kritik hata** | **11** |
-| **Duzeltilen orta hata** | **7** |
+| **Duzeltilen kritik hata** | **13** |
+| **Duzeltilen orta hata** | **10** |
 | **Kalan dusuk hata** | **27** |
-| Kalan kritik (UI null refs) | ~12 (inspector-dependent, runtime'da sorun olmaz if assigned) |
+| Kalan kritik (UI null refs) | ~10 (inspector-dependent, runtime'da sorun olmaz if assigned) |
 
 ### Saglik Skoru: **B+**
 
@@ -192,4 +198,4 @@ Gerekce:
 
 ---
 
-*Rapor sonu. Toplam 119 dosya satir satir incelendi. 18 kritik+orta hata duzeltildi.*
+*Rapor sonu. Toplam 119 dosya satir satir incelendi. 23 kritik+orta hata duzeltildi.*
