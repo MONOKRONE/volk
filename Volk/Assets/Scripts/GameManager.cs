@@ -186,6 +186,9 @@ public class GameManager : MonoBehaviour
                         DailyQuestManager.Instance.ReportProgress(QuestCondition.WinWithoutDamage);
                 }
             }
+
+            // Submit leaderboard score
+            LeaderboardManager.Instance?.SubmitScore();
         }
         else
         {
