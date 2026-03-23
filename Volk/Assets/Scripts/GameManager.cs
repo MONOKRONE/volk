@@ -123,7 +123,10 @@ public class GameManager : MonoBehaviour
         if (roundUI != null) roundUI.UpdateTimer(roundTimer);
 
         if (roundTimer <= 0f)
+        {
+            roundActive = false;
             StartCoroutine(EndRound(null));
+        }
     }
 
     public void OnFighterDied(bool isPlayer)
@@ -236,8 +239,11 @@ public class GameManager : MonoBehaviour
     IEnumerator ReturnToMainMenuDelayed(bool playerWon, float delay)
     {
         yield return new WaitForSeconds(delay);
-        Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
-        Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWon;
+        if (Volk.Core.GameFlowManager.Instance != null)
+        {
+            Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
+            Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWon;
+        }
         SceneManager.LoadScene("MainMenu");
     }
 

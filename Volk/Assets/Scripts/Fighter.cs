@@ -48,6 +48,7 @@ public class Fighter : MonoBehaviour
     private float retreatHPThreshold;
     private float aiAttackRange = 1.8f;
     private float aiApproachStop = 1.4f;
+    private Fighter cachedTargetFighter;
 
     // Touch input
     [HideInInspector] public Vector2 touchMoveInput;
@@ -240,8 +241,8 @@ public class Fighter : MonoBehaviour
         bool canAttack = !isAttacking || comboWindowOpen;
         if (canAttack)
         {
-            if (Input.GetKeyDown(KeyCode.J)) { comboWindowOpen = false; StopAllCoroutines(); StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
-            if (Input.GetKeyDown(KeyCode.K)) { comboWindowOpen = false; StopAllCoroutines(); StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
+            if (Input.GetKeyDown(KeyCode.J)) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
+            if (Input.GetKeyDown(KeyCode.K)) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
             if (!isAttacking && Input.GetKeyDown(KeyCode.L)) { StartCoroutine(DoBlock()); return; }
         }
 
@@ -371,7 +372,8 @@ public class Fighter : MonoBehaviour
                 { currentAIState = AIState.Retreat; aiRetreatTimer = 1.5f; break; }
 
                 // Try parry if target is attacking
-                Fighter targetFighter = aiTarget.GetComponent<Fighter>();
+                if (cachedTargetFighter == null) cachedTargetFighter = aiTarget.GetComponent<Fighter>();
+                Fighter targetFighter = cachedTargetFighter;
                 if (targetFighter != null && targetFighter.isAttacking && !isAttacking)
                 {
                     if (Random.value < parryChance * Time.deltaTime * 10f)
@@ -447,7 +449,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(attackDamage, transform.position);
+                        target.TakeDamage(attackDamage, transform.position, true);
                         hitLanded = true;
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
@@ -522,7 +524,7 @@ public class Fighter : MonoBehaviour
         cam.transform.localPosition = originalPos;
     }
 
-    public void TakeDamage(float amount, Vector3 attackerPos = default)
+    public void TakeDamage(float amount, Vector3 attackerPos = default, bool hasAttackerPos = false)
     {
         if (isDead) return;
         CheckParryOnDamage(ref amount);
@@ -539,7 +541,7 @@ public class Fighter : MonoBehaviour
         VibrationManager.Instance?.VibrateLight();
 
         // Knockback
-        if (attackerPos != default)
+        if (hasAttackerPos || attackerPos.sqrMagnitude > 0.001f)
         {
             Vector3 dir = (transform.position - attackerPos).normalized;
             dir.y = 0;
@@ -567,6 +569,7 @@ public class Fighter : MonoBehaviour
         else
         {
             StopAllCoroutines();
+            anim.speed = 1f; // Ensure anim speed is restored after stopping HitStop coroutines
             isAttacking = false;
             anim.applyRootMotion = false;
             anim.SetTrigger(Random.value > 0.5f ? hHit1 : hHit2);
@@ -612,7 +615,7 @@ public class Fighter : MonoBehaviour
     {
         bool canAttack = !isAttacking || comboWindowOpen;
         if (!canAttack || isDead) return;
-        if (comboWindowOpen) { comboWindowOpen = false; StopAllCoroutines(); }
+        if (comboWindowOpen) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; }
 
         int animHash = type == AttackType.Punch ? hPunch : hKick;
         Transform hitPoint = type == AttackType.Punch ? rightHandPoint : rightFootPoint;
@@ -661,7 +664,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(heavyDamage, transform.position);
+                        target.TakeDamage(heavyDamage, transform.position, true);
                         hitLanded = true;
                         StartCoroutine(Hitstop());
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
@@ -751,7 +754,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(skill.damage, transform.position);
+                        target.TakeDamage(skill.damage, transform.position, true);
                         hitLanded = true;
 
                         // VFX

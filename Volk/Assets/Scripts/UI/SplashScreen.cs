@@ -135,13 +135,11 @@ namespace Volk.UI
             }
 
             // Any input proceeds
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.anyKeyDown)
-            {
-                canProceed = false;
-                StartCoroutine(TransitionOut());
-            }
+            bool inputDetected = Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.anyKeyDown;
+            if (!inputDetected && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+                inputDetected = true;
 
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+            if (inputDetected)
             {
                 canProceed = false;
                 StartCoroutine(TransitionOut());

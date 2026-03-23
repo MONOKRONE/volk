@@ -24,6 +24,7 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;

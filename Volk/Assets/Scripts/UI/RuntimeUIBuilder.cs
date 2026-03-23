@@ -24,9 +24,10 @@ namespace Volk.UI
 
         private Canvas _canvas;
         private CanvasScaler _scaler;
+        private RectTransform _canvasRect;
 
         public Canvas UICanvas => _canvas;
-        public RectTransform CanvasRect => _canvas != null ? _canvas.GetComponent<RectTransform>() : null;
+        public RectTransform CanvasRect => _canvasRect;
 
         void Awake()
         {
@@ -51,6 +52,7 @@ namespace Volk.UI
             _scaler.matchWidthOrHeight = 0.5f;
 
             canvasGO.AddComponent<GraphicRaycaster>();
+            _canvasRect = canvasGO.GetComponent<RectTransform>();
 
             // EventSystem - check for existing
             if (FindAnyObjectByType<EventSystem>() == null)

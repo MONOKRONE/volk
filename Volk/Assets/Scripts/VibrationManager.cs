@@ -7,6 +7,7 @@ public class VibrationManager : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         vibrationEnabled = PlayerPrefs.GetInt("VibrationEnabled", 1) == 1;
     }

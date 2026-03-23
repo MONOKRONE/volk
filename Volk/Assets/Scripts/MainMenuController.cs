@@ -38,7 +38,7 @@ public class MainMenuController : MonoBehaviour
             GameFlowManager.Instance.returnFromCombat = false;
             GameFlowManager.Instance.ChangeState(GameState.MatchResult);
         }
-        else
+        else if (GameFlowManager.Instance != null)
         {
             GameFlowManager.Instance.ChangeState(GameState.Splash);
         }

@@ -9,7 +9,11 @@ public class HitEffectManager : MonoBehaviour
     public GameObject kickHitPrefab;
     public GameObject blockHitPrefab;
 
-    void Awake() { Instance = this; }
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
 
     public void SpawnHitEffect(Vector3 position, bool isKick = false, bool isBlock = false)
     {

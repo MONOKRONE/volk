@@ -41,7 +41,8 @@ namespace Volk.Core
             if (candidates.Count == 0) return null;
 
             var chosen = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-            bool isNew = !EquipmentManager.Instance.Inventory.Exists(i => i.itemId == chosen.itemId);
+            bool isNew = EquipmentManager.Instance != null
+                && !EquipmentManager.Instance.Inventory.Exists(i => i.itemId == chosen.itemId);
 
             if (isNew)
                 EquipmentManager.Instance?.AddToInventory(chosen.itemId);
