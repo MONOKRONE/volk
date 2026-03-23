@@ -51,6 +51,10 @@ public class GameManager : MonoBehaviour
         if (GameSettings.Instance.enemyCharacter != null && enemyFighter != null)
             enemyFighter.ApplyCharacterData(GameSettings.Instance.enemyCharacter);
 
+        // Apply difficulty from GameSettings (QuickFight mode)
+        if (GameSettings.Instance.currentMode == GameSettings.GameMode.QuickFight)
+            selectedDifficulty = GameSettings.Instance.selectedDifficulty;
+
         // Apply story mode difficulty and HP multiplier
         if (StoryManager.Instance != null && StoryManager.Instance.IsStoryMode && StoryManager.Instance.CurrentChapter != null)
         {
