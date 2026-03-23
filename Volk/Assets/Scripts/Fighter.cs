@@ -74,6 +74,14 @@ public class Fighter : MonoBehaviour
     public float comboWindowDuration = 0.4f;
     private float comboWindowTimer;
 
+    // Skill cooldowns
+    private float skill1CooldownTimer;
+    private float skill2CooldownTimer;
+    public float Skill1CooldownRatio => characterData?.skill1 != null && characterData.skill1.cooldown > 0
+        ? Mathf.Clamp01(skill1CooldownTimer / characterData.skill1.cooldown) : 0f;
+    public float Skill2CooldownRatio => characterData?.skill2 != null && characterData.skill2.cooldown > 0
+        ? Mathf.Clamp01(skill2CooldownTimer / characterData.skill2.cooldown) : 0f;
+
     // Private
     private CharacterController cc;
     private Animator anim;
@@ -150,6 +158,10 @@ public class Fighter : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        // Skill cooldown tick
+        if (skill1CooldownTimer > 0f) skill1CooldownTimer -= Time.deltaTime;
+        if (skill2CooldownTimer > 0f) skill2CooldownTimer -= Time.deltaTime;
 
         if (comboWindowOpen)
         {
@@ -566,6 +578,8 @@ public class Fighter : MonoBehaviour
         isCrouching = false;
         isParrying = false;
         postAttackCooldown = 0f;
+        skill1CooldownTimer = 0f;
+        skill2CooldownTimer = 0f;
         currentAIState = AIState.Idle;
         aiAttackCooldown = 0f;
         aiStunnedTimer = 0f;
@@ -670,7 +684,84 @@ public class Fighter : MonoBehaviour
 
     public void UseSkill(int skillIndex)
     {
-        Debug.Log($"[Fighter] UseSkill({skillIndex}) - placeholder");
+        if (isAttacking || isDead) return;
+        if (characterData == null) { Debug.Log($"[Fighter] No CharacterData, skill {skillIndex} skipped"); return; }
+
+        SkillData skill = skillIndex == 1 ? characterData.skill1 : characterData.skill2;
+        if (skill == null) { Debug.Log($"[Fighter] Skill {skillIndex} not assigned"); return; }
+
+        float cooldownTimer = skillIndex == 1 ? skill1CooldownTimer : skill2CooldownTimer;
+        if (cooldownTimer > 0f) { Debug.Log($"[Fighter] Skill {skill.skillName} on cooldown ({cooldownTimer:F1}s)"); return; }
+
+        StartCoroutine(DoSkillAttack(skill, skillIndex));
+    }
+
+    IEnumerator DoSkillAttack(SkillData skill, int skillIndex)
+    {
+        isAttacking = true;
+        anim.applyRootMotion = false;
+
+        int animHash = Animator.StringToHash(skill.animationTrigger);
+        anim.SetTrigger(animHash);
+
+        // Set cooldown
+        if (skillIndex == 1) skill1CooldownTimer = skill.cooldown;
+        else skill2CooldownTimer = skill.cooldown;
+
+        // Play skill SFX
+        if (skill.sfxClip != null)
+            AudioManager.Instance?.PlayOneShot(skill.sfxClip);
+
+        yield return new WaitForSeconds(0.2f);
+
+        // Hit detection window
+        float hitWindowDuration = 0.4f;
+        float hitTimer = 0f;
+        bool hitLanded = false;
+        Transform hitPoint = rightHandPoint != null ? rightHandPoint : rightFootPoint;
+
+        while (hitTimer < hitWindowDuration)
+        {
+            hitTimer += Time.deltaTime;
+            anim.applyRootMotion = false;
+
+            if (!hitLanded && hitPoint != null)
+            {
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
+                foreach (var hit in hits)
+                {
+                    Fighter target = hit.GetComponentInParent<Fighter>();
+                    if (target != null && target != this && hit.CompareTag(enemyTag))
+                    {
+                        target.TakeDamage(skill.damage, transform.position);
+                        hitLanded = true;
+
+                        // VFX
+                        if (skill.vfxPrefab != null)
+                        {
+                            Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                            Instantiate(skill.vfxPrefab, hitPos, Quaternion.identity);
+                        }
+                        else
+                        {
+                            Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                            HitEffectManager.Instance?.SpawnHitEffect(hitPos, false);
+                        }
+
+                        StartCoroutine(HitStop(0.1f));
+                        target.StartCoroutine(target.HitStop(0.1f));
+                        VibrationManager.Instance?.VibrateHeavy();
+                        break;
+                    }
+                }
+            }
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.7f);
+        anim.applyRootMotion = false;
+        isAttacking = false;
+        postAttackCooldown = 0.2f;
     }
 
     // Override TakeDamage to check parry
