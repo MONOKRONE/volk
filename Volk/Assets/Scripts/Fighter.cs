@@ -482,6 +482,7 @@ public class Fighter : MonoBehaviour
     {
         isAttacking = true;
         anim.SetTrigger(hBlock);
+        AudioManager.Instance?.PlayBlock();
         yield return new WaitForSeconds(0.8f);
         isAttacking = false;
     }
