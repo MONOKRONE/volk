@@ -223,14 +223,18 @@ public class Fighter : MonoBehaviour
             yVelocity = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
         anim.SetBool(hJump, !cc.isGrounded);
 
-        // Crouch toggle
-        if (touchHandler != null && touchHandler.CrouchTriggered)
+        // Crouch toggle (touch + keyboard)
+        bool crouchInput = (touchHandler != null && touchHandler.CrouchTriggered) || Input.GetKeyDown(KeyCode.C);
+        if (crouchInput)
         {
             isCrouching = !isCrouching;
             cc.height = isCrouching ? crouchHeight : normalHeight;
             cc.center = new Vector3(0, cc.height / 2f, 0);
         }
         anim.SetBool(hCrouch, isCrouching);
+
+        // Reduce walk speed while crouching
+        float currentSpeed = isCrouching ? walkSpeed * 0.5f : walkSpeed;
 
         // Check attack input FIRST - before any movement
         bool canAttack = !isAttacking || comboWindowOpen;
@@ -251,7 +255,7 @@ public class Fighter : MonoBehaviour
 
         if (inputMag > 0.15f)
         {
-            Vector3 move = dir * walkSpeed;
+            Vector3 move = dir * currentSpeed;
             move.y = yVelocity;
             cc.Move(move * Time.deltaTime);
 
