@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using Volk.Core;
+using Volk.Story;
 
 public class GameManager : MonoBehaviour
 {
@@ -48,6 +49,18 @@ public class GameManager : MonoBehaviour
 
         if (GameSettings.Instance.enemyCharacter != null && enemyFighter != null)
             enemyFighter.ApplyCharacterData(GameSettings.Instance.enemyCharacter);
+
+        // Apply story mode difficulty and HP multiplier
+        if (StoryManager.Instance != null && StoryManager.Instance.IsStoryMode && StoryManager.Instance.CurrentChapter != null)
+        {
+            var chapter = StoryManager.Instance.CurrentChapter;
+            selectedDifficulty = chapter.difficulty;
+            if (enemyFighter != null)
+            {
+                enemyFighter.maxHP *= chapter.enemyHPMultiplier;
+                enemyFighter.currentHP = enemyFighter.maxHP;
+            }
+        }
     }
 
     IEnumerator StartRound()
@@ -143,9 +156,17 @@ public class GameManager : MonoBehaviour
                 roundUI.ShowMatchResult(playerRoundWins > enemyRoundWins);
 
             // Save match result
-            if (SaveManager.Instance != null)
+            bool playerWonMatch = playerRoundWins > enemyRoundWins;
+            if (StoryManager.Instance != null && StoryManager.Instance.IsStoryMode)
             {
-                if (playerRoundWins > enemyRoundWins)
+                if (playerWonMatch)
+                    StoryManager.Instance.OnChapterWon();
+                else
+                    StoryManager.Instance.OnChapterLost();
+            }
+            else if (SaveManager.Instance != null)
+            {
+                if (playerWonMatch)
                     SaveManager.Instance.AddWin();
                 else
                     SaveManager.Instance.AddLoss();
