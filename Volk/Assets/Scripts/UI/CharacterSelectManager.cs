@@ -38,11 +38,16 @@ namespace Volk.UI
 
         void Start()
         {
-            // Ensure GameSettings exists
+            // Ensure singletons exist
             if (GameSettings.Instance == null)
             {
                 var go = new GameObject("GameSettings");
                 go.AddComponent<GameSettings>();
+            }
+            if (CharacterUnlockManager.Instance == null)
+            {
+                var go = new GameObject("CharacterUnlockManager");
+                go.AddComponent<CharacterUnlockManager>();
             }
 
             PopulateCards();
@@ -58,7 +63,7 @@ namespace Volk.UI
             // Auto-select first unlocked character
             for (int i = 0; i < allCharacters.Length; i++)
             {
-                if (allCharacters[i].unlockedByDefault || IsCharacterUnlocked(allCharacters[i]))
+                if (allCharacters[i].unlockedByDefault || CharacterUnlockManager.Instance.IsUnlocked(allCharacters[i]))
                 {
                     SelectCharacter(i);
                     break;
@@ -87,7 +92,7 @@ namespace Volk.UI
                     portrait.sprite = data.portrait;
 
                 // Lock overlay
-                bool unlocked = data.unlockedByDefault || IsCharacterUnlocked(data);
+                bool unlocked = CharacterUnlockManager.Instance.IsUnlocked(data);
                 var lockOverlay = card.transform.Find("LockOverlay");
                 if (lockOverlay != null)
                     lockOverlay.gameObject.SetActive(!unlocked);
@@ -127,19 +132,18 @@ namespace Volk.UI
 
         void ShowUnlockRequirement(CharacterData data)
         {
-            string msg = data.unlockType switch
-            {
-                UnlockCondition.StoryProgress => $"Chapter {data.unlockValue} tamamla",
-                UnlockCondition.WinCount => $"{data.unlockValue} mac kazan",
-                UnlockCondition.Currency => $"{data.unlockValue} coin gerekli",
-                _ => "Kilitli"
-            };
-            Debug.Log($"[CharSelect] {data.characterName}: {msg}");
-        }
+            string msg = CharacterUnlockManager.Instance.GetUnlockDescription(data);
+            float progress = CharacterUnlockManager.Instance.GetUnlockProgress(data);
+            Debug.Log($"[CharSelect] {data.characterName}: {msg} ({progress:P0})");
 
-        bool IsCharacterUnlocked(CharacterData data)
-        {
-            return PlayerPrefs.GetInt($"char_unlocked_{data.characterName}", 0) == 1;
+            // Try to unlock if conditions are met
+            if (CharacterUnlockManager.Instance.TryUnlock(data))
+            {
+                // Refresh cards to show unlocked state
+                foreach (Transform child in cardContainer)
+                    Destroy(child.gameObject);
+                PopulateCards();
+            }
         }
 
         void OnSelectPressed()
