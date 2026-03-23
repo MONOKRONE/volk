@@ -24,6 +24,7 @@ namespace Volk.Core
 
         [Header("Arena")]
         public string arenaSceneName = "CombatTest";
+        public ArenaData arenaData;
     }
 
     [System.Serializable]

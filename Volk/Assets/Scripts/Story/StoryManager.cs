@@ -35,10 +35,12 @@ namespace Volk.Story
             CurrentChapterIndex = index;
             CurrentChapter = chapters[index];
 
-            // Setup enemy in GameSettings
+            // Setup enemy and arena in GameSettings
             if (GameSettings.Instance != null)
             {
                 GameSettings.Instance.enemyCharacter = CurrentChapter.enemyCharacter;
+                GameSettings.Instance.selectedArena = CurrentChapter.arenaData;
+                GameSettings.Instance.currentMode = GameSettings.GameMode.Story;
             }
 
             // If chapter has intro dialogue, go to dialogue scene first
