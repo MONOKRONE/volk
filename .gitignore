@@ -101,3 +101,6 @@ Volk/Library/
 Volk/Temp/
 Volk/obj/
 Volk/Logs/
+
+# Multi-agent logs
+.agents/logs/
