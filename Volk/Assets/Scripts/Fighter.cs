@@ -603,6 +603,10 @@ public class Fighter : MonoBehaviour
         int animHash = type == AttackType.Punch ? hPunch : hKick;
         Transform hitPoint = type == AttackType.Punch ? rightHandPoint : rightFootPoint;
 
+        // Track combo input
+        if (!isAI && Volk.Core.ComboTracker.Instance != null)
+            Volk.Core.ComboTracker.Instance.RegisterInput(type);
+
         switch (variant)
         {
             case AttackVariant.Normal:
