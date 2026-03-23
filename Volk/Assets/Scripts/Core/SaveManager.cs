@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Volk.Meta;
 
 namespace Volk.Core
 {
@@ -28,6 +29,47 @@ namespace Volk.Core
             PlayerPrefs.SetString(SAVE_KEY, json);
             PlayerPrefs.Save();
             OnSaveUpdated?.Invoke();
+            SyncToCloud();
+        }
+
+        void SyncToCloud()
+        {
+            if (SupabaseManager.Instance != null && SupabaseManager.Instance.IsAuthenticated)
+            {
+                SupabaseManager.Instance.SaveToCloud(Data);
+            }
+        }
+
+        public void LoadFromCloud(Action<bool> onComplete = null)
+        {
+            if (SupabaseManager.Instance == null || !SupabaseManager.Instance.IsAuthenticated)
+            {
+                onComplete?.Invoke(false);
+                return;
+            }
+
+            SupabaseManager.Instance.LoadFromCloud(cloudData =>
+            {
+                if (cloudData != null)
+                {
+                    // Conflict resolution: latest timestamp wins
+                    if (!string.IsNullOrEmpty(cloudData.lastSaveTime) &&
+                        !string.IsNullOrEmpty(Data.lastSaveTime))
+                    {
+                        var cloudTime = DateTime.Parse(cloudData.lastSaveTime);
+                        var localTime = DateTime.Parse(Data.lastSaveTime);
+                        if (cloudTime > localTime)
+                        {
+                            Data = cloudData;
+                            string json = JsonUtility.ToJson(Data);
+                            PlayerPrefs.SetString(SAVE_KEY, json);
+                            PlayerPrefs.Save();
+                            OnSaveLoaded?.Invoke();
+                        }
+                    }
+                }
+                onComplete?.Invoke(true);
+            }, error => onComplete?.Invoke(false));
         }
 
         public void Load()
