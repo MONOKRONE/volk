@@ -68,10 +68,12 @@ namespace Volk.Core
         void RecalculateTotalStars()
         {
             int total = 0;
+            int zeroStreak = 0;
             for (int i = 0; i < 50; i++) // max 50 chapters
             {
                 int s = PlayerPrefs.GetInt($"chapter_{i}_stars", 0);
-                if (s == 0 && i > 10) break; // optimization
+                if (s == 0) { zeroStreak++; if (zeroStreak > 5) break; }
+                else zeroStreak = 0;
                 total += s;
             }
 

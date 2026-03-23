@@ -17,6 +17,7 @@ namespace Volk.Meta
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         public bool CanAfford(ShopItemData item)

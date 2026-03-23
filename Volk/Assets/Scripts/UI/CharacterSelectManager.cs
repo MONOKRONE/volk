@@ -57,10 +57,11 @@ namespace Volk.UI
             if (backButton != null)
                 backButton.onClick.AddListener(OnBackPressed);
 
-            selectButton.interactable = false;
+            if (selectButton != null) selectButton.interactable = false;
             StartCoroutine(FadeIn());
 
             // Auto-select first unlocked character
+            if (allCharacters == null || allCharacters.Length == 0) return;
             for (int i = 0; i < allCharacters.Length; i++)
             {
                 if (allCharacters[i].unlockedByDefault || CharacterUnlockManager.Instance.IsUnlocked(allCharacters[i]))
@@ -127,7 +128,7 @@ namespace Volk.UI
             if (defenseBar != null) defenseBar.value = data.defense / 10f;
             if (hpText != null) hpText.text = $"HP: {data.maxHP}";
 
-            selectButton.interactable = true;
+            if (selectButton != null) selectButton.interactable = true;
         }
 
         void ShowUnlockRequirement(CharacterData data)

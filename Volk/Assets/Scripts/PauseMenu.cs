@@ -31,6 +31,7 @@ public class PauseMenu : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         soundEnabled = PlayerPrefs.GetInt("SoundEnabled", 1) == 1;
     }
