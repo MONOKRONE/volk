@@ -22,7 +22,7 @@ public class TouchCombatBridge : MonoBehaviour
         {
             punchButton.OnTap += () => fighter?.DoAttack(AttackType.Punch, AttackVariant.Normal);
             punchButton.OnHold += () => fighter?.DoAttack(AttackType.Punch, AttackVariant.Heavy);
-            punchButton.OnDoubleTap += () => fighter?.DoAttack(AttackType.Punch, AttackVariant.Special);
+            punchButton.OnDoubleTap += () => fighter?.UseSkill(1);
             punchButton.OnSlideTo += (target) =>
             {
                 if (target == kickButton)
@@ -34,7 +34,7 @@ public class TouchCombatBridge : MonoBehaviour
         {
             kickButton.OnTap += () => fighter?.DoAttack(AttackType.Kick, AttackVariant.Normal);
             kickButton.OnHold += () => fighter?.DoAttack(AttackType.Kick, AttackVariant.Heavy);
-            kickButton.OnDoubleTap += () => fighter?.DoAttack(AttackType.Kick, AttackVariant.Special);
+            kickButton.OnDoubleTap += () => fighter?.UseSkill(2);
             kickButton.OnSlideTo += (target) =>
             {
                 if (target == punchButton)
