@@ -141,6 +141,15 @@ public class GameManager : MonoBehaviour
             CurrentState = RoundState.MatchEnd;
             if (roundUI != null)
                 roundUI.ShowMatchResult(playerRoundWins > enemyRoundWins);
+
+            // Save match result
+            if (SaveManager.Instance != null)
+            {
+                if (playerRoundWins > enemyRoundWins)
+                    SaveManager.Instance.AddWin();
+                else
+                    SaveManager.Instance.AddLoss();
+            }
         }
         else
         {
