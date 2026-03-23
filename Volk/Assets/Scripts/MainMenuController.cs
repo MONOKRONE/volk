@@ -8,7 +8,7 @@ public class MainMenuController : MonoBehaviour
 {
     public Button playButton;
     public CanvasGroup menuGroup;
-    public string combatSceneName = "CombatTest";
+    public string nextSceneName = "CharacterSelect";
 
     void Awake()
     {
@@ -34,7 +34,7 @@ public class MainMenuController : MonoBehaviour
     {
         playButton.interactable = false;
         yield return StartCoroutine(FadeOut(menuGroup, 0.4f));
-        SceneManager.LoadScene(combatSceneName);
+        SceneManager.LoadScene(nextSceneName);
     }
 
     IEnumerator FadeIn(CanvasGroup cg, float duration)

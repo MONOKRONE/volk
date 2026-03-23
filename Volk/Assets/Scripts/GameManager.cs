@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using Volk.Core;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,9 +31,24 @@ public class GameManager : MonoBehaviour
     public enum RoundState { Intro, Fighting, RoundEnd, MatchEnd }
     public RoundState CurrentState { get; private set; }
 
-    void Awake() { Instance = this; }
+    void Awake()
+    {
+        Instance = this;
+        ApplySelectedCharacter();
+    }
 
     void Start() { StartCoroutine(StartRound()); }
+
+    void ApplySelectedCharacter()
+    {
+        if (GameSettings.Instance == null) return;
+
+        if (GameSettings.Instance.selectedCharacter != null && playerFighter != null)
+            playerFighter.ApplyCharacterData(GameSettings.Instance.selectedCharacter);
+
+        if (GameSettings.Instance.enemyCharacter != null && enemyFighter != null)
+            enemyFighter.ApplyCharacterData(GameSettings.Instance.enemyCharacter);
+    }
 
     IEnumerator StartRound()
     {
