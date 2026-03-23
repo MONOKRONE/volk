@@ -94,7 +94,8 @@ namespace Volk.Core
             if (combo.bonusVfx != null && trackedFighter != null)
             {
                 Vector3 pos = trackedFighter.transform.position + Vector3.up * 1.2f;
-                Instantiate(combo.bonusVfx, pos, Quaternion.identity);
+                var fx = Instantiate(combo.bonusVfx, pos, Quaternion.identity);
+                Destroy(fx, 3f);
             }
         }
 

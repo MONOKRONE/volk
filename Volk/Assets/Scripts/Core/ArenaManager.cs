@@ -110,7 +110,9 @@ namespace Volk.Core
 
         void ApplySkybox(ArenaData arena)
         {
-            skyboxMat = new Material(Shader.Find("Skybox/Procedural"));
+            var shader = Shader.Find("Skybox/Procedural");
+            if (shader == null) return;
+            skyboxMat = new Material(shader);
             if (skyboxMat != null)
             {
                 skyboxMat.SetColor("_SkyTint", arena.skyboxTop);

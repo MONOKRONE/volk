@@ -24,6 +24,7 @@ namespace Volk.Core
         // Set before loading CombatTest to signal return
         public bool returnFromCombat;
         public bool lastMatchWon;
+        private Coroutine activeCoroutine;
 
         // Story mode tracking
         public int selectedChapterIndex;
@@ -58,12 +59,13 @@ namespace Volk.Core
 
             var ui = RuntimeUIBuilder.Instance;
             if (ui == null) return;
+            if (activeCoroutine != null) StopCoroutine(activeCoroutine);
             ui.EnsureCanvas();
             ui.ClearUI();
 
             switch (newState)
             {
-                case GameState.Splash:       StartCoroutine(BuildSplash()); break;
+                case GameState.Splash:       activeCoroutine = StartCoroutine(BuildSplash()); break;
                 case GameState.MainHub:      BuildMainHub(); break;
                 case GameState.StoryMap:     BuildStoryMap(); break;
                 case GameState.CharacterSelect: BuildCharacterSelect(); break;
@@ -141,7 +143,6 @@ namespace Volk.Core
 
             // Player name + level (left)
             int level = LevelSystem.Instance != null ? LevelSystem.Instance.CurrentLevel : 1;
-            string title = LevelSystem.Instance != null ? LevelSystem.Instance.GetLevelTitle() : "Cirak";
             var nameText = ui.CreateText(topBar.transform, $"SAVASCI  Lv.{level}", 26, RuntimeUIBuilder.White,
                 TextAlignmentOptions.MidlineLeft);
             var nameRect = nameText.GetComponent<RectTransform>();

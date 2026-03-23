@@ -56,8 +56,12 @@ namespace Volk.Core
                     if (!string.IsNullOrEmpty(cloudData.lastSaveTime) &&
                         !string.IsNullOrEmpty(Data.lastSaveTime))
                     {
-                        var cloudTime = DateTime.Parse(cloudData.lastSaveTime);
-                        var localTime = DateTime.Parse(Data.lastSaveTime);
+                        if (!DateTime.TryParse(cloudData.lastSaveTime, out var cloudTime) ||
+                            !DateTime.TryParse(Data.lastSaveTime, out var localTime))
+                        {
+                            onComplete?.Invoke(false);
+                            return;
+                        }
                         if (cloudTime > localTime)
                         {
                             Data = cloudData;
