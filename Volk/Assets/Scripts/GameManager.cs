@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using Volk.Core;
 using Volk.Story;
+using Volk.Meta;
 
 public class GameManager : MonoBehaviour
 {
@@ -170,6 +171,20 @@ public class GameManager : MonoBehaviour
                     SaveManager.Instance.AddWin();
                 else
                     SaveManager.Instance.AddLoss();
+            }
+
+            // Daily quest progress
+            if (DailyQuestManager.Instance != null)
+            {
+                DailyQuestManager.Instance.ReportProgress(QuestCondition.PlayMatches);
+                if (playerWonMatch)
+                {
+                    DailyQuestManager.Instance.ReportProgress(QuestCondition.WinMatches);
+                    if (selectedDifficulty == AIDifficulty.Hard)
+                        DailyQuestManager.Instance.ReportProgress(QuestCondition.WinOnHard);
+                    if (playerFighter.currentHP >= playerFighter.maxHP)
+                        DailyQuestManager.Instance.ReportProgress(QuestCondition.WinWithoutDamage);
+                }
             }
         }
         else
