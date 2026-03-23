@@ -53,7 +53,7 @@ namespace Volk.UI
 
             if (finalScoreText) finalScoreText.text = $"SKOR: {SurvivalManager.Instance.Score}";
             if (finalRoundText) finalRoundText.text = $"ROUND: {SurvivalManager.Instance.CurrentRound}";
-            if (newHighScoreLabel) newHighScoreLabel.SetActive(
+            if (newHighScoreLabel) newHighScoreLabel.gameObject.SetActive(
                 SurvivalManager.Instance.Score >= SurvivalManager.Instance.HighScore);
         }
 

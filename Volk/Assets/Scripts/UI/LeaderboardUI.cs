@@ -20,8 +20,6 @@ namespace Volk.UI
         public Button allTimeTab;
         public Button weeklyTab;
 
-        private bool showWeekly;
-
         void Awake()
         {
             Screen.orientation = ScreenOrientation.LandscapeLeft;
@@ -36,9 +34,9 @@ namespace Volk.UI
                     UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu"));
 
             if (allTimeTab != null)
-                allTimeTab.onClick.AddListener(() => { showWeekly = false; Refresh(); });
+                allTimeTab.onClick.AddListener(Refresh);
             if (weeklyTab != null)
-                weeklyTab.onClick.AddListener(() => { showWeekly = true; Refresh(); });
+                weeklyTab.onClick.AddListener(Refresh);
 
             if (LeaderboardManager.Instance != null)
             {

@@ -28,7 +28,6 @@ namespace Volk.UI
         public string nextScene = "MainHub";
         public float titleFadeInDuration = 1.5f;
 
-        private bool titleShown;
         private bool canProceed;
         private float tapPulseTimer;
 
@@ -68,7 +67,6 @@ namespace Volk.UI
             yield return new WaitForSeconds(0.3f);
 
             // Phase 2: Title
-            titleShown = true;
             if (titleGroup != null)
             {
                 if (volkTitle)
