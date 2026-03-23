@@ -8,6 +8,12 @@ namespace Volk.Core
 
         public CharacterData selectedCharacter;
         public CharacterData enemyCharacter;
+        public ArenaData selectedArena;
+        public AIDifficulty selectedDifficulty = AIDifficulty.Normal;
+
+        // Game mode
+        public enum GameMode { Story, QuickFight, Survival, Training }
+        public GameMode currentMode = GameMode.QuickFight;
 
         void Awake()
         {
