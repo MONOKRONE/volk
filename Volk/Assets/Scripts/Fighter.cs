@@ -456,7 +456,8 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(attackDamage, transform.position, true, this);
+                        float finalDmg = attackDamage * ConsumeNextAttackBonus(); // stealth bonus etc.
+                        target.TakeDamage(finalDmg, transform.position, true, this);
                         hitLanded = true;
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
@@ -536,10 +537,18 @@ public class Fighter : MonoBehaviour
     /// finalDamage = (attackerPower * rawDamage) / (defender.defense * 5 + attackerPower)
     /// Ensures damage is never zero and defense scales meaningfully.
     /// </summary>
+    /// <summary>
+    /// Damage formula — balanced for power/defense range 1-10:
+    /// powerMult: 0.6x (power=1) to 1.5x (power=10)
+    /// defReduction: 0% (defense=1) to ~50% (defense=10)
+    /// finalDamage = rawDamage * powerMult * (1 - defReduction)
+    /// </summary>
     public static float CalculateDamage(float rawDamage, float attackerPower, float defenderDefense)
     {
-        float defMult = defenderDefense * 5f; // 1-10 → 5-50
-        return (attackerPower * rawDamage) / (defMult + attackerPower);
+        float powerMult    = 0.5f + (attackerPower / 10f);          // 0.6 – 1.5
+        float defReduction = (defenderDefense - 1f) / 18f;          // 0.0 – 0.5
+        float result       = rawDamage * powerMult * (1f - defReduction);
+        return Mathf.Max(result, 1f); // never zero
     }
 
     public void TakeDamage(float amount, Vector3 attackerPos = default, bool hasAttackerPos = false, Fighter attacker = null)
@@ -863,10 +872,16 @@ public class Fighter : MonoBehaviour
     {
         isStunned = true;
         stunTimer = duration;
+        // AI stun via FSM
         if (isAI)
         {
             currentAIState = AIState.Stunned;
             aiStunnedTimer = duration;
+        }
+        // Player stun: block input via postAttackCooldown
+        else
+        {
+            postAttackCooldown = Mathf.Max(postAttackCooldown, duration);
         }
     }
 

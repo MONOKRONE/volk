@@ -33,14 +33,18 @@ namespace Volk.Core
                 wall.transform.localScale = new Vector3(wallWidth, wallHeight, 0.3f);
                 wall.transform.rotation = caster.transform.rotation;
 
+                // Set trigger so OnTriggerEnter fires
+                var col = wall.GetComponent<BoxCollider>();
+                if (col != null) col.isTrigger = true;
+
                 // Simple material tint
                 var renderer = wall.GetComponent<Renderer>();
                 if (renderer != null)
                     renderer.material.color = new Color(0.5f, 0.35f, 0.2f); // earthy brown
             }
 
-            // Damage trigger on contact
-            wall.AddComponent<WallDamageTrigger>().Init(damage, caster);
+            // Damage trigger on contact — use power-scaled damage
+            wall.AddComponent<WallDamageTrigger>().Init(GetScaledDamage(caster), caster);
             caster.StartCoroutine(DestroyAfter(wall, wallDuration));
         }
 

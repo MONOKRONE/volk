@@ -17,11 +17,13 @@ namespace Volk.Core
         {
             float dmg = GetScaledDamage(caster);
             Collider[] hits = Physics.OverlapSphere(caster.transform.position, radius);
+            var hit_fighters = new System.Collections.Generic.HashSet<Fighter>(); // dedup
             foreach (var hit in hits)
             {
                 Fighter f = hit.GetComponentInParent<Fighter>();
                 if (f == null || f == caster || f.isDead) continue;
                 if (!hit.CompareTag(caster.enemyTag)) continue;
+                if (!hit_fighters.Add(f)) continue; // already processed
                 f.TakeDamage(dmg, caster.transform.position, true, caster);
                 f.ApplyStun(stunDuration);
             }

@@ -22,9 +22,15 @@ namespace Volk.Core
                 caster.transform.position + caster.transform.TransformDirection(spawnOffset),
                 caster.transform.rotation);
 
-            // Disable scripts on clone so it's just a dummy
+            // Disable all scripts on clone so it's a static dummy
             foreach (var mono in clone.GetComponentsInChildren<MonoBehaviour>())
                 if (mono != null) mono.enabled = false;
+
+            // Add contact damage trigger (uses WallDamageTrigger pattern)
+            var col = clone.GetComponent<Collider>();
+            if (col == null) col = clone.AddComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            clone.AddComponent<WallDamageTrigger>().Init(cloneContactDamage, caster);
 
             // Visual — make it semi-transparent
             foreach (var r in clone.GetComponentsInChildren<Renderer>())
