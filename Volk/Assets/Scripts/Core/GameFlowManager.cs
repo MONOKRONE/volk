@@ -54,24 +54,36 @@ namespace Volk.Core
 
         public void ChangeState(GameState newState)
         {
+            Debug.Log($"[GameFlow] ChangeState: {CurrentState} -> {newState}");
             PreviousState = CurrentState;
             CurrentState = newState;
 
             var ui = RuntimeUIBuilder.Instance;
-            if (ui == null) return;
-            if (activeCoroutine != null) StopCoroutine(activeCoroutine);
+            if (ui == null)
+            {
+                Debug.LogError("[GameFlow] RuntimeUIBuilder.Instance is null!");
+                return;
+            }
+            if (activeCoroutine != null) { StopCoroutine(activeCoroutine); activeCoroutine = null; }
             ui.EnsureCanvas();
             ui.ClearUI();
 
+            // Reset canvas alpha to 1 (previous FadeOut may have left it at 0)
+            var rootCG = ui.CanvasRect != null ? ui.CanvasRect.GetComponent<CanvasGroup>() : null;
+            if (rootCG != null) rootCG.alpha = 1f;
+
             switch (newState)
             {
-                case GameState.Splash:       activeCoroutine = StartCoroutine(BuildSplash()); break;
-                case GameState.MainHub:      BuildMainHub(); break;
-                case GameState.StoryMap:     BuildStoryMap(); break;
+                case GameState.Splash:          activeCoroutine = StartCoroutine(BuildSplash()); break;
+                case GameState.MainHub:         BuildMainHub(); break;
+                case GameState.StoryMap:        BuildStoryMap(); break;
                 case GameState.CharacterSelect: BuildCharacterSelect(); break;
-                case GameState.MatchResult:  BuildMatchResult(); break;
-                case GameState.Settings:     BuildSettings(); break;
-                default: BuildMainHub(); break;
+                case GameState.MatchResult:     BuildMatchResult(); break;
+                case GameState.Settings:        BuildSettings(); break;
+                default:
+                    Debug.LogWarning($"[GameFlow] No Build method for state {newState}, falling back to MainHub");
+                    BuildMainHub();
+                    break;
             }
         }
 
@@ -85,44 +97,46 @@ namespace Volk.Core
         // ============================================================
         IEnumerator BuildSplash()
         {
+            Debug.Log("[GameFlow] BuildSplash started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
-            // Full black BG
-            ui.CreatePanel(canvas, Vector2.zero, Vector2.one, Color.black);
+            // Create a splash container (so we can fade IT, not the canvas root)
+            var containerGO = new GameObject("SplashContainer", typeof(RectTransform));
+            containerGO.transform.SetParent(canvas, false);
+            var containerRect = containerGO.GetComponent<RectTransform>();
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.one;
+            containerRect.offsetMin = Vector2.zero;
+            containerRect.offsetMax = Vector2.zero;
+            var splashCG = containerGO.AddComponent<CanvasGroup>();
+            splashCG.alpha = 1;
 
-            // VOLK text
-            var textGO = new GameObject("VolkTitle", typeof(RectTransform));
-            textGO.transform.SetParent(canvas, false);
-            var textRect = textGO.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0.3f, 0.35f);
-            textRect.anchorMax = new Vector2(0.7f, 0.65f);
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
+            // Full black BG inside container
+            ui.CreatePanel(containerGO.transform, Vector2.zero, Vector2.one, Color.black);
 
-            var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "VOLK";
-            tmp.fontSize = 120;
-            tmp.color = RuntimeUIBuilder.White;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Bold;
+            // VOLK text inside container
+            var titleTMP = ui.CreateText(containerGO.transform, "VOLK", 120, RuntimeUIBuilder.White,
+                TextAlignmentOptions.Center);
+            var titleRect = titleTMP.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.2f, 0.35f);
+            titleRect.anchorMax = new Vector2(0.8f, 0.65f);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
+            titleTMP.fontStyle = FontStyles.Bold;
 
-            textGO.transform.localScale = Vector3.zero;
-
-            var cg = ui.EnsureCanvasGroup(canvas.gameObject);
-            cg.alpha = 1;
+            titleTMP.transform.localScale = Vector3.zero;
 
             // Scale animation: 0 -> 1.3 -> 1.0 in 0.5s
-            yield return StartCoroutine(ui.ScaleOvershoot(textGO.transform, 0f, 1.3f, 1f, 0.5f));
+            yield return StartCoroutine(ui.ScaleOvershoot(titleTMP.transform, 0f, 1.3f, 1f, 0.5f));
 
             // Wait 2.5s
             yield return new WaitForSecondsRealtime(2.5f);
 
-            // Fade out
-            var splashCG = ui.EnsureCanvasGroup(canvas.GetChild(0).gameObject);
-            // Actually fade entire canvas
-            yield return StartCoroutine(ui.FadeOut(cg, 0.4f));
+            // Fade out splash container only (NOT the canvas root)
+            yield return StartCoroutine(ui.FadeOut(splashCG, 0.4f));
 
+            Debug.Log("[GameFlow] BuildSplash -> transitioning to MainHub");
             ChangeState(GameState.MainHub);
         }
 
@@ -131,6 +145,7 @@ namespace Volk.Core
         // ============================================================
         void BuildMainHub()
         {
+            Debug.Log("[GameFlow] BuildMainHub started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
@@ -217,12 +232,7 @@ namespace Volk.Core
                 new Vector2(0.38f, 0.03f), new Vector2(0.62f, 0.09f),
                 () => ChangeState(GameState.Settings));
 
-            // Animate: fade in
-            var cg = ui.EnsureCanvasGroup(canvas.GetChild(0).gameObject);
-            // Fade entire canvas
-            var rootCG = ui.EnsureCanvasGroup(canvas.gameObject);
-            rootCG.alpha = 0;
-            StartCoroutine(ui.FadeIn(rootCG, 0.3f));
+            Debug.Log("[GameFlow] BuildMainHub completed");
         }
 
         void BuildModeCard(RectTransform canvas, string title, Color stripeColor, string extra,
@@ -283,6 +293,7 @@ namespace Volk.Core
         // ============================================================
         void BuildStoryMap()
         {
+            Debug.Log("[GameFlow] BuildStoryMap started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
@@ -333,6 +344,7 @@ namespace Volk.Core
             Color bgColor = isLocked ? new Color(0.08f, 0.08f, 0.12f) : RuntimeUIBuilder.Panel;
             var bg = rowGO.AddComponent<Image>();
             bg.color = bgColor;
+            bg.raycastTarget = false; // Don't block child button clicks
 
             // Current chapter: red border effect
             if (isCurrent)
@@ -416,6 +428,7 @@ namespace Volk.Core
         // ============================================================
         void BuildCharacterSelect()
         {
+            Debug.Log("[GameFlow] BuildCharacterSelect started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
@@ -474,6 +487,7 @@ namespace Volk.Core
 
             var bg = cardGO.AddComponent<Image>();
             bg.color = unlocked ? RuntimeUIBuilder.Panel : new Color(0.08f, 0.08f, 0.12f);
+            bg.raycastTarget = false; // Don't block child button clicks
 
             // Character name
             var nameText = ui.CreateText(cardGO.transform, charData.characterName ?? $"Fighter {index + 1}", 28,
@@ -583,6 +597,7 @@ namespace Volk.Core
         // ============================================================
         void BuildMatchResult()
         {
+            Debug.Log("[GameFlow] BuildMatchResult started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
@@ -645,10 +660,7 @@ namespace Volk.Core
                 new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.15f),
                 () => ChangeState(GameState.MainHub));
 
-            // Fade in
-            var rootCG = ui.EnsureCanvasGroup(canvas.gameObject);
-            rootCG.alpha = 0;
-            StartCoroutine(ui.FadeIn(rootCG, 0.3f));
+            Debug.Log("[GameFlow] BuildMatchResult completed");
         }
 
         void AddStatLine(Transform parent, string label, string value, float yNorm)
@@ -676,6 +688,7 @@ namespace Volk.Core
         // ============================================================
         void BuildSettings()
         {
+            Debug.Log("[GameFlow] BuildSettings started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 

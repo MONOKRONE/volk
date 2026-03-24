@@ -76,6 +76,7 @@ namespace Volk.UI
 
             var img = go.AddComponent<Image>();
             img.color = color;
+            img.raycastTarget = false; // Panels are decorative — don't block button clicks
             return img;
         }
 
@@ -96,6 +97,7 @@ namespace Volk.UI
             tmp.alignment = anchor;
             tmp.enableAutoSizing = false;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
+            tmp.raycastTarget = false; // Text should never block button clicks
             return tmp;
         }
 
@@ -112,11 +114,12 @@ namespace Volk.UI
 
             var img = go.AddComponent<Image>();
             img.color = bgColor;
+            img.raycastTarget = true; // Button Image MUST receive raycasts
 
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = img;
 
-            // Button text
+            // Button text — raycastTarget MUST be false so clicks pass through to button Image
             var txtGO = new GameObject("BtnText", typeof(RectTransform));
             txtGO.transform.SetParent(go.transform, false);
             var txtRect = txtGO.GetComponent<RectTransform>();
@@ -131,6 +134,7 @@ namespace Volk.UI
             tmp.color = textColor;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontStyle = FontStyles.Bold;
+            tmp.raycastTarget = false; // CRITICAL: text must not block button clicks
 
             if (onClick != null)
                 btn.onClick.AddListener(() => onClick());
@@ -150,6 +154,7 @@ namespace Volk.UI
 
             var img = go.AddComponent<Image>();
             img.color = color;
+            img.raycastTarget = false;
             return img;
         }
 
@@ -163,7 +168,9 @@ namespace Volk.UI
             viewRect.anchorMax = anchorMax;
             viewRect.offsetMin = Vector2.zero;
             viewRect.offsetMax = Vector2.zero;
-            viewportGO.AddComponent<Image>().color = Color.clear;
+            var viewImg = viewportGO.AddComponent<Image>();
+            viewImg.color = Color.clear;
+            viewImg.raycastTarget = true; // Viewport MUST receive raycasts for scroll/touch
             viewportGO.AddComponent<Mask>().showMaskGraphic = false;
 
             // Content

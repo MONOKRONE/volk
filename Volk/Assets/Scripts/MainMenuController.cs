@@ -55,19 +55,14 @@ public class MainMenuController : MonoBehaviour
 
     void DisableOldUI()
     {
-        // Disable old Canvas/buttons on the MainMenu scene that might conflict
-        var canvases = GetComponentsInChildren<Canvas>(true);
-        foreach (var c in canvases)
-        {
-            if (c.gameObject != gameObject)
-                c.gameObject.SetActive(false);
-        }
+        // Only disable the old scene Canvas that this controller sits on
+        // Do NOT touch RuntimeUIBuilder's canvas (it's on a different hierarchy)
+        var myCanvas = GetComponent<Canvas>();
+        if (myCanvas != null)
+            myCanvas.enabled = false;
 
-        // Disable old buttons/UI on this object
-        var buttons = GetComponentsInChildren<Button>(true);
-        foreach (var b in buttons) b.gameObject.SetActive(false);
-
-        var groups = GetComponentsInChildren<CanvasGroup>(true);
-        foreach (var g in groups) g.alpha = 0;
+        var myGroup = GetComponent<CanvasGroup>();
+        if (myGroup != null)
+            myGroup.alpha = 0;
     }
 }
