@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36c6d4283f9e2435d953f415e158ed8c, type: 3}
+  m_Name: TOPRAK
+  m_EditorClassIdentifier: 
+  characterName: TOPRAK
+  portrait: {fileID: 0}
+  prefab: {fileID: 0}
+  speed: 4
+  power: 7
+  defense: 7
+  maxHP: 110
+  attackDamage: 11.69
+  attackRange: 1.2
+  walkSpeed: 3.5
+  runSpeed: 6
+  knockbackForce: 2.5
+  animController: {fileID: 0}
+  skill1: {fileID: 11400000, guid: 32eaa3b3e27dc435db03e59d8f37b42b, type: 2}
+  skill2: {fileID: 11400000, guid: 4abfd093ae86041339f73447eeb7642c, type: 2}
+  unlockedByDefault: 0
+  unlockType: 2
+  unlockValue: 10

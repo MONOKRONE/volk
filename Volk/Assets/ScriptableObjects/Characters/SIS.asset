@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36c6d4283f9e2435d953f415e158ed8c, type: 3}
+  m_Name: SIS
+  m_EditorClassIdentifier: 
+  characterName: SIS
+  portrait: {fileID: 0}
+  prefab: {fileID: 0}
+  speed: 8
+  power: 6
+  defense: 4
+  maxHP: 80
+  attackDamage: 10.0199995
+  attackRange: 1.2
+  walkSpeed: 5
+  runSpeed: 8.5
+  knockbackForce: 1.5
+  animController: {fileID: 0}
+  skill1: {fileID: 11400000, guid: 71d8b3030e5c74133bad75b036870935, type: 2}
+  skill2: {fileID: 11400000, guid: 28b58506caa0a434bb66ef5a0e8826e0, type: 2}
+  unlockedByDefault: 0
+  unlockType: 2
+  unlockValue: 10

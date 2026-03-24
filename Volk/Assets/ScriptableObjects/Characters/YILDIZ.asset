@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36c6d4283f9e2435d953f415e158ed8c, type: 3}
+  m_Name: YILDIZ
+  m_EditorClassIdentifier: 
+  characterName: YILDIZ
+  portrait: {fileID: 0}
+  prefab: {fileID: 0}
+  speed: 6
+  power: 6
+  defense: 6
+  maxHP: 100
+  attackDamage: 10.0199995
+  attackRange: 1.2
+  walkSpeed: 4
+  runSpeed: 7
+  knockbackForce: 2
+  animController: {fileID: 0}
+  skill1: {fileID: 11400000, guid: ea41898b17dbc4f5c9843088dc3697dc, type: 2}
+  skill2: {fileID: 11400000, guid: cc106d4cc6e9a4c0080dd3e4008e4348, type: 2}
+  unlockedByDefault: 1
+  unlockType: 0
+  unlockValue: 0
