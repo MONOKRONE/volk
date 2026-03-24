@@ -4,43 +4,40 @@ using System.IO;
 
 public class SetupFonts
 {
-    [MenuItem("VOLK/Import Fonts from Downloads")]
-    static void ImportFonts()
+    [MenuItem("VOLK/Setup Font Assets")]
+    static void SetupFontAssets()
     {
-        string fontsDir = "Assets/UI/Fonts";
-        if (!AssetDatabase.IsValidFolder(fontsDir))
+        string[] fontPaths = {
+            "Assets/Fonts/Rajdhani",
+            "Assets/Fonts/Inter"
+        };
+
+        int found = 0;
+
+        foreach (var dir in fontPaths)
         {
-            AssetDatabase.CreateFolder("Assets/UI", "Fonts");
-        }
-
-        string downloads = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), "Downloads");
-        int imported = 0;
-
-        // Search for Rajdhani and Inter font files
-        string[] patterns = { "Rajdhani*.ttf", "Rajdhani*.otf", "Inter*.ttf", "Inter*.otf",
-                              "rajdhani*.ttf", "rajdhani*.otf", "inter*.ttf", "inter*.otf" };
-
-        foreach (var pattern in patterns)
-        {
-            string[] files = Directory.GetFiles(downloads, pattern, SearchOption.AllDirectories);
-            foreach (var file in files)
+            if (!AssetDatabase.IsValidFolder(dir))
             {
-                string fileName = Path.GetFileName(file);
-                string destPath = Path.Combine(Application.dataPath, "UI/Fonts", fileName);
-                if (!File.Exists(destPath))
+                Debug.LogWarning($"[VOLK] Font folder not found: {dir}");
+                continue;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:Font", new[] { dir });
+            foreach (var guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                Font font = AssetDatabase.LoadAssetAtPath<Font>(path);
+                if (font != null)
                 {
-                    File.Copy(file, destPath);
-                    imported++;
-                    Debug.Log($"[Fonts] Imported: {fileName}");
+                    found++;
+                    Debug.Log($"[VOLK] Font ready: {font.name} ({path})");
                 }
             }
         }
 
-        AssetDatabase.Refresh();
-
-        if (imported > 0)
-            Debug.Log($"[VOLK] {imported} font files imported! Now create TMP SDF assets via Window > TextMeshPro > Font Asset Creator.");
+        if (found > 0)
+            Debug.Log($"[VOLK] {found} font assets found. Create TMP SDF assets via Window > TextMeshPro > Font Asset Creator.");
         else
-            Debug.LogWarning("[VOLK] No font files found in Downloads. Place Rajdhani and Inter .ttf/.otf files in ~/Downloads/");
+            Debug.LogWarning("[VOLK] No font files found in Assets/Fonts/Rajdhani/ or Assets/Fonts/Inter/.");
     }
 }
