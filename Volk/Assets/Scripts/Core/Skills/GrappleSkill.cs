@@ -21,8 +21,9 @@ namespace Volk.Core
 
             // Partially bypass defense
             float effectiveDefense = target.defense * (1f - defenseBypass);
+            // Pre-calculated damage with partial defense bypass — pass without attacker to skip double-calc
             float dmg = Fighter.CalculateDamage(GetScaledDamage(caster), caster.power, effectiveDefense);
-            target.TakeDamage(dmg, caster.transform.position, true); // pre-calculated, no attacker
+            target.TakeDamage(dmg, caster.transform.position, true, null);
             target.ApplyStun(0.8f);
         }
     }

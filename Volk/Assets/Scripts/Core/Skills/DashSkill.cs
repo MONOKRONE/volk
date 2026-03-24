@@ -27,10 +27,13 @@ namespace Volk.Core
             float elapsed = 0f;
             bool hitDealt = false;
 
+            // Cache CharacterController once — avoid per-frame GetComponent
+            UnityEngine.CharacterController cc = caster.GetComponent<UnityEngine.CharacterController>();
+
             while (elapsed < dashDuration)
             {
                 elapsed += Time.deltaTime;
-                caster.GetComponent<UnityEngine.CharacterController>()?.Move(dir * dashSpeed * Time.deltaTime);
+                cc?.Move(dir * dashSpeed * Time.deltaTime);
 
                 // Hit on close proximity
                 if (!hitDealt && Vector3.Distance(caster.transform.position, target.transform.position) < 1.2f)
