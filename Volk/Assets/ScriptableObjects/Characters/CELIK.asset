@@ -25,8 +25,8 @@ MonoBehaviour:
   runSpeed: 6.5
   knockbackForce: 1.8
   animController: {fileID: 0}
-  skill1: {fileID: 11400000, guid: bd98581ca3b0e49d192831ba6a6a4b06, type: 2}
-  skill2: {fileID: 11400000, guid: 38460d819734b4b9a813b3f1187d25d0, type: 2}
+  skill1: {fileID: 11400000, guid: dfb0705d69704c5b84db3817584dd567, type: 2}
+  skill2: {fileID: 11400000, guid: ec95cb1df7a94562a23bf3ba39ef2a99, type: 2}
   unlockedByDefault: 0
   unlockType: 2
   unlockValue: 10
