@@ -135,10 +135,8 @@ public class SetupMainMenu
         esGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
         esGO.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
-        // MainMenuController
-        var menuController = canvasGO.AddComponent<MainMenuController>();
-        menuController.playButton = btnGO.GetComponent<Button>();
-        menuController.menuGroup = menuGroup;
+        // MainMenuController (runtime UI is built via GameFlowManager, no fields to wire)
+        canvasGO.AddComponent<MainMenuController>();
 
         // Save scene
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/MainMenu.unity");
