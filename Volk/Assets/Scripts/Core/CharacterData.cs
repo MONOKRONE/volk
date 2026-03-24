@@ -27,8 +27,8 @@ namespace Volk.Core
         public RuntimeAnimatorController animController;
 
         [Header("Skills")]
-        public SkillData skill1;
-        public SkillData skill2;
+        public SkillBase skill1;
+        public SkillBase skill2;
 
         [Header("Unlock")]
         public bool unlockedByDefault = true;

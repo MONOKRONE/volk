@@ -19,6 +19,11 @@ public class Fighter : MonoBehaviour
     public float attackRange = 1.2f;
     public string enemyTag = "Enemy";
 
+    // Combat stats from CharacterData (1-10 scale)
+    // power: attacker multiplier, defense: damage reduction
+    [HideInInspector] public float power = 5f;
+    [HideInInspector] public float defense = 5f;
+
     [Header("Attack Points - assign hand/foot transforms")]
     public Transform rightHandPoint;
     public Transform rightFootPoint;
@@ -137,6 +142,8 @@ public class Fighter : MonoBehaviour
         walkSpeed = data.walkSpeed;
         runSpeed = data.runSpeed;
         knockbackForce = data.knockbackForce;
+        power = data.power;
+        defense = data.defense;
 
         if (data.animController != null)
             anim.runtimeAnimatorController = data.animController;
@@ -449,7 +456,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(attackDamage, transform.position, true);
+                        target.TakeDamage(attackDamage, transform.position, true, this);
                         hitLanded = true;
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
@@ -524,9 +531,25 @@ public class Fighter : MonoBehaviour
         cam.transform.localPosition = originalPos;
     }
 
-    public void TakeDamage(float amount, Vector3 attackerPos = default, bool hasAttackerPos = false)
+    /// <summary>
+    /// Calculates final damage using defense formula:
+    /// finalDamage = (attackerPower * rawDamage) / (defender.defense * 5 + attackerPower)
+    /// Ensures damage is never zero and defense scales meaningfully.
+    /// </summary>
+    public static float CalculateDamage(float rawDamage, float attackerPower, float defenderDefense)
+    {
+        float defMult = defenderDefense * 5f; // 1-10 → 5-50
+        return (attackerPower * rawDamage) / (defMult + attackerPower);
+    }
+
+    public void TakeDamage(float amount, Vector3 attackerPos = default, bool hasAttackerPos = false, Fighter attacker = null)
     {
         if (isDead) return;
+
+        // Apply defense formula if attacker is known
+        if (attacker != null)
+            amount = CalculateDamage(amount, attacker.power, defense);
+
         CheckParryOnDamage(ref amount);
         if (amount <= 0f) return;
         currentHP -= amount;
@@ -664,7 +687,7 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(heavyDamage, transform.position, true);
+                        target.TakeDamage(heavyDamage, transform.position, true, this);
                         hitLanded = true;
                         StartCoroutine(Hitstop());
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
@@ -708,7 +731,7 @@ public class Fighter : MonoBehaviour
         if (isAttacking || isDead) return;
         if (characterData == null) { Debug.Log($"[Fighter] No CharacterData, skill {skillIndex} skipped"); return; }
 
-        SkillData skill = skillIndex == 1 ? characterData.skill1 : characterData.skill2;
+        Volk.Core.SkillBase skill = skillIndex == 1 ? characterData.skill1 : characterData.skill2;
         if (skill == null) { Debug.Log($"[Fighter] Skill {skillIndex} not assigned"); return; }
 
         float cooldownTimer = skillIndex == 1 ? skill1CooldownTimer : skill2CooldownTimer;
@@ -717,13 +740,17 @@ public class Fighter : MonoBehaviour
         StartCoroutine(DoSkillAttack(skill, skillIndex));
     }
 
-    IEnumerator DoSkillAttack(SkillData skill, int skillIndex)
+    IEnumerator DoSkillAttack(Volk.Core.SkillBase skill, int skillIndex)
     {
         isAttacking = true;
         anim.applyRootMotion = false;
 
-        int animHash = Animator.StringToHash(skill.animationTrigger);
-        anim.SetTrigger(animHash);
+        // Trigger animation if set
+        if (!string.IsNullOrEmpty(skill.animationTrigger))
+        {
+            int animHash = Animator.StringToHash(skill.animationTrigger);
+            anim.SetTrigger(animHash);
+        }
 
         // Set cooldown
         if (skillIndex == 1) skill1CooldownTimer = skill.cooldown;
@@ -735,7 +762,15 @@ public class Fighter : MonoBehaviour
 
         yield return new WaitForSeconds(0.2f);
 
-        // Hit detection window
+        // Find nearest enemy target for skill execution
+        Fighter skillTarget = null;
+        if (aiTarget != null) skillTarget = aiTarget.GetComponent<Fighter>();
+        if (skillTarget == null) skillTarget = GameObject.FindWithTag(enemyTag)?.GetComponent<Fighter>();
+
+        // Execute skill behavior (command pattern)
+        skill.Execute(this, skillTarget);
+
+        // Legacy hit detection fallback (for SkillData / simple skills with no Execute logic)
         float hitWindowDuration = 0.4f;
         float hitTimer = 0f;
         bool hitLanded = false;
@@ -754,7 +789,9 @@ public class Fighter : MonoBehaviour
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(skill.damage, transform.position, true);
+                        // Legacy path — only for SkillData, specialized skills self-handle
+                        if (skill is Volk.Core.SkillData)
+                            target.TakeDamage(skill.damage, transform.position, true, this);
                         hitLanded = true;
 
                         // VFX
@@ -794,8 +831,74 @@ public class Fighter : MonoBehaviour
             isParrying = false;
             StopCoroutine(nameof(ParryWindow));
             Debug.Log($"{gameObject.name} PARRIED!");
-            // Could trigger counter animation here
         }
+
+        // Counter reflect: if we're in counter window, reflect damage back
+        if (isCounterActive && amount > 0f)
+        {
+            Fighter attacker = FindAttackerInRange();
+            if (attacker != null)
+                attacker.TakeDamage(amount * counterReflectMult, transform.position, true);
+            amount = 0f;
+            isCounterActive = false;
+            Debug.Log($"{gameObject.name} COUNTERED!");
+        }
+    }
+
+    // ── SKILL HELPER METHODS ────────────────────────────────────────────────
+
+    // Knockback
+    public void ApplyKnockback(Vector3 attackerPos, float multiplier)
+    {
+        Vector3 dir = (transform.position - attackerPos).normalized;
+        dir.y = 0;
+        knockbackVelocity = dir * knockbackForce * multiplier;
+        knockbackTimer = knockbackDuration * multiplier * 0.5f;
+    }
+
+    // Stun
+    private float stunTimer;
+    private bool isStunned;
+    public void ApplyStun(float duration)
+    {
+        isStunned = true;
+        stunTimer = duration;
+        if (isAI)
+        {
+            currentAIState = AIState.Stunned;
+            aiStunnedTimer = duration;
+        }
+    }
+
+    // Counter
+    private bool isCounterActive;
+    private float counterReflectMult;
+    public void SetCounterActive(bool active, float reflectMult)
+    {
+        isCounterActive = active;
+        counterReflectMult = reflectMult;
+    }
+
+    // Next attack bonus
+    private float nextAttackBonus = 1f;
+    public void SetNextAttackBonus(float multiplier) => nextAttackBonus = multiplier;
+    public float ConsumeNextAttackBonus()
+    {
+        float b = nextAttackBonus;
+        nextAttackBonus = 1f;
+        return b;
+    }
+
+    // Find nearest enemy for counter
+    private Fighter FindAttackerInRange()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, 3f);
+        foreach (var h in hits)
+        {
+            Fighter f = h.GetComponentInParent<Fighter>();
+            if (f != null && f != this && h.CompareTag(enemyTag)) return f;
+        }
+        return null;
     }
 
     void OnDrawGizmosSelected()

@@ -3,12 +3,11 @@ using UnityEngine;
 namespace Volk.Core
 {
     /// <summary>
-    /// Legacy simple skill — inherits from SkillBase.
-    /// Execute() deals direct damage to target.
-    /// For more complex behavior, use specialized subclasses (DamageSkill, DashSkill, etc.)
+    /// Basic damage skill — hits target for scaled damage.
+    /// Used by: YILDIZ Alev Yumruk
     /// </summary>
-    [CreateAssetMenu(fileName = "NewSkill", menuName = "VOLK/Skills/Simple Skill (Legacy)")]
-    public class SkillData : SkillBase
+    [CreateAssetMenu(fileName = "NewDamageSkill", menuName = "VOLK/Skills/Damage Skill")]
+    public class DamageSkill : SkillBase
     {
         public override void Execute(Fighter caster, Fighter target)
         {
