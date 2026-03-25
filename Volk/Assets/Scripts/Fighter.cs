@@ -53,8 +53,16 @@ public class Fighter : MonoBehaviour
     private float parryChance;
     private float retreatHPThreshold;
     private float aiAttackRange = 1.8f;
-    private float aiApproachStop = 1.4f;
+    private float aiApproachStop = 0.9f;
     private Fighter cachedTargetFighter;
+
+    // AI state commitment
+    private float stateMinDuration;
+    private float stateTimer;
+
+    // AI approach zigzag
+    private float zigzagAngle;
+    private float zigzagTimer;
 
     // Touch input
     [HideInInspector] public Vector2 touchMoveInput;
@@ -327,10 +335,35 @@ public class Fighter : MonoBehaviour
         transform.rotation *= leanRot;
     }
 
+    float GetReactionDelay()
+    {
+        float baseMs = 150f;
+        float variance = Random.Range(-30f, 80f);
+        float diffMod = difficulty == AIDifficulty.Hard ? -60f : difficulty == AIDifficulty.Easy ? 60f : 0f;
+        return (baseMs + variance + diffMod) / 1000f;
+    }
+
+    void SetAIState(AIState newState)
+    {
+        if (newState == currentAIState) return;
+        // State commitment: don't switch if minimum duration hasn't elapsed (except Stunned)
+        if (stateTimer < stateMinDuration && newState != AIState.Stunned) return;
+
+        currentAIState = newState;
+        stateTimer = 0f;
+        stateMinDuration = Random.Range(2.5f, 4.0f);
+
+        // Reset zigzag on state change
+        zigzagAngle = 0f;
+        zigzagTimer = Random.Range(0.3f, 0.8f);
+    }
+
     void UpdateAI()
     {
         if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
         if (aiTarget == null) return;
+
+        stateTimer += Time.deltaTime;
 
         // Knockback override
         if (knockbackTimer > 0f)
@@ -341,6 +374,8 @@ public class Fighter : MonoBehaviour
             if (knockbackVelocity.magnitude < 0.1f)
                 knockbackVelocity = Vector3.zero;
             currentAIState = AIState.Stunned;
+            stateTimer = 0f;
+            stateMinDuration = 0f; // Stunned can always be exited
             aiStunnedTimer = 0.4f;
             return;
         }
@@ -360,20 +395,30 @@ public class Fighter : MonoBehaviour
                 cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
                 aiDecisionTimer -= Time.deltaTime;
                 if (aiDecisionTimer <= 0f)
-                    currentAIState = AIState.Approach;
+                    SetAIState(AIState.Approach);
                 break;
 
             case AIState.Approach:
                 if (hpRatio < retreatHPThreshold)
-                { currentAIState = AIState.Retreat; aiRetreatTimer = 1.5f; break; }
+                { SetAIState(AIState.Retreat); aiRetreatTimer = 1.5f; break; }
 
                 if (distToTarget <= aiAttackRange)
-                { currentAIState = AIState.Combat; aiAttackCooldown = reactionTime; break; }
+                { SetAIState(AIState.Combat); aiAttackCooldown = GetReactionDelay(); break; }
 
                 if (!isAttacking)
                 {
                     Vector3 approachDir = (aiTarget.position - transform.position).normalized;
                     approachDir.y = 0;
+
+                    // Zigzag: periodically offset approach angle
+                    zigzagTimer -= Time.deltaTime;
+                    if (zigzagTimer <= 0f)
+                    {
+                        zigzagAngle = Random.Range(-20f, 20f);
+                        zigzagTimer = Random.Range(0.3f, 0.8f);
+                    }
+                    approachDir = Quaternion.Euler(0f, zigzagAngle, 0f) * approachDir;
+
                     if (distToTarget > aiApproachStop)
                     {
                         Vector3 move = approachDir * walkSpeed;
@@ -400,10 +445,10 @@ public class Fighter : MonoBehaviour
                         Quaternion.LookRotation(faceDir), rotSpeed * Time.deltaTime);
 
                 if (distToTarget > aiAttackRange + 0.5f)
-                { currentAIState = AIState.Approach; break; }
+                { SetAIState(AIState.Approach); break; }
 
                 if (hpRatio < retreatHPThreshold)
-                { currentAIState = AIState.Retreat; aiRetreatTimer = 1.5f; break; }
+                { SetAIState(AIState.Retreat); aiRetreatTimer = 1.5f; break; }
 
                 // Try parry if target is attacking
                 if (cachedTargetFighter == null) cachedTargetFighter = aiTarget.GetComponent<Fighter>();
@@ -414,14 +459,12 @@ public class Fighter : MonoBehaviour
                         AttemptParry();
                 }
 
-                // Attack on cooldown
+                // Attack on cooldown with telegraph
                 aiAttackCooldown -= Time.deltaTime;
                 if (aiAttackCooldown <= 0f && !isAttacking)
                 {
-                    bool usePunch = Random.value < 0.6f;
-                    StartCoroutine(DoAttack(usePunch ? hPunch : hKick,
-                        usePunch ? rightHandPoint : rightFootPoint));
-                    aiAttackCooldown = reactionTime + Random.Range(-0.1f, 0.3f);
+                    StartCoroutine(AITelegraphAttack());
+                    aiAttackCooldown = GetReactionDelay() + Random.Range(0.1f, 0.4f);
                 }
 
                 anim.SetBool(hWalk, false);
@@ -432,7 +475,7 @@ public class Fighter : MonoBehaviour
             case AIState.Retreat:
                 aiRetreatTimer -= Time.deltaTime;
                 if (aiRetreatTimer <= 0f)
-                { currentAIState = AIState.Approach; break; }
+                { SetAIState(AIState.Approach); break; }
 
                 Vector3 retreatDir = (transform.position - aiTarget.position).normalized;
                 retreatDir.y = 0;
@@ -451,9 +494,25 @@ public class Fighter : MonoBehaviour
                 anim.SetBool(hRun, false);
                 cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
                 if (aiStunnedTimer <= 0f)
-                    currentAIState = AIState.Approach;
+                    SetAIState(AIState.Approach);
                 break;
         }
+    }
+
+    IEnumerator AITelegraphAttack()
+    {
+        // Subtle telegraph: brief rotation twitch before attacking
+        float telegraphDuration = Random.Range(0.2f, 0.4f);
+        Quaternion originalRot = transform.rotation;
+        float twitchAngle = Random.Range(-5f, 5f);
+        transform.rotation *= Quaternion.Euler(0f, twitchAngle, 0f);
+        yield return new WaitForSeconds(telegraphDuration);
+        transform.rotation = originalRot;
+
+        // Now attack
+        bool usePunch = Random.value < 0.6f;
+        StartCoroutine(DoAttack(usePunch ? hPunch : hKick,
+            usePunch ? rightHandPoint : rightFootPoint));
     }
 
     IEnumerator DoAttack(int animHash, Transform hitPoint)
