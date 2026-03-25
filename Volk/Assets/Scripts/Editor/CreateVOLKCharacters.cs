@@ -52,25 +52,25 @@ public class CreateVOLKCharacters
         MakeCharacter("RUZGAR",
             hp: 85f, spd: 10f, pow: 5f, def: 3f,
             walk: 5.5f, run: 9.0f, kb: 1.5f,
-            unlocked: false, unlockType: UnlockCondition.WinCount, unlockVal: 10,
+            unlocked: false, unlockType: UnlockCondition.StoryProgress, unlockVal: 4,
             sk1: ruzgar_sk1, sk2: ruzgar_sk2);
 
         MakeCharacter("CELIK",
             hp: 100f, spd: 5f, pow: 7f, def: 9f,
             walk: 4.0f, run: 6.5f, kb: 1.8f,
-            unlocked: false, unlockType: UnlockCondition.WinCount, unlockVal: 10,
+            unlocked: false, unlockType: UnlockCondition.StoryProgress, unlockVal: 6,
             sk1: celik_sk1, sk2: celik_sk2);
 
         MakeCharacter("SIS",
             hp: 80f, spd: 8f, pow: 6f, def: 4f,
             walk: 5.0f, run: 8.5f, kb: 1.5f,
-            unlocked: false, unlockType: UnlockCondition.WinCount, unlockVal: 10,
+            unlocked: false, unlockType: UnlockCondition.StoryProgress, unlockVal: 8,
             sk1: sis_sk1, sk2: sis_sk2);
 
         MakeCharacter("TOPRAK",
             hp: 110f, spd: 4f, pow: 7f, def: 7f,
             walk: 3.5f, run: 6.0f, kb: 2.5f,
-            unlocked: false, unlockType: UnlockCondition.WinCount, unlockVal: 10,
+            unlocked: false, unlockType: UnlockCondition.StoryProgress, unlockVal: 10,
             sk1: toprak_sk1, sk2: toprak_sk2);
 
         AssetDatabase.SaveAssets();

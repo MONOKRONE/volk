@@ -9,6 +9,7 @@ namespace Volk.Core
         public CharacterData selectedCharacter;
         public CharacterData enemyCharacter;
         public ArenaData selectedArena;
+        public CharacterData[] allCharacters;
         public AIDifficulty selectedDifficulty = AIDifficulty.Normal;
 
         // Game mode

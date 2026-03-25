@@ -116,6 +116,11 @@ namespace Volk.Story
             // XP for chapter
             LevelSystem.Instance?.AddChapterXP();
 
+            // Check story-based character unlocks
+            if (CharacterUnlockManager.Instance != null && GameSettings.Instance != null)
+                CharacterUnlockManager.Instance.CheckStoryUnlocks(
+                    CurrentChapterIndex + 1, GameSettings.Instance.allCharacters);
+
             // When using GameFlowManager, match result is shown there
             // Otherwise fallback to old dialogue/scene flow
             if (GameFlowManager.Instance == null)

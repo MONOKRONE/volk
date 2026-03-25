@@ -103,6 +103,23 @@ namespace Volk.Core
             };
         }
 
+        /// <summary>
+        /// Check all characters for story-based unlocks after completing a chapter.
+        /// </summary>
+        public void CheckStoryUnlocks(int completedChapter, CharacterData[] allCharacters)
+        {
+            if (allCharacters == null) return;
+            foreach (var data in allCharacters)
+            {
+                if (data == null || data.unlockedByDefault || IsUnlocked(data)) continue;
+                if (data.unlockType == UnlockCondition.StoryProgress && completedChapter >= data.unlockValue)
+                {
+                    Unlock(data);
+                    Debug.Log($"[Unlock] Story progress: {data.characterName} unlocked at chapter {completedChapter}!");
+                }
+            }
+        }
+
         string GetKey(CharacterData data) => $"char_unlocked_{data.characterName}";
     }
 }
