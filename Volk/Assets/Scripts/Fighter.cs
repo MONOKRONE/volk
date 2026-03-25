@@ -706,6 +706,7 @@ public class Fighter : MonoBehaviour
             VibrationManager.Instance?.VibrateHeavy();
             JuiceManager.Instance?.ScreenFlash();
             JuiceManager.Instance?.SlowMotionKO();
+            PostProcessAnimator.Instance?.KOPulse();
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
