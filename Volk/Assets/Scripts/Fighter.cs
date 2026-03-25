@@ -109,6 +109,7 @@ public class Fighter : MonoBehaviour
     private Animator anim;
     public bool isAttacking { get; private set; }
     public event System.Action<Volk.Core.PlayerAction> OnActionPerformed;
+    private Volk.Core.PlayerBehaviorTracker behaviorTracker;
     public bool isDead { get; private set; }
     private float yVelocity;
     private float postAttackCooldown;
@@ -150,6 +151,18 @@ public class Fighter : MonoBehaviour
         var smr = GetComponentInChildren<SkinnedMeshRenderer>();
         if (smr != null) meshTransform = smr.transform;
         else meshTransform = anim != null ? anim.transform : transform;
+
+        if (!isAI)
+        {
+            behaviorTracker = Volk.Core.PlayerBehaviorTracker.Instance;
+            if (behaviorTracker != null)
+            {
+                string myChar = characterData != null ? characterData.characterName : "Unknown";
+                string enemyChar = aiTarget?.GetComponent<Fighter>()?.characterData?.characterName ?? "Unknown";
+                behaviorTracker.SetMatchup(myChar, enemyChar);
+            }
+            OnActionPerformed += OnPlayerAction;
+        }
 
         if (isAI) InitAIDifficulty();
 
@@ -724,6 +737,9 @@ public class Fighter : MonoBehaviour
                 ragdoll.ActivateRagdoll(attackDir, knockbackForce * 2f);
             }
 
+            // Save behavior profile on match end
+            if (!isAI) behaviorTracker?.SaveProfile();
+
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
@@ -742,6 +758,29 @@ public class Fighter : MonoBehaviour
 
             StartCoroutine(HitRecovery());
         }
+    }
+
+    void OnPlayerAction(Volk.Core.PlayerAction action)
+    {
+        if (behaviorTracker == null) return;
+        var situation = GetCurrentSituation();
+        behaviorTracker.Record(situation, action);
+    }
+
+    Volk.Core.GameSituation GetCurrentSituation()
+    {
+        float hpRatio = currentHP / maxHP;
+        if (hpRatio < 0.3f) return Volk.Core.GameSituation.LowHP;
+        if (hpRatio > 0.8f) return Volk.Core.GameSituation.HighHP;
+
+        if (aiTarget != null)
+        {
+            float dist = Vector3.Distance(transform.position, aiTarget.position);
+            if (dist > 4f) return Volk.Core.GameSituation.NeutralFar;
+            if (dist > 2f) return Volk.Core.GameSituation.NeutralMid;
+            return Volk.Core.GameSituation.NeutralClose;
+        }
+        return Volk.Core.GameSituation.NeutralMid;
     }
 
     IEnumerator HitRecovery()

@@ -28,5 +28,5 @@ MonoBehaviour:
   skill1: {fileID: 11400000, guid: dfb0705d69704c5b84db3817584dd567, type: 2}
   skill2: {fileID: 11400000, guid: ec95cb1df7a94562a23bf3ba39ef2a99, type: 2}
   unlockedByDefault: 0
-  unlockType: 2
-  unlockValue: 10
+  unlockType: 1
+  unlockValue: 6

@@ -96,8 +96,9 @@ namespace Volk.Core
             if (CurrentFloor % 10 == 0)
             {
                 int reward = 50 * (CurrentFloor / 10);
-                if (SaveManager.Instance != null)
-                    SaveManager.Instance.AddCurrency(reward);
+                CurrencyManager.Instance?.AddCoins(reward);
+                CurrencyManager.Instance?.OnTowerMilestone();
+                BattlePassManager.Instance?.AddXP(BattlePassManager.XP_TOWER_FLOOR * 10);
                 Debug.Log($"[Tower] Milestone reward: {reward} coins");
 
                 if (CurrentFloor == 25)

@@ -116,6 +116,11 @@ namespace Volk.Story
             // XP for chapter
             LevelSystem.Instance?.AddChapterXP();
 
+            // Progression: chapter clear + boss kill rewards
+            CurrencyManager.Instance?.OnChapterClear();
+            if (CurrentChapter.boss != null)
+                CurrencyManager.Instance?.OnBossKill();
+
             // Check story-based character unlocks
             if (CharacterUnlockManager.Instance != null && GameSettings.Instance != null)
                 CharacterUnlockManager.Instance.CheckStoryUnlocks(
@@ -227,6 +232,9 @@ namespace Volk.Story
             var stage = CurrentStage;
             if (stage != null && SaveManager.Instance != null)
                 SaveManager.Instance.AddCurrency(stage.coinReward);
+
+            // Progression rewards
+            CurrencyManager.Instance?.OnStageClear();
 
             // Advance to next stage
             CurrentStageIndex++;
