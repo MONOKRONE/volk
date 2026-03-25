@@ -128,10 +128,67 @@ namespace Volk.Core
             return EquippedSlots.TryGetValue(slot, out var id) ? id : null;
         }
 
-        // Apply equipment bonuses to a fighter
-        public void ApplyBonuses(Fighter fighter)
+        /// <summary>
+        /// Fuse 3 items of the same tier into the next tier.
+        /// Returns the new item ID or null if fusion failed.
+        /// </summary>
+        public string FuseItems(string itemId1, string itemId2, string itemId3, int fusionCoinCost = 200)
         {
-            if (fighter == null) return;
+            var d1 = GetEquipmentData(itemId1);
+            var d2 = GetEquipmentData(itemId2);
+            var d3 = GetEquipmentData(itemId3);
+            if (d1 == null || d2 == null || d3 == null) return null;
+            if (d1.rarity != d2.rarity || d2.rarity != d3.rarity) return null;
+            if (d1.rarity == EquipmentRarity.Legendary) return null; // Can't fuse legendaries
+
+            if (CurrencyManager.Instance == null || !CurrencyManager.Instance.SpendCoins(fusionCoinCost))
+                return null;
+
+            EquipmentRarity nextTier = d1.rarity + 1;
+            // Find a matching slot item of next tier
+            foreach (var eq in allEquipment)
+            {
+                if (eq.slot == d1.slot && eq.rarity == nextTier)
+                {
+                    // Remove the 3 source items
+                    Inventory.RemoveAll(i => i.itemId == itemId1 || i.itemId == itemId2 || i.itemId == itemId3);
+                    AddToInventory(eq.itemId);
+                    Debug.Log($"[Equipment] Fused 3x {d1.rarity} → {eq.itemName} ({nextTier})");
+                    return eq.itemId;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get the equipped accessory special effect, if any.
+        /// </summary>
+        public EquipmentSpecialEffect GetActiveSpecialEffect()
+        {
+            string accessoryId = GetEquippedInSlot(EquipmentSlot.Accessory);
+            if (accessoryId == null) return EquipmentSpecialEffect.None;
+            var data = GetEquipmentData(accessoryId);
+            return data?.specialEffect ?? EquipmentSpecialEffect.None;
+        }
+
+        /// <summary>
+        /// Get headband cooldown reduction multiplier (0-1 range, e.g. 0.8 = 20% reduction).
+        /// </summary>
+        public float GetCooldownMultiplier()
+        {
+            string headbandId = GetEquippedInSlot(EquipmentSlot.Headband);
+            if (headbandId == null) return 1f;
+            var data = GetEquipmentData(headbandId);
+            var owned = GetOwned(headbandId);
+            if (data == null || owned == null) return 1f;
+            float stat = data.GetStatAtLevel(owned.upgradeLevel);
+            return Mathf.Clamp(1f - stat * 0.01f, 0.5f, 1f);
+        }
+
+        // Apply equipment bonuses to a fighter (PvE only — skip in PvP)
+        public void ApplyBonuses(Fighter fighter, bool isPvP = false)
+        {
+            if (fighter == null || isPvP) return;
 
             foreach (var kvp in EquippedSlots)
             {
@@ -144,18 +201,21 @@ namespace Volk.Core
                 switch (data.slot)
                 {
                     case EquipmentSlot.Gloves:
-                        fighter.attackDamage += stat; // punch damage boost
+                        fighter.attackDamage += stat;
                         break;
                     case EquipmentSlot.Boots:
-                        fighter.walkSpeed += stat * 0.1f; // speed boost
-                        fighter.attackDamage += stat * 0.5f; // kick damage
+                        fighter.walkSpeed += stat * 0.1f;
+                        fighter.attackDamage += stat * 0.5f; // kick bonus
                         break;
-                    case EquipmentSlot.Guard:
-                        fighter.maxHP += stat * 2f; // defense = more HP
+                    case EquipmentSlot.Chest:
+                        fighter.maxHP += stat * 2f;
+                        fighter.defense += stat * 0.1f;
                         break;
-                    case EquipmentSlot.Headgear:
-                        fighter.knockbackForce -= stat * 0.05f; // less knockback received
-                        fighter.maxHP += stat; // minor HP boost
+                    case EquipmentSlot.Headband:
+                        // Skill cooldown reduction applied via multiplier
+                        break;
+                    case EquipmentSlot.Accessory:
+                        // Special effects handled separately
                         break;
                 }
             }

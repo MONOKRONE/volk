@@ -2,8 +2,9 @@ using UnityEngine;
 
 namespace Volk.Core
 {
-    public enum EquipmentSlot { Gloves, Boots, Guard, Headgear }
+    public enum EquipmentSlot { Gloves, Boots, Chest, Headband, Accessory }
     public enum EquipmentRarity { Common, Rare, Epic, Legendary }
+    public enum EquipmentSpecialEffect { None, Lifesteal, StunChance, ExpBoost }
 
     [CreateAssetMenu(fileName = "NewEquipment", menuName = "VOLK/Equipment")]
     public class EquipmentData : ScriptableObject
@@ -19,15 +20,16 @@ namespace Volk.Core
         public float baseStat = 5f;
         public int maxUpgradeLevel = 5;
         public int upgradeCostBase = 50;
+        public EquipmentSpecialEffect specialEffect = EquipmentSpecialEffect.None;
 
         public float GetStatAtLevel(int level)
         {
             float rarityMult = rarity switch
             {
                 EquipmentRarity.Common => 1f,
-                EquipmentRarity.Rare => 1.5f,
-                EquipmentRarity.Epic => 2f,
-                EquipmentRarity.Legendary => 3f,
+                EquipmentRarity.Rare => 1.3f,
+                EquipmentRarity.Epic => 1.7f,
+                EquipmentRarity.Legendary => 2.5f,
                 _ => 1f
             };
             return baseStat * rarityMult * (1f + level * 0.2f);
