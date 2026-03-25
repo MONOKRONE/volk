@@ -715,16 +715,31 @@ public class Fighter : MonoBehaviour
             JuiceManager.Instance?.ScreenFlash();
             JuiceManager.Instance?.SlowMotionKO();
             PostProcessAnimator.Instance?.KOPulse();
+
+            // Ragdoll on KO
+            var ragdoll = GetComponent<RagdollController>();
+            if (ragdoll != null && hasAttackerPos)
+            {
+                Vector3 attackDir = (transform.position - attackerPos).normalized;
+                ragdoll.ActivateRagdoll(attackDir, knockbackForce * 2f);
+            }
+
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
         else
         {
             StopAllCoroutines();
-            anim.speed = 1f; // Ensure anim speed is restored after stopping HitStop coroutines
+            anim.speed = characterData != null ? characterData.animationSpeedMult : 1f;
             isAttacking = false;
             anim.applyRootMotion = false;
-            anim.SetTrigger(Random.value > 0.5f ? hHit1 : hHit2);
+
+            // Stagger reaction based on damage amount
+            if (amount >= 30f)
+                anim.SetTrigger(hHit2); // Heavy stagger
+            else
+                anim.SetTrigger(Random.value > 0.5f ? hHit1 : hHit2);
+
             StartCoroutine(HitRecovery());
         }
     }
@@ -738,6 +753,7 @@ public class Fighter : MonoBehaviour
     public void ResetForRound()
     {
         StopAllCoroutines();
+        GetComponent<RagdollController>()?.ResetRagdoll();
         currentHP = maxHP;
         isAttacking = false;
         isDead = false;
