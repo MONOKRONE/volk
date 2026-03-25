@@ -24,7 +24,6 @@ namespace Volk.Core
         public static DailyChallengeManager Instance { get; private set; }
 
         public DailyChallenge[] TodayChallenges { get; private set; }
-        public int DailyTokens { get; private set; }
         public int Streak { get; private set; }
 
         static readonly string[] StyleDescriptions = {
@@ -49,7 +48,6 @@ namespace Volk.Core
         {
             string today = DateTime.Today.ToString("yyyy-MM-dd");
             string lastDate = PlayerPrefs.GetString("daily_date", "");
-            DailyTokens = PlayerPrefs.GetInt("daily_tokens", 0);
             Streak = PlayerPrefs.GetInt("daily_streak", 0);
 
             if (lastDate == today)
@@ -125,7 +123,7 @@ namespace Volk.Core
             if (TodayChallenges[index].completed) return;
 
             TodayChallenges[index].completed = true;
-            DailyTokens += 25;
+            CurrencyManager.Instance?.OnDailyChallengeComplete();
 
             // Check if all completed for streak bonus
             bool allDone = true;
@@ -134,13 +132,12 @@ namespace Volk.Core
 
             if (allDone && Streak >= 3)
             {
-                DailyTokens += 50;
+                CurrencyManager.Instance?.AddDailyTokens(50);
                 Debug.Log("[Daily] 3-day streak bonus: +50 tokens!");
             }
 
-            PlayerPrefs.SetInt("daily_tokens", DailyTokens);
             SaveChallenges();
-            Debug.Log($"[Daily] Challenge {index} completed! Tokens: {DailyTokens}");
+            Debug.Log($"[Daily] Challenge {index} completed!");
         }
 
         void SaveChallenges()

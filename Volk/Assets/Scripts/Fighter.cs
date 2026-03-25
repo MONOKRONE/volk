@@ -83,6 +83,7 @@ public class Fighter : MonoBehaviour
 
     // Lean/tilt
     private float leanAmount = 0.8f;
+    private Transform meshTransform;
 
     // Knockback
     public float knockbackForce = 2f;
@@ -145,6 +146,10 @@ public class Fighter : MonoBehaviour
         inputBuffer = GetComponent<Volk.InputBuffer>();
         if (inputBuffer == null)
             inputBuffer = gameObject.AddComponent<Volk.InputBuffer>();
+
+        var smr = GetComponentInChildren<SkinnedMeshRenderer>();
+        if (smr != null) meshTransform = smr.transform;
+        else meshTransform = anim != null ? anim.transform : transform;
 
         if (isAI) InitAIDifficulty();
 
@@ -336,12 +341,14 @@ public class Fighter : MonoBehaviour
             }
         }
 
-        // Lean/tilt based on lateral velocity
-        float lateralSpeed = Vector3.Dot(currentVelocity, transform.right);
-        float targetLean = -lateralSpeed * leanAmount;
-        targetLean = Mathf.Clamp(targetLean, -8f, 8f);
-        Quaternion leanRot = Quaternion.Euler(0f, 0f, targetLean);
-        transform.rotation *= leanRot;
+        // Lean/tilt based on lateral velocity — applied to mesh, not root
+        if (meshTransform != null && meshTransform != transform)
+        {
+            float lateralSpeed = Vector3.Dot(currentVelocity, transform.right);
+            float targetLean = -lateralSpeed * leanAmount;
+            targetLean = Mathf.Clamp(targetLean, -8f, 8f);
+            meshTransform.localRotation = Quaternion.Euler(0f, 0f, targetLean);
+        }
     }
 
     float GetReactionDelay()
@@ -608,13 +615,6 @@ public class Fighter : MonoBehaviour
         AudioManager.Instance?.PlayBlock();
         yield return new WaitForSeconds(0.8f);
         isAttacking = false;
-    }
-
-    IEnumerator Hitstop()
-    {
-        Time.timeScale = 0.05f;
-        yield return new WaitForSecondsRealtime(0.08f);
-        Time.timeScale = 1f;
     }
 
     public IEnumerator HitStop(float duration)
