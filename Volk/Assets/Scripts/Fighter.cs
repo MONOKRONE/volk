@@ -107,6 +107,7 @@ public class Fighter : MonoBehaviour
     private CharacterController cc;
     private Animator anim;
     public bool isAttacking { get; private set; }
+    public event System.Action<Volk.Core.PlayerAction> OnActionPerformed;
     public bool isDead { get; private set; }
     private float yVelocity;
     private float postAttackCooldown;
@@ -769,6 +770,15 @@ public class Fighter : MonoBehaviour
         if (!isAI && Volk.Core.ComboTracker.Instance != null)
             Volk.Core.ComboTracker.Instance.RegisterInput(type);
 
+        // Behavior tracking
+        if (!isAI)
+        {
+            var action = variant == AttackVariant.Heavy
+                ? Volk.Core.PlayerAction.HeavyPunch
+                : (type == AttackType.Punch ? Volk.Core.PlayerAction.Punch : Volk.Core.PlayerAction.Kick);
+            OnActionPerformed?.Invoke(action);
+        }
+
         switch (variant)
         {
             case AttackVariant.Normal:
@@ -835,6 +845,7 @@ public class Fighter : MonoBehaviour
     public void AttemptParry()
     {
         if (isAttacking || isDead || isParrying) return;
+        if (!isAI) OnActionPerformed?.Invoke(Volk.Core.PlayerAction.Parry);
         StartCoroutine(ParryWindow());
     }
 
@@ -856,6 +867,7 @@ public class Fighter : MonoBehaviour
     public void UseSkill(int skillIndex)
     {
         if (isAttacking || isDead) return;
+        if (!isAI) OnActionPerformed?.Invoke(skillIndex == 1 ? Volk.Core.PlayerAction.Skill1 : Volk.Core.PlayerAction.Skill2);
         if (characterData == null) { Debug.Log($"[Fighter] No CharacterData, skill {skillIndex} skipped"); return; }
 
         Volk.Core.SkillBase skill = skillIndex == 1 ? characterData.skill1 : characterData.skill2;
