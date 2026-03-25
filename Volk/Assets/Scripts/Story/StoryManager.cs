@@ -86,7 +86,6 @@ namespace Volk.Story
             if (SaveManager.Instance != null)
             {
                 SaveManager.Instance.CompleteChapter(CurrentChapterIndex + 1);
-                SaveManager.Instance.AddCurrency(CurrentChapter.coinReward);
                 SaveManager.Instance.AddWin();
 
                 if (CurrentChapter.characterUnlockReward != null)
@@ -229,11 +228,7 @@ namespace Volk.Story
 
         public void OnStageWon()
         {
-            var stage = CurrentStage;
-            if (stage != null && SaveManager.Instance != null)
-                SaveManager.Instance.AddCurrency(stage.coinReward);
-
-            // Progression rewards
+            // Progression rewards (single source of truth: CurrencyManager)
             CurrencyManager.Instance?.OnStageClear();
 
             // Advance to next stage

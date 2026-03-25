@@ -68,10 +68,9 @@ public class RagdollController : MonoBehaviour
             if (rb.gameObject == gameObject) continue;
             rb.isKinematic = false;
 
-            // Apply launch velocity in attack direction + slight upward
+            // Apply launch velocity in attack direction + slight upward (single force only)
             Vector3 launchDir = (attackDir.normalized + Vector3.up * 0.3f).normalized;
-            rb.velocity = launchDir * force;
-            rb.AddForce(launchDir * force * 0.5f, ForceMode.Impulse);
+            rb.linearVelocity = launchDir * force;
 
             bodyCount++;
             if (bodyCount >= 8) break; // Mobile limit

@@ -77,6 +77,9 @@ public class CreateVOLKCharacters
         AssetDatabase.Refresh();
 
         Debug.Log("[VOLK] 6 karakter + 12 skill asset olusturuldu!");
+
+        // Auto-create prefabs after character data
+        CreateFighterPrefabs.CreateAll();
     }
 
     static SkillData MakeSkill(string fileName, string displayName, float damage, float cooldown, string animTrigger = "")

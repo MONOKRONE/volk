@@ -142,6 +142,7 @@ namespace Volk.Core
             if (string.IsNullOrEmpty(json)) return;
 
             var data = JsonUtility.FromJson<CosmeticInventoryData>(json);
+            if (data == null) return;
             if (data.ownedItemIds != null)
                 ownedItems = new HashSet<string>(data.ownedItemIds);
             if (data.equippedKeys != null)

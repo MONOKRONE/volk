@@ -139,25 +139,26 @@ namespace Volk.Core
             var d3 = GetEquipmentData(itemId3);
             if (d1 == null || d2 == null || d3 == null) return null;
             if (d1.rarity != d2.rarity || d2.rarity != d3.rarity) return null;
-            if (d1.rarity == EquipmentRarity.Legendary) return null; // Can't fuse legendaries
+            if (d1.rarity == EquipmentRarity.Legendary) return null;
+
+            EquipmentRarity nextTier = d1.rarity + 1;
+
+            // Find result BEFORE spending coins
+            EquipmentData resultEquip = null;
+            foreach (var eq in allEquipment)
+            {
+                if (eq.slot == d1.slot && eq.rarity == nextTier)
+                { resultEquip = eq; break; }
+            }
+            if (resultEquip == null) return null; // No valid fusion target
 
             if (CurrencyManager.Instance == null || !CurrencyManager.Instance.SpendCoins(fusionCoinCost))
                 return null;
 
-            EquipmentRarity nextTier = d1.rarity + 1;
-            // Find a matching slot item of next tier
-            foreach (var eq in allEquipment)
-            {
-                if (eq.slot == d1.slot && eq.rarity == nextTier)
-                {
-                    // Remove the 3 source items
-                    Inventory.RemoveAll(i => i.itemId == itemId1 || i.itemId == itemId2 || i.itemId == itemId3);
-                    AddToInventory(eq.itemId);
-                    Debug.Log($"[Equipment] Fused 3x {d1.rarity} → {eq.itemName} ({nextTier})");
-                    return eq.itemId;
-                }
-            }
-            return null;
+            Inventory.RemoveAll(i => i.itemId == itemId1 || i.itemId == itemId2 || i.itemId == itemId3);
+            AddToInventory(resultEquip.itemId);
+            Debug.Log($"[Equipment] Fused 3x {d1.rarity} → {resultEquip.itemName} ({nextTier})");
+            return resultEquip.itemId;
         }
 
         /// <summary>
