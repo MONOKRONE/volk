@@ -10,28 +10,28 @@ public class CreateVOLKCharacters
         // ── SKILL DATA ──────────────────────────────────────────────
 
         // YILDIZ
-        var yildiz_sk1 = MakeSkill("AlevYumruk", "Alev Yumruk", 35f, 6f);
-        var yildiz_sk2 = MakeSkill("GirdapTekme", "Girdap Tekme", 28f, 5f);
+        var yildiz_sk1 = MakeSkill("AlevYumruk", "Alev Yumruk", 35f, 6f, "HookPunch");
+        var yildiz_sk2 = MakeSkill("GirdapTekme", "Girdap Tekme", 28f, 5f, "MMAKick");
 
         // KAYA
-        var kaya_sk1 = MakeSkill("DepremDarbesi", "Deprem Darbesi", 45f, 8f);
-        var kaya_sk2 = MakeSkill("AyiKucagi", "Ayi Kucagi", 30f, 7f);
+        var kaya_sk1 = MakeSkill("DepremDarbesi", "Deprem Darbesi", 45f, 8f, "HookPunch");
+        var kaya_sk2 = MakeSkill("AyiKucagi", "Ayi Kucagi", 30f, 7f, "HookPunch");
 
         // RUZGAR
-        var ruzgar_sk1 = MakeSkill("GolgeAdim", "Golge Adim", 20f, 4f);
-        var ruzgar_sk2 = MakeSkill("FirtinaSerisi", "Firtina Serisi", 25f, 5f);
+        var ruzgar_sk1 = MakeSkill("GolgeAdim", "Golge Adim", 20f, 4f, "HookPunch");
+        var ruzgar_sk2 = MakeSkill("FirtinaSerisi", "Firtina Serisi", 25f, 5f, "MMAKick");
 
         // CELIK
-        var celik_sk1 = MakeSkill("AynaKalkan", "Ayna Kalkan", 15f, 6f);
-        var celik_sk2 = MakeSkill("HassasVurus", "Hassas Vurus", 40f, 9f);
+        var celik_sk1 = MakeSkill("AynaKalkan", "Ayna Kalkan", 15f, 6f, "BodyBlock");
+        var celik_sk2 = MakeSkill("HassasVurus", "Hassas Vurus", 40f, 9f, "HookPunch");
 
         // SIS
-        var sis_sk1 = MakeSkill("SisPerdesi", "Sis Perdesi", 18f, 5f);
-        var sis_sk2 = MakeSkill("GolgeKlon", "Golge Klon", 22f, 7f);
+        var sis_sk1 = MakeSkill("SisPerdesi", "Sis Perdesi", 18f, 5f, "BodyBlock");
+        var sis_sk2 = MakeSkill("GolgeKlon", "Golge Klon", 22f, 7f, "HookPunch");
 
         // TOPRAK
-        var toprak_sk1 = MakeSkill("TasFirlatma", "Tas Firlatma", 32f, 5f);
-        var toprak_sk2 = MakeSkill("DuvarYukselt", "Duvar Yukselt", 20f, 8f);
+        var toprak_sk1 = MakeSkill("TasFirlatma", "Tas Firlatma", 32f, 5f, "MMAKick");
+        var toprak_sk2 = MakeSkill("DuvarYukselt", "Duvar Yukselt", 20f, 8f, "HookPunch");
 
         AssetDatabase.SaveAssets();
 
@@ -79,7 +79,7 @@ public class CreateVOLKCharacters
         Debug.Log("[VOLK] 6 karakter + 12 skill asset olusturuldu!");
     }
 
-    static SkillData MakeSkill(string fileName, string displayName, float damage, float cooldown)
+    static SkillData MakeSkill(string fileName, string displayName, float damage, float cooldown, string animTrigger = "")
     {
         string path = $"Assets/ScriptableObjects/Skills/{fileName}.asset";
 
@@ -90,7 +90,7 @@ public class CreateVOLKCharacters
         sk.skillName = displayName;
         sk.damage = damage;
         sk.cooldown = cooldown;
-        sk.animationTrigger = ""; // Sonra doldurulacak
+        sk.animationTrigger = animTrigger;
         AssetDatabase.CreateAsset(sk, path);
         return sk;
     }
