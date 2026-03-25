@@ -123,6 +123,12 @@ public class CreateVOLKCharacters
         c.skill1 = sk1;
         c.skill2 = sk2;
 
+        // Link animator controller
+        var animCtrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+            "Assets/Animations/PlayerAnimator.controller");
+        if (animCtrl != null)
+            c.animController = animCtrl;
+
         AssetDatabase.CreateAsset(c, path);
         EditorUtility.SetDirty(c);
     }
