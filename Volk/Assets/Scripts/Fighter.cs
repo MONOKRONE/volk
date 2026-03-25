@@ -167,6 +167,14 @@ public class Fighter : MonoBehaviour
 
         if (data.animController != null)
             anim.runtimeAnimatorController = data.animController;
+
+        // Apply palette swap material
+        if (data.characterMaterial != null)
+        {
+            var renderers = GetComponentsInChildren<SkinnedMeshRenderer>();
+            foreach (var r in renderers)
+                r.material = data.characterMaterial;
+        }
     }
 
     public void InitAIDifficulty()

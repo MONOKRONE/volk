@@ -27,6 +27,9 @@ namespace Volk.Core
         [Header("Animation")]
         public RuntimeAnimatorController animController;
 
+        [Header("Visual")]
+        public Material characterMaterial;
+
         [Header("Skills")]
         public SkillBase skill1;
         public SkillBase skill2;
