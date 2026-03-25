@@ -29,9 +29,10 @@ public class Fighter : MonoBehaviour
     public Transform rightFootPoint;
 
     [Header("Movement")]
-    public float walkSpeed = 4f;
-    public float runSpeed = 7f;
-    public float rotSpeed = 10f;
+    public float walkSpeed = 6f;
+    public float runSpeed = 8.5f;
+    public float rotSpeed = 1800f;
+    private Vector3 currentVelocity;
     public float jumpHeight = 1.8f;
 
     [Header("Lock-On")]
@@ -142,6 +143,7 @@ public class Fighter : MonoBehaviour
         walkSpeed = data.walkSpeed;
         runSpeed = data.runSpeed;
         knockbackForce = data.knockbackForce;
+        rotSpeed = data.rotationSpeed;
         power = data.power;
         defense = data.defense;
 
@@ -203,9 +205,11 @@ public class Fighter : MonoBehaviour
     {
         if (knockbackTimer > 0f)
         {
-            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 8f * Time.deltaTime);
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 15f * Time.deltaTime);
             cc.Move(knockbackVelocity * Time.deltaTime);
             knockbackTimer -= Time.deltaTime;
+            if (knockbackVelocity.magnitude < 0.1f)
+                knockbackVelocity = Vector3.zero;
             return;
         }
         else
@@ -261,12 +265,17 @@ public class Fighter : MonoBehaviour
             return;
         }
 
+        // Deceleration curve: smooth velocity towards target
+        Vector3 targetVelocity = dir * currentSpeed;
+        float accelRate = inputMag > 0.15f ? 20f : 12f;
+        currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, accelRate * Time.deltaTime);
+
+        Vector3 move = currentVelocity;
+        move.y = yVelocity;
+        cc.Move(move * Time.deltaTime);
+
         if (inputMag > 0.15f)
         {
-            Vector3 move = dir * currentSpeed;
-            move.y = yVelocity;
-            cc.Move(move * Time.deltaTime);
-
             bool movingBackward = v < -0.15f;
             anim.SetFloat(hWalkSpeed, movingBackward ? -1f : 1f);
             anim.SetBool(hWalk, true);
@@ -274,20 +283,19 @@ public class Fighter : MonoBehaviour
         }
         else
         {
-            cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
             anim.SetFloat(hWalkSpeed, 1f);
-            anim.SetBool(hWalk, false);
+            anim.SetBool(hWalk, currentVelocity.magnitude > 0.1f);
             anim.SetBool(hRun, false);
         }
 
-        // Auto face enemy when locked on
+        // Auto face enemy when locked on - using RotateTowards
         if (lockOnEnabled && aiTarget != null && !isAttacking)
         {
             Vector3 lookDir = (aiTarget.position - transform.position).normalized;
             lookDir.y = 0;
             if (lookDir.sqrMagnitude > 0.01f)
-                transform.rotation = Quaternion.Slerp(transform.rotation,
-                    Quaternion.LookRotation(lookDir), 8f * Time.deltaTime);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation,
+                    Quaternion.LookRotation(lookDir), rotSpeed * Time.deltaTime);
         }
         else if (!lockOnEnabled && !isAttacking)
         {
@@ -296,8 +304,8 @@ public class Fighter : MonoBehaviour
             {
                 Vector3 camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
                 if (camForward.sqrMagnitude > 0.01f)
-                    transform.rotation = Quaternion.Slerp(transform.rotation,
-                        Quaternion.LookRotation(camForward), 6f * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation,
+                        Quaternion.LookRotation(camForward), rotSpeed * Time.deltaTime);
             }
         }
     }
@@ -310,9 +318,11 @@ public class Fighter : MonoBehaviour
         // Knockback override
         if (knockbackTimer > 0f)
         {
-            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 8f * Time.deltaTime);
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 15f * Time.deltaTime);
             cc.Move(knockbackVelocity * Time.deltaTime);
             knockbackTimer -= Time.deltaTime;
+            if (knockbackVelocity.magnitude < 0.1f)
+                knockbackVelocity = Vector3.zero;
             currentAIState = AIState.Stunned;
             aiStunnedTimer = 0.4f;
             return;
@@ -357,7 +367,7 @@ public class Fighter : MonoBehaviour
                     {
                         cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
                     }
-                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation,
                         Quaternion.LookRotation(approachDir), rotSpeed * Time.deltaTime);
                     anim.SetBool(hWalk, distToTarget > aiApproachStop);
                     anim.SetBool(hRun, false);
@@ -369,7 +379,7 @@ public class Fighter : MonoBehaviour
                 Vector3 faceDir = (aiTarget.position - transform.position).normalized;
                 faceDir.y = 0;
                 if (faceDir.sqrMagnitude > 0.01f)
-                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation,
                         Quaternion.LookRotation(faceDir), rotSpeed * Time.deltaTime);
 
                 if (distToTarget > aiAttackRange + 0.5f)
@@ -412,7 +422,7 @@ public class Fighter : MonoBehaviour
                 Vector3 retreatMove = retreatDir * walkSpeed;
                 retreatMove.y = yVelocity;
                 cc.Move(retreatMove * Time.deltaTime);
-                transform.rotation = Quaternion.Slerp(transform.rotation,
+                transform.rotation = Quaternion.RotateTowards(transform.rotation,
                     Quaternion.LookRotation(-retreatDir), rotSpeed * Time.deltaTime);
                 anim.SetBool(hWalk, true);
                 anim.SetBool(hRun, false);
@@ -623,6 +633,7 @@ public class Fighter : MonoBehaviour
         isDead = false;
         knockbackTimer = 0f;
         knockbackVelocity = Vector3.zero;
+        currentVelocity = Vector3.zero;
         comboWindowOpen = false;
         isCrouching = false;
         isParrying = false;

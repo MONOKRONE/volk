@@ -22,6 +22,7 @@ namespace Volk.Core
         public float walkSpeed = 4f;
         public float runSpeed = 7f;
         public float knockbackForce = 2f;
+        public float rotationSpeed = 1800f;
 
         [Header("Animation")]
         public RuntimeAnimatorController animController;
