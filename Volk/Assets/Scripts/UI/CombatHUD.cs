@@ -30,6 +30,10 @@ namespace Volk.UI
         public CanvasGroup comboGroup;
         public float comboDisplayDuration = 2f;
 
+        [Header("Round Display")]
+        public TextMeshProUGUI roundText;
+        public TextMeshProUGUI timerText;
+
         [Header("KO Effect")]
         public CanvasGroup koOverlay;
         public TextMeshProUGUI koText;
@@ -149,7 +153,7 @@ namespace Volk.UI
             if (comboText != null && hitCount >= 2)
             {
                 comboText.text = $"{hitCount} HIT COMBO!";
-                comboText.color = hitCount >= 5 ? VTheme.Gold : hitCount >= 3 ? VTheme.Red : VTheme.Blue;
+                comboText.color = GetComboColor(hitCount);
 
                 if (comboGroup)
                 {
@@ -218,6 +222,34 @@ namespace Volk.UI
                 yield return null;
             }
             bar.anchoredPosition = original;
+        }
+
+        Color GetComboColor(int hits)
+        {
+            if (hits >= 5) return VTheme.Red;
+            if (hits >= 4) return new Color(1f, 0.5f, 0f); // orange
+            if (hits >= 3) return VTheme.Gold;
+            return Color.white;
+        }
+
+        public void UpdateRound(int currentRound, int totalRounds, int playerWins, int enemyWins)
+        {
+            if (roundText != null)
+                roundText.text = $"Round {currentRound}/{totalRounds}  {playerWins}-{enemyWins}";
+        }
+
+        public void UpdateTimer(float seconds)
+        {
+            if (timerText != null)
+                timerText.text = Mathf.CeilToInt(seconds).ToString();
+        }
+
+        public void SetHUDVisible(bool visible)
+        {
+            // For NG+ NoHUD modifier
+            var cg = GetComponent<CanvasGroup>();
+            if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = visible ? 1f : 0f;
         }
 
         IEnumerator PunchScaleText(Transform t)
