@@ -20,9 +20,22 @@ public class TouchCombatBridge : MonoBehaviour
     {
         if (punchButton != null)
         {
-            punchButton.OnTap += () => fighter?.DoAttack(AttackType.Punch, AttackVariant.Normal);
-            punchButton.OnHold += () => fighter?.DoAttack(AttackType.Punch, AttackVariant.Heavy);
-            punchButton.OnDoubleTap += () => fighter?.UseSkill(1);
+            punchButton.OnTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Punch");
+                fighter?.DoAttack(AttackType.Punch, AttackVariant.Normal);
+            };
+            punchButton.OnHold += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Punch");
+                fighter?.DoAttack(AttackType.Punch, AttackVariant.Heavy);
+            };
+            punchButton.OnDoubleTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Punch");
+                if (fighter?.inputBuffer != null && fighter.inputBuffer.IsDoubleTap("Punch"))
+                    fighter?.UseSkill(1);
+            };
             punchButton.OnSlideTo += (target) =>
             {
                 if (target == kickButton)
@@ -32,9 +45,22 @@ public class TouchCombatBridge : MonoBehaviour
 
         if (kickButton != null)
         {
-            kickButton.OnTap += () => fighter?.DoAttack(AttackType.Kick, AttackVariant.Normal);
-            kickButton.OnHold += () => fighter?.DoAttack(AttackType.Kick, AttackVariant.Heavy);
-            kickButton.OnDoubleTap += () => fighter?.UseSkill(2);
+            kickButton.OnTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Kick");
+                fighter?.DoAttack(AttackType.Kick, AttackVariant.Normal);
+            };
+            kickButton.OnHold += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Kick");
+                fighter?.DoAttack(AttackType.Kick, AttackVariant.Heavy);
+            };
+            kickButton.OnDoubleTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Kick");
+                if (fighter?.inputBuffer != null && fighter.inputBuffer.IsDoubleTap("Kick"))
+                    fighter?.UseSkill(2);
+            };
             kickButton.OnSlideTo += (target) =>
             {
                 if (target == punchButton)
@@ -43,13 +69,31 @@ public class TouchCombatBridge : MonoBehaviour
         }
 
         if (parryButton != null)
-            parryButton.OnTap += () => fighter?.AttemptParry();
+        {
+            parryButton.OnTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Block");
+                fighter?.AttemptParry();
+            };
+        }
 
         if (sk1Button != null)
-            sk1Button.OnTap += () => fighter?.UseSkill(1);
+        {
+            sk1Button.OnTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Skill1");
+                fighter?.UseSkill(1);
+            };
+        }
 
         if (sk2Button != null)
-            sk2Button.OnTap += () => fighter?.UseSkill(2);
+        {
+            sk2Button.OnTap += () =>
+            {
+                fighter?.inputBuffer?.RecordInput("Skill2");
+                fighter?.UseSkill(2);
+            };
+        }
     }
 
     void Update()

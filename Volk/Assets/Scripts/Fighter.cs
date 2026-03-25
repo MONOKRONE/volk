@@ -61,6 +61,9 @@ public class Fighter : MonoBehaviour
     [HideInInspector] public bool useTouchMovement;
     private TouchInputHandler touchHandler;
 
+    // Input buffer
+    [HideInInspector] public Volk.InputBuffer inputBuffer;
+
     // Parry
     private bool isParrying;
     private float parryTimer;
@@ -126,6 +129,10 @@ public class Fighter : MonoBehaviour
 
         if (Application.isMobilePlatform || useTouchMovement)
             touchHandler = FindFirstObjectByType<TouchInputHandler>();
+
+        inputBuffer = GetComponent<Volk.InputBuffer>();
+        if (inputBuffer == null)
+            inputBuffer = gameObject.AddComponent<Volk.InputBuffer>();
 
         if (isAI) InitAIDifficulty();
 
