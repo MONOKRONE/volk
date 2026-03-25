@@ -9,7 +9,11 @@ namespace Volk.Core
         [TextArea(2, 4)] public string description;
         public int chapterNumber;
 
-        [Header("Enemy")]
+        [Header("Stages")]
+        public StageData[] stages;
+        public BossData boss;
+
+        [Header("Legacy Enemy (single-stage compat)")]
         public CharacterData enemyCharacter;
         public AIDifficulty difficulty = AIDifficulty.Normal;
         public float enemyHPMultiplier = 1f;

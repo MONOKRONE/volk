@@ -11,6 +11,8 @@ namespace Volk.Story
         public ChapterData[] chapters;
         public ChapterData CurrentChapter { get; private set; }
         public int CurrentChapterIndex { get; private set; }
+        public int CurrentStageIndex { get; private set; }
+        public StageData CurrentStage => GetCurrentStage();
         public bool IsStoryMode { get; private set; }
         public bool ShowOutroDialogue { get; set; }
 
@@ -164,7 +166,83 @@ namespace Volk.Story
         {
             IsStoryMode = false;
             CurrentChapter = null;
+            CurrentStageIndex = 0;
             SceneManager.LoadScene("MainMenu");
         }
+
+        StageData GetCurrentStage()
+        {
+            if (CurrentChapter == null || CurrentChapter.stages == null) return null;
+            if (CurrentStageIndex < 0 || CurrentStageIndex >= CurrentChapter.stages.Length) return null;
+            return CurrentChapter.stages[CurrentStageIndex];
+        }
+
+        public void LoadStage(int stageIndex)
+        {
+            if (CurrentChapter == null) return;
+            if (CurrentChapter.stages == null || stageIndex >= CurrentChapter.stages.Length)
+            {
+                // No more stages, check boss
+                if (CurrentChapter.boss != null)
+                {
+                    LoadBoss();
+                    return;
+                }
+                OnChapterWon();
+                return;
+            }
+
+            CurrentStageIndex = stageIndex;
+            var stage = CurrentChapter.stages[stageIndex];
+
+            if (GameSettings.Instance != null)
+            {
+                GameSettings.Instance.enemyCharacter = stage.opponentCharacter ?? CurrentChapter.enemyCharacter;
+                GameSettings.Instance.selectedArena = CurrentChapter.arenaData;
+                GameSettings.Instance.currentMode = GameSettings.GameMode.Story;
+            }
+
+            StartFight();
+        }
+
+        void LoadBoss()
+        {
+            var boss = CurrentChapter.boss;
+            if (GameSettings.Instance != null)
+            {
+                GameSettings.Instance.enemyCharacter = boss.bossCharacter;
+                GameSettings.Instance.selectedArena = CurrentChapter.arenaData;
+                GameSettings.Instance.currentMode = GameSettings.GameMode.Story;
+            }
+            StartFight();
+        }
+
+        public void OnStageWon()
+        {
+            var stage = CurrentStage;
+            if (stage != null && SaveManager.Instance != null)
+                SaveManager.Instance.AddCurrency(stage.coinReward);
+
+            // Advance to next stage
+            CurrentStageIndex++;
+            if (CurrentChapter.stages != null && CurrentStageIndex < CurrentChapter.stages.Length)
+            {
+                LoadStage(CurrentStageIndex);
+            }
+            else if (CurrentChapter.boss != null && CurrentStageIndex == (CurrentChapter.stages?.Length ?? 0))
+            {
+                LoadBoss();
+            }
+            else
+            {
+                OnChapterWon();
+            }
+        }
+
+        public bool IsBossStage => CurrentChapter != null && CurrentChapter.boss != null
+            && CurrentStageIndex >= (CurrentChapter.stages?.Length ?? 0);
+
+        public int TotalStagesInChapter => (CurrentChapter?.stages?.Length ?? 0)
+            + (CurrentChapter?.boss != null ? 1 : 0);
     }
 }
