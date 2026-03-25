@@ -112,7 +112,7 @@ public class CreateVOLKCharacters
         c.speed = spd;
         c.power = pow;
         c.defense = def;
-        c.attackDamage = pow * 1.67f; // power'a oranli
+        c.attackDamage = pow * 1.67f;
         c.attackRange = 1.2f;
         c.walkSpeed = walk;
         c.runSpeed = run;
@@ -123,6 +123,9 @@ public class CreateVOLKCharacters
         c.skill1 = sk1;
         c.skill2 = sk2;
 
+        // Per-character combat feel
+        ApplyCombatFeel(c, name);
+
         // Link animator controller
         var animCtrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
             "Assets/Animations/PlayerAnimator.controller");
@@ -131,5 +134,26 @@ public class CreateVOLKCharacters
 
         AssetDatabase.CreateAsset(c, path);
         EditorUtility.SetDirty(c);
+    }
+
+    static void ApplyCombatFeel(CharacterData c, string name)
+    {
+        // (animSpeedMult, attackKB, kbResist, hitstopMult, camShakeMult, pitchOffset)
+        (float a, float kb, float r, float h, float cs, float p) feel = name switch
+        {
+            "YILDIZ" => (1.0f, 2.5f, 0.4f, 1.0f, 1.0f, 0.0f),
+            "KAYA"   => (0.7f, 5.0f, 0.8f, 1.4f, 1.5f, -0.3f),
+            "RUZGAR" => (1.4f, 1.5f, 0.2f, 0.6f, 0.5f, 0.2f),
+            "CELIK"  => (1.1f, 2.0f, 0.6f, 1.1f, 0.8f, 0.1f),
+            "SIS"    => (1.2f, 1.8f, 0.3f, 0.8f, 0.6f, 0.15f),
+            "TOPRAK" => (0.85f, 4.0f, 0.7f, 1.2f, 1.2f, -0.15f),
+            _        => (1.0f, 2.5f, 0.5f, 1.0f, 1.0f, 0.0f),
+        };
+        c.animationSpeedMult = feel.a;
+        c.attackKnockbackForce = feel.kb;
+        c.knockbackResistance = feel.r;
+        c.hitstopMultiplier = feel.h;
+        c.cameraShakeMultiplier = feel.cs;
+        c.soundPitchOffset = feel.p;
     }
 }

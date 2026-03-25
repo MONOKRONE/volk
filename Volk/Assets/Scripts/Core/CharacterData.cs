@@ -24,6 +24,14 @@ namespace Volk.Core
         public float knockbackForce = 2f;
         public float rotationSpeed = 1800f;
 
+        [Header("Combat Feel")]
+        public float animationSpeedMult = 1.0f;
+        public float attackKnockbackForce = 2.5f;
+        public float knockbackResistance = 0.5f;
+        public float hitstopMultiplier = 1.0f;
+        public float cameraShakeMultiplier = 1.0f;
+        public float soundPitchOffset = 0.0f;
+
         [Header("Animation")]
         public RuntimeAnimatorController animController;
 

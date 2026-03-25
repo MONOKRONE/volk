@@ -174,6 +174,11 @@ public class Fighter : MonoBehaviour
         if (data.animController != null)
             anim.runtimeAnimatorController = data.animController;
 
+        // Combat feel parameters
+        if (anim != null)
+            anim.speed = data.animationSpeedMult;
+        knockbackForce = data.attackKnockbackForce;
+
         // Apply palette swap material
         if (data.characterMaterial != null)
         {
@@ -677,8 +682,9 @@ public class Fighter : MonoBehaviour
         if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
             Volk.Core.MatchStatsTracker.Instance.RecordHitReceived(amount);
 
-        JuiceManager.Instance?.CharacterShake(transform);
-        StartCoroutine(ShakeCamera(0.1f, 0.05f));
+        float shakeMult = characterData != null ? characterData.cameraShakeMultiplier : 1f;
+        JuiceManager.Instance?.CharacterShake(transform, 0.05f * shakeMult);
+        StartCoroutine(ShakeCamera(0.1f, 0.05f * shakeMult));
         AudioManager.Instance?.PlayHit();
         VibrationManager.Instance?.VibrateLight();
 
@@ -687,7 +693,8 @@ public class Fighter : MonoBehaviour
         {
             Vector3 dir = (transform.position - attackerPos).normalized;
             dir.y = 0;
-            knockbackVelocity = dir * knockbackForce;
+            float kbResist = characterData != null ? (1f - characterData.knockbackResistance) : 1f;
+            knockbackVelocity = dir * knockbackForce * kbResist;
             knockbackTimer = knockbackDuration;
         }
 
