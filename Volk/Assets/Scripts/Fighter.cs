@@ -73,6 +73,9 @@ public class Fighter : MonoBehaviour
     private float normalHeight;
     private float crouchHeight;
 
+    // Lean/tilt
+    private float leanAmount = 0.8f;
+
     // Knockback
     public float knockbackForce = 2f;
     public float knockbackDuration = 0.2f;
@@ -315,6 +318,13 @@ public class Fighter : MonoBehaviour
                         Quaternion.LookRotation(camForward), rotSpeed * Time.deltaTime);
             }
         }
+
+        // Lean/tilt based on lateral velocity
+        float lateralSpeed = Vector3.Dot(currentVelocity, transform.right);
+        float targetLean = -lateralSpeed * leanAmount;
+        targetLean = Mathf.Clamp(targetLean, -8f, 8f);
+        Quaternion leanRot = Quaternion.Euler(0f, 0f, targetLean);
+        transform.rotation *= leanRot;
     }
 
     void UpdateAI()
@@ -503,6 +513,13 @@ public class Fighter : MonoBehaviour
             yield return null;
         }
 
+        // Whiff frame: if no hit landed, keep isAttacking true for 2 extra frames (commitment)
+        if (!hitLanded)
+        {
+            yield return null;
+            yield return null;
+        }
+
         // Wait for rest of animation
         yield return new WaitForSeconds(0.6f);
         anim.applyRootMotion = false;
@@ -586,6 +603,7 @@ public class Fighter : MonoBehaviour
         if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
             Volk.Core.MatchStatsTracker.Instance.RecordHitReceived(amount);
 
+        JuiceManager.Instance?.CharacterShake(transform);
         StartCoroutine(ShakeCamera(0.1f, 0.05f));
         AudioManager.Instance?.PlayHit();
         VibrationManager.Instance?.VibrateLight();
@@ -613,6 +631,8 @@ public class Fighter : MonoBehaviour
             anim.SetTrigger(hDeath);
             AudioManager.Instance?.PlayFall();
             VibrationManager.Instance?.VibrateHeavy();
+            JuiceManager.Instance?.ScreenFlash();
+            JuiceManager.Instance?.SlowMotionKO();
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
         }
