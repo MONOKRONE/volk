@@ -81,7 +81,7 @@ public class Fighter : MonoBehaviour
 
     // Combo
     [HideInInspector] public bool comboWindowOpen;
-    public float comboWindowDuration = 0.4f;
+    public float comboWindowDuration = 0.55f;
     private float comboWindowTimer;
 
     // Skill cooldowns
@@ -487,8 +487,9 @@ public class Fighter : MonoBehaviour
                         if (animHash == hKick) AudioManager.Instance?.PlayKick();
                         else AudioManager.Instance?.PlayPunch();
 
-                        StartCoroutine(HitStop(0.08f));
-                        target.StartCoroutine(target.HitStop(0.08f));
+                        HitstopManager.Instance?.Trigger(HitstopManager.LightHit);
+                        StartCoroutine(HitStop(HitstopManager.LightHit));
+                        target.StartCoroutine(target.HitStop(HitstopManager.LightHit));
 
                         // Spawn hit effect
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
@@ -716,7 +717,9 @@ public class Fighter : MonoBehaviour
                     {
                         target.TakeDamage(heavyDamage, transform.position, true, this);
                         hitLanded = true;
-                        StartCoroutine(Hitstop());
+                        HitstopManager.Instance?.Trigger(HitstopManager.HeavyHit);
+                        StartCoroutine(HitStop(HitstopManager.HeavyHit));
+                        target.StartCoroutine(target.HitStop(HitstopManager.HeavyHit));
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, animHash == hKick);
                         break;
@@ -833,8 +836,9 @@ public class Fighter : MonoBehaviour
                             HitEffectManager.Instance?.SpawnHitEffect(hitPos, false);
                         }
 
-                        StartCoroutine(HitStop(0.1f));
-                        target.StartCoroutine(target.HitStop(0.1f));
+                        HitstopManager.Instance?.Trigger(HitstopManager.SkillHit);
+                        StartCoroutine(HitStop(HitstopManager.SkillHit));
+                        target.StartCoroutine(target.HitStop(HitstopManager.SkillHit));
                         VibrationManager.Instance?.VibrateHeavy();
                         break;
                     }
