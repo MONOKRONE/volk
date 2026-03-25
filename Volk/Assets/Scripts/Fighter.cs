@@ -521,6 +521,9 @@ public class Fighter : MonoBehaviour
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
 
+        // Whoosh before impact
+        AudioManager.Instance?.PlayWhoosh();
+
         // Wait longer for animator to enter the attack state
         yield return new WaitForSeconds(0.15f);
 
@@ -555,8 +558,10 @@ public class Fighter : MonoBehaviour
                         // Sound only on confirmed hit
                         if (animHash == hKick) AudioManager.Instance?.PlayKick();
                         else AudioManager.Instance?.PlayPunch();
+                        AudioManager.Instance?.PlayLayeredHit(false, false);
 
                         HitstopManager.Instance?.Trigger(HitstopManager.LightHit);
+                        AudioManager.Instance?.PauseHitSounds(HitstopManager.LightHit);
                         StartCoroutine(HitStop(HitstopManager.LightHit));
                         target.StartCoroutine(target.HitStop(HitstopManager.LightHit));
 
@@ -572,9 +577,10 @@ public class Fighter : MonoBehaviour
             yield return null;
         }
 
-        // Whiff frame: if no hit landed, keep isAttacking true for 2 extra frames (commitment)
+        // Whiff frame: if no hit landed, play whiff sound and keep isAttacking for 2 extra frames
         if (!hitLanded)
         {
+            AudioManager.Instance?.PlayWhiff();
             yield return null;
             yield return null;
         }
@@ -688,7 +694,7 @@ public class Fighter : MonoBehaviour
             isDead = true;
             currentHP = 0;
             anim.SetTrigger(hDeath);
-            AudioManager.Instance?.PlayFall();
+            AudioManager.Instance?.PlayKnockout();
             VibrationManager.Instance?.VibrateHeavy();
             JuiceManager.Instance?.ScreenFlash();
             JuiceManager.Instance?.SlowMotionKO();
@@ -773,6 +779,7 @@ public class Fighter : MonoBehaviour
         isAttacking = true;
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
+        AudioManager.Instance?.PlayWhoosh();
 
         yield return new WaitForSeconds(0.2f);
 
@@ -796,7 +803,9 @@ public class Fighter : MonoBehaviour
                     {
                         target.TakeDamage(heavyDamage, transform.position, true, this);
                         hitLanded = true;
+                        AudioManager.Instance?.PlayLayeredHit(true, false);
                         HitstopManager.Instance?.Trigger(HitstopManager.HeavyHit);
+                        AudioManager.Instance?.PauseHitSounds(HitstopManager.HeavyHit);
                         StartCoroutine(HitStop(HitstopManager.HeavyHit));
                         target.StartCoroutine(target.HitStop(HitstopManager.HeavyHit));
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
@@ -902,6 +911,7 @@ public class Fighter : MonoBehaviour
                         if (skill is Volk.Core.SkillData)
                             target.TakeDamage(skill.damage, transform.position, true, this);
                         hitLanded = true;
+                        AudioManager.Instance?.PlaySkillHit();
 
                         // VFX
                         if (skill.vfxPrefab != null)
