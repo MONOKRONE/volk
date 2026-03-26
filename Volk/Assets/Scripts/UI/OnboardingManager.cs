@@ -5,42 +5,63 @@ using System.Collections;
 
 namespace Volk.UI
 {
-    public enum GhostArchetype { Aggressive, Balanced, Defensive }
-
     public class OnboardingManager : MonoBehaviour
     {
         public static OnboardingManager Instance;
 
-        [Header("Panels")]
-        public GameObject welcomePanel;
-        public GameObject archetypePanel;
-        public GameObject tutorialPanel;
-        public GameObject completePanel;
+        [Header("Overlay")]
+        public CanvasGroup overlayGroup;
+        public Image overlayBG;
 
-        [Header("Archetype Selection")]
-        public VButton aggressiveButton;
-        public VButton balancedButton;
-        public VButton defensiveButton;
-        public TextMeshProUGUI archetypeDescText;
+        [Header("Step UI")]
+        public TextMeshProUGUI stepTitleText;
+        public TextMeshProUGUI stepDescriptionText;
+        public TextMeshProUGUI stepCounterText;
+        public Image stepIcon;
+        public Slider progressBar;
 
-        [Header("Tutorial Steps")]
-        public TextMeshProUGUI tutorialStepText;
-        public TextMeshProUGUI tutorialInstructionText;
-        public VButton skipButton;
+        [Header("Buttons")]
         public VButton nextButton;
-        public Slider tutorialProgress;
+        public VButton skipButton;
+
+        [Header("Highlight")]
+        public RectTransform highlightRect;
+        public Image highlightImage;
+
+        [Header("Settings")]
+        public string prefsKey = "onboarding_done";
 
         private int currentStep;
-        private GhostArchetype selectedArchetype;
+        private bool isActive;
 
-        static readonly (string title, string instruction)[] TutorialSteps = {
-            ("Hareket", "Sol joystick'i kullanarak hareket et"),
-            ("Yumruk", "Yumruk butonuna dokun → hafif saldiri"),
-            ("Tekme", "Tekme butonuna dokun → tekme saldirisi"),
-            ("Agir Saldiri", "Butonu basili tut → agir saldiri"),
-            ("Blok", "Blok butonuna dokun → savunma"),
-            ("Skill", "Butona cift dokun → ozel beceri"),
+        static readonly TutorialStep[] Steps = {
+            new TutorialStep {
+                title = "Hareket",
+                description = "Sol joystick ile karakterini hareket ettir.\nYukariya fiske = zipla, asagiya = egilme.",
+                highlightAnchorMin = new Vector2(0, 0),
+                highlightAnchorMax = new Vector2(0.25f, 0.5f)
+            },
+            new TutorialStep {
+                title = "Saldiri",
+                description = "Yumruk ve Tekme butonlarina dokun.\nBasili tut = agir saldiri.\nBlok = savunma.",
+                highlightAnchorMin = new Vector2(0.75f, 0),
+                highlightAnchorMax = new Vector2(1f, 0.5f)
+            },
+            new TutorialStep {
+                title = "Skill",
+                description = "Butona cift dokun = ozel beceri.\nHer karakterin 2 farkli skill'i var.\nSkill cooldown'a dikkat et.",
+                highlightAnchorMin = new Vector2(0.75f, 0.5f),
+                highlightAnchorMax = new Vector2(1f, 1f)
+            }
         };
+
+        struct TutorialStep
+        {
+            public string title;
+            public string description;
+            public Vector2 highlightAnchorMin;
+            public Vector2 highlightAnchorMax;
+        }
 
         void Awake()
         {
@@ -49,92 +70,140 @@ namespace Volk.UI
 
         void Start()
         {
-            if (PlayerPrefs.GetInt("onboarding_done", 0) == 1)
+            if (PlayerPrefs.GetInt(prefsKey, 0) == 1)
             {
                 gameObject.SetActive(false);
                 return;
             }
-            ShowWelcome();
-        }
 
-        void ShowWelcome()
-        {
-            SetPanel(welcomePanel);
-        }
-
-        public void OnWelcomeContinue()
-        {
-            SetPanel(archetypePanel);
-        }
-
-        public void SelectArchetype(int type)
-        {
-            selectedArchetype = (GhostArchetype)type;
-            PlayerPrefs.SetInt("ghost_archetype", type);
-
-            if (archetypeDescText)
-            {
-                archetypeDescText.text = selectedArchetype switch
-                {
-                    GhostArchetype.Aggressive => "Agresif: Hizli saldiri, az savunma. Riskli ama oldurucu.",
-                    GhostArchetype.Balanced => "Dengeli: Saldiri ve savunma dengesinde. Her duruma uygun.",
-                    GhostArchetype.Defensive => "Defansif: Guclu savunma, karsi atak odakli. Sabir gerektirir.",
-                    _ => ""
-                };
-            }
-        }
-
-        public void OnArchetypeContinue()
-        {
             currentStep = 0;
-            SetPanel(tutorialPanel);
-            ShowTutorialStep();
+            isActive = true;
+            if (overlayGroup) overlayGroup.alpha = 0;
+
+            if (nextButton) nextButton.onClick.AddListener(NextStep);
+            if (skipButton) skipButton.onClick.AddListener(Skip);
+
+            StartCoroutine(ShowFirstStep());
         }
 
-        void ShowTutorialStep()
+        IEnumerator ShowFirstStep()
         {
-            if (currentStep >= TutorialSteps.Length)
+            yield return new WaitForSeconds(0.5f);
+
+            if (overlayGroup)
             {
-                CompleteTutorial();
+                float t = 0;
+                while (t < 0.4f)
+                {
+                    t += Time.unscaledDeltaTime;
+                    overlayGroup.alpha = t / 0.4f;
+                    yield return null;
+                }
+                overlayGroup.alpha = 1;
+            }
+
+            ShowStep(0);
+        }
+
+        void ShowStep(int index)
+        {
+            if (index >= Steps.Length)
+            {
+                Complete();
                 return;
             }
 
-            var step = TutorialSteps[currentStep];
-            if (tutorialStepText) tutorialStepText.text = $"Adim {currentStep + 1}/{TutorialSteps.Length}: {step.title}";
-            if (tutorialInstructionText) tutorialInstructionText.text = step.instruction;
-            if (tutorialProgress) tutorialProgress.value = (float)currentStep / TutorialSteps.Length;
+            currentStep = index;
+            var step = Steps[index];
+
+            if (stepTitleText)
+            {
+                stepTitleText.text = step.title;
+                stepTitleText.color = VTheme.Gold;
+            }
+            if (stepDescriptionText)
+            {
+                stepDescriptionText.text = step.description;
+                stepDescriptionText.color = VTheme.TextPrimary;
+            }
+            if (stepCounterText)
+            {
+                stepCounterText.text = $"{index + 1} / {Steps.Length}";
+                stepCounterText.color = VTheme.TextSecondary;
+            }
+            if (progressBar)
+                progressBar.value = (float)(index + 1) / Steps.Length;
+
+            // Highlight area
+            if (highlightRect)
+            {
+                highlightRect.anchorMin = step.highlightAnchorMin;
+                highlightRect.anchorMax = step.highlightAnchorMax;
+                highlightRect.offsetMin = Vector2.zero;
+                highlightRect.offsetMax = Vector2.zero;
+            }
+            if (highlightImage)
+                highlightImage.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, 0.15f);
+
+            // Pulse highlight
+            StartCoroutine(PulseHighlight());
+
+            // Next button text
+            if (nextButton)
+            {
+                var txt = nextButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt) txt.text = index == Steps.Length - 1 ? "TAMAM" : "SONRAKI";
+            }
         }
 
-        public void OnNextStep()
+        IEnumerator PulseHighlight()
         {
-            currentStep++;
-            ShowTutorialStep();
+            if (highlightImage == null) yield break;
+            float baseAlpha = 0.15f;
+            float t = 0;
+            while (t < 0.8f && currentStep < Steps.Length)
+            {
+                t += Time.unscaledDeltaTime;
+                float pulse = baseAlpha + Mathf.Sin(t * 6f) * 0.08f;
+                highlightImage.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, pulse);
+                yield return null;
+            }
         }
 
-        public void OnSkipTutorial()
+        public void NextStep()
         {
-            CompleteTutorial();
+            UIAudio.Instance?.PlayClick();
+            ShowStep(currentStep + 1);
         }
 
-        void CompleteTutorial()
+        public void Skip()
         {
-            SetPanel(completePanel);
-            PlayerPrefs.SetInt("onboarding_done", 1);
+            UIAudio.Instance?.PlayClick();
+            Complete();
+        }
+
+        void Complete()
+        {
+            PlayerPrefs.SetInt(prefsKey, 1);
             PlayerPrefs.Save();
-            Debug.Log($"[Onboarding] Complete! Archetype: {selectedArchetype}");
+            isActive = false;
+            Debug.Log("[Onboarding] Tutorial completed");
+            StartCoroutine(FadeOut());
         }
 
-        public void OnCompleteContinue()
+        IEnumerator FadeOut()
         {
+            if (overlayGroup)
+            {
+                float t = 0;
+                while (t < 0.3f)
+                {
+                    t += Time.unscaledDeltaTime;
+                    overlayGroup.alpha = 1 - t / 0.3f;
+                    yield return null;
+                }
+            }
             gameObject.SetActive(false);
-        }
-
-        void SetPanel(GameObject panel)
-        {
-            if (welcomePanel) welcomePanel.SetActive(panel == welcomePanel);
-            if (archetypePanel) archetypePanel.SetActive(panel == archetypePanel);
-            if (tutorialPanel) tutorialPanel.SetActive(panel == tutorialPanel);
-            if (completePanel) completePanel.SetActive(panel == completePanel);
         }
     }
 }
