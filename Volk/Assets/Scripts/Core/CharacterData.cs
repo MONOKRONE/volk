@@ -22,7 +22,8 @@ namespace Volk.Core
         public float walkSpeed = 4f;
         public float runSpeed = 7f;
         public float knockbackForce = 2f;
-        public float rotationSpeed = 1800f;
+        public float rotationSpeed = 1200f;
+        public float combatRotationSpeed = 2400f;
 
         [Header("Combat Feel")]
         public float animationSpeedMult = 1.0f;

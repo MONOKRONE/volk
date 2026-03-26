@@ -31,7 +31,8 @@ public class Fighter : MonoBehaviour
     [Header("Movement")]
     public float walkSpeed = 6f;
     public float runSpeed = 8.5f;
-    public float rotSpeed = 1800f;
+    public float rotSpeed = 1200f;
+    public float combatRotSpeed = 2400f;
     private Vector3 currentVelocity;
     public float jumpHeight = 1.8f;
 
@@ -186,6 +187,7 @@ public class Fighter : MonoBehaviour
         runSpeed = data.runSpeed;
         knockbackForce = data.knockbackForce;
         rotSpeed = data.rotationSpeed;
+        combatRotSpeed = data.combatRotationSpeed;
         power = data.power;
         defense = data.defense;
 
@@ -313,13 +315,18 @@ public class Fighter : MonoBehaviour
         // Reduce walk speed while crouching
         float currentSpeed = isCrouching ? walkSpeed * 0.5f : walkSpeed;
 
+        // Buffer attack inputs for responsiveness (PLA-89)
+        if (Input.GetKeyDown(KeyCode.J)) inputBuffer.RecordInput("Punch");
+        if (Input.GetKeyDown(KeyCode.K)) inputBuffer.RecordInput("Kick");
+        if (Input.GetKeyDown(KeyCode.L)) inputBuffer.RecordInput("Block");
+
         // Check attack input FIRST - before any movement
         bool canAttack = !isAttacking || comboWindowOpen;
         if (canAttack)
         {
-            if (Input.GetKeyDown(KeyCode.J)) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
-            if (Input.GetKeyDown(KeyCode.K)) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
-            if (!isAttacking && Input.GetKeyDown(KeyCode.L)) { StartCoroutine(DoBlock()); return; }
+            if (Input.GetKeyDown(KeyCode.J) || inputBuffer.ConsumeInput("Punch")) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
+            if (Input.GetKeyDown(KeyCode.K) || inputBuffer.ConsumeInput("Kick")) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
+            if (!isAttacking && (Input.GetKeyDown(KeyCode.L) || inputBuffer.ConsumeInput("Block"))) { StartCoroutine(DoBlock()); return; }
         }
 
         if (isAttacking)
@@ -331,8 +338,9 @@ public class Fighter : MonoBehaviour
         }
 
         // Deceleration curve: smooth velocity towards target
+        // accel ~0.05s, decel ~0.1s (PLA-88)
         Vector3 targetVelocity = dir * currentSpeed;
-        float accelRate = inputMag > 0.15f ? 20f : 12f;
+        float accelRate = inputMag > 0.15f ? 20f : currentSpeed / 0.1f;
         currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, accelRate * Time.deltaTime);
 
         Vector3 move = currentVelocity;
@@ -354,13 +362,21 @@ public class Fighter : MonoBehaviour
         }
 
         // Auto face enemy when locked on - using RotateTowards
+        // Use combatRotSpeed (2400) when close to enemy, rotSpeed (1200) otherwise
+        float activeRotSpeed = rotSpeed;
+        if (aiTarget != null)
+        {
+            float distToTarget = Vector3.Distance(transform.position, aiTarget.position);
+            activeRotSpeed = distToTarget < attackRange * 2f ? combatRotSpeed : rotSpeed;
+        }
+
         if (lockOnEnabled && aiTarget != null && !isAttacking)
         {
             Vector3 lookDir = (aiTarget.position - transform.position).normalized;
             lookDir.y = 0;
             if (lookDir.sqrMagnitude > 0.01f)
                 transform.rotation = Quaternion.RotateTowards(transform.rotation,
-                    Quaternion.LookRotation(lookDir), rotSpeed * Time.deltaTime);
+                    Quaternion.LookRotation(lookDir), activeRotSpeed * Time.deltaTime);
         }
         else if (!lockOnEnabled && !isAttacking)
         {
