@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
+  m_Name: Chapter5
+  m_EditorClassIdentifier: 
+  chapterTitle: Celikin Kalesi
+  description: Bolum 5
+  chapterNumber: 5
+  stages: []
+  boss: {fileID: 11400000, guid: b8108edcda1a431c9448cd649d9af7e1, type: 2}
+  enemyCharacter: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b, type: 2}
+  difficulty: 1
+  enemyHPMultiplier: 1.8
+  coinReward: 250
+  characterUnlockReward: {fileID: 0}
+  introDialogue: []
+  outroDialogue: []
+  arenaSceneName: CombatTest
+  arenaData: {fileID: 0}

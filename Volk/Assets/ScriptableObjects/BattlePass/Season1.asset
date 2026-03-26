@@ -1,0 +1,258 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61482ff82566a46d2a3ab7c22a9032f9, type: 3}
+  m_Name: Season1
+  m_EditorClassIdentifier: 
+  seasonName: "Sezon 1: Sokak Efsaneleri"
+  startDate: "2026-04-01"
+  endDate: "2026-05-27"
+  tiers:
+    - tierNumber: 1
+      xpRequired: 100
+      freeReward: 
+      premiumReward: EpicSkin_YILDIZ
+    - tierNumber: 2
+      xpRequired: 300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 3
+      xpRequired: 600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 4
+      xpRequired: 1000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 5
+      xpRequired: 1500
+      freeReward: 25 Gem
+      premiumReward: 100 Coin
+    - tierNumber: 6
+      xpRequired: 2100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 7
+      xpRequired: 2800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 8
+      xpRequired: 3600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 9
+      xpRequired: 4500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 10
+      xpRequired: 5500
+      freeReward: 500 Coin
+      premiumReward: HitEffect_Fire
+    - tierNumber: 11
+      xpRequired: 6600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 12
+      xpRequired: 7800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 13
+      xpRequired: 9100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 14
+      xpRequired: 10500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 15
+      xpRequired: 12000
+      freeReward: 75 Gem
+      premiumReward: 300 Coin
+    - tierNumber: 16
+      xpRequired: 13600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 17
+      xpRequired: 15300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 18
+      xpRequired: 17100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 19
+      xpRequired: 19000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 20
+      xpRequired: 21000
+      freeReward: 1000 Coin
+      premiumReward: 400 Coin
+    - tierNumber: 21
+      xpRequired: 23100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 22
+      xpRequired: 25300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 23
+      xpRequired: 27600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 24
+      xpRequired: 30000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 25
+      xpRequired: 32500
+      freeReward: 125 Gem
+      premiumReward: HitEffect_Ice
+    - tierNumber: 26
+      xpRequired: 35100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 27
+      xpRequired: 37800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 28
+      xpRequired: 40600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 29
+      xpRequired: 43500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 30
+      xpRequired: 46500
+      freeReward: 1500 Coin
+      premiumReward: 600 Coin
+    - tierNumber: 31
+      xpRequired: 49600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 32
+      xpRequired: 52800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 33
+      xpRequired: 56100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 34
+      xpRequired: 59500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 35
+      xpRequired: 63000
+      freeReward: 175 Gem
+      premiumReward: 700 Coin
+    - tierNumber: 36
+      xpRequired: 66600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 37
+      xpRequired: 70300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 38
+      xpRequired: 74100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 39
+      xpRequired: 78000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 40
+      xpRequired: 82000
+      freeReward: 2000 Coin
+      premiumReward: 800 Coin
+    - tierNumber: 41
+      xpRequired: 86100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 42
+      xpRequired: 90300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 43
+      xpRequired: 94600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 44
+      xpRequired: 99000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 45
+      xpRequired: 103500
+      freeReward: 225 Gem
+      premiumReward: 900 Coin
+    - tierNumber: 46
+      xpRequired: 108100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 47
+      xpRequired: 112800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 48
+      xpRequired: 117600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 49
+      xpRequired: 122500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 50
+      xpRequired: 127500
+      freeReward: 2500 Coin
+      premiumReward: LegendarySkin_RUZGAR
+    - tierNumber: 51
+      xpRequired: 132600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 52
+      xpRequired: 137800
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 53
+      xpRequired: 143100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 54
+      xpRequired: 148500
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 55
+      xpRequired: 154000
+      freeReward: 275 Gem
+      premiumReward: 1100 Coin
+    - tierNumber: 56
+      xpRequired: 159600
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 57
+      xpRequired: 165300
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 58
+      xpRequired: 171100
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 59
+      xpRequired: 177000
+      freeReward: 
+      premiumReward: 
+    - tierNumber: 60
+      xpRequired: 183000
+      freeReward: 3000 Coin
+      premiumReward: LegendarySkin_CELIK

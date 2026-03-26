@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cd051a67c15b49b0998373c3ccd9994, type: 3}
+  m_Name: Ch4_Boss
+  m_EditorClassIdentifier: 
+  bossCharacter: {fileID: 11400000, guid: 77c466dd3e4b43b29a812e2a994bb91b, type: 2}
+  bossHPMultiplier: 1.5
+  specialModifier: 
+  modifierValue: 0
+  rewardCharacterUnlock: {fileID: 11400000, guid: 263f7fc68a794df7888d531e0a167748, type: 2}
+  coinReward: 200

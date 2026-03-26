@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
+  m_Name: Chapter6
+  m_EditorClassIdentifier: 
+  chapterTitle: Gizli Usta
+  description: Bolum 6
+  chapterNumber: 6
+  stages: []
+  boss: {fileID: 11400000, guid: 85f33ed03a8246e58d1c5b7ce2952386, type: 2}
+  enemyCharacter: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b, type: 2}
+  difficulty: 2
+  enemyHPMultiplier: 2.0
+  coinReward: 300
+  characterUnlockReward: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b, type: 2}
+  introDialogue: []
+  outroDialogue: []
+  arenaSceneName: CombatTest
+  arenaData: {fileID: 0}
