@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 using Volk.Core;
 using Volk.Meta;
@@ -8,12 +9,34 @@ namespace Volk.UI
 {
     public class ShopUI : MonoBehaviour
     {
-        [Header("References")]
-        public Transform itemGrid;
-        public GameObject itemCardPrefab;
-        public TextMeshProUGUI currencyText;
+        [Header("Navigation")]
         public Button backButton;
-        public CanvasGroup canvasGroup;
+        public VTopBar topBar;
+
+        [Header("Currency Display")]
+        public TextMeshProUGUI coinText;
+        public TextMeshProUGUI gemText;
+
+        [Header("Tab Buttons")]
+        public Button battlePassTab;
+        public Button cosmeticsTab;
+        public Button charactersTab;
+
+        [Header("Tab Panels")]
+        public GameObject battlePassPanel;
+        public GameObject cosmeticsPanel;
+        public GameObject charactersPanel;
+
+        [Header("Battle Pass")]
+        public BattlePassUI battlePassUI;
+
+        [Header("Cosmetics Grid")]
+        public Transform cosmeticsGrid;
+        public GameObject cosmeticCardPrefab;
+
+        [Header("Characters Grid")]
+        public Transform charactersGrid;
+        public GameObject characterCardPrefab;
 
         [Header("Confirm Popup")]
         public GameObject confirmPopup;
@@ -21,7 +44,9 @@ namespace Volk.UI
         public Button confirmYes;
         public Button confirmNo;
 
-        private ShopItemData pendingItem;
+        private int activeTabIndex;
+        private ShopItemData pendingShopItem;
+        private CharacterData pendingCharacter;
 
         void Awake()
         {
@@ -30,26 +55,29 @@ namespace Volk.UI
 
         void Start()
         {
-            if (backButton != null)
-                backButton.onClick.AddListener(() =>
-                    UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu"));
+            // Back button
+            if (backButton)
+                backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
 
-            if (confirmNo != null)
-                confirmNo.onClick.AddListener(() => confirmPopup.SetActive(false));
+            // Tab buttons
+            if (battlePassTab) battlePassTab.onClick.AddListener(() => SwitchTab(0));
+            if (cosmeticsTab) cosmeticsTab.onClick.AddListener(() => SwitchTab(1));
+            if (charactersTab) charactersTab.onClick.AddListener(() => SwitchTab(2));
 
-            if (confirmYes != null)
-                confirmYes.onClick.AddListener(OnConfirmPurchase);
+            // Confirm popup
+            if (confirmPopup) confirmPopup.SetActive(false);
+            if (confirmNo) confirmNo.onClick.AddListener(() => confirmPopup?.SetActive(false));
+            if (confirmYes) confirmYes.onClick.AddListener(OnConfirmPurchase);
 
-            if (confirmPopup != null)
-                confirmPopup.SetActive(false);
-
+            // Shop events
             if (ShopManager.Instance != null)
             {
-                ShopManager.Instance.OnItemPurchased += OnPurchased;
+                ShopManager.Instance.OnItemPurchased += OnItemPurchased;
                 ShopManager.Instance.OnPurchaseFailed += OnFailed;
             }
 
-            PopulateShop();
+            // Default tab
+            SwitchTab(0);
             UpdateCurrency();
         }
 
@@ -57,72 +85,194 @@ namespace Volk.UI
         {
             if (ShopManager.Instance != null)
             {
-                ShopManager.Instance.OnItemPurchased -= OnPurchased;
+                ShopManager.Instance.OnItemPurchased -= OnItemPurchased;
                 ShopManager.Instance.OnPurchaseFailed -= OnFailed;
             }
         }
 
-        void PopulateShop()
+        // --- Tab Management ---
+
+        void SwitchTab(int index)
         {
-            if (ShopManager.Instance == null || itemCardPrefab == null || itemGrid == null) return;
+            activeTabIndex = index;
+            UIAudio.Instance?.PlayClick();
+
+            if (battlePassPanel) battlePassPanel.SetActive(index == 0);
+            if (cosmeticsPanel) cosmeticsPanel.SetActive(index == 1);
+            if (charactersPanel) charactersPanel.SetActive(index == 2);
+
+            UpdateTabColors();
+
+            if (index == 0 && battlePassUI) battlePassUI.Refresh();
+            if (index == 1) PopulateCosmetics();
+            if (index == 2) PopulateCharacters();
+        }
+
+        void UpdateTabColors()
+        {
+            SetTabColor(battlePassTab, activeTabIndex == 0);
+            SetTabColor(cosmeticsTab, activeTabIndex == 1);
+            SetTabColor(charactersTab, activeTabIndex == 2);
+        }
+
+        void SetTabColor(Button tab, bool active)
+        {
+            if (tab == null) return;
+            var img = tab.GetComponent<Image>();
+            if (img) img.color = active ? VTheme.Red : VTheme.Card;
+            var txt = tab.GetComponentInChildren<TextMeshProUGUI>();
+            if (txt) txt.color = active ? VTheme.TextPrimary : VTheme.TextMuted;
+        }
+
+        // --- Cosmetics Tab ---
+
+        void PopulateCosmetics()
+        {
+            if (cosmeticsGrid == null) return;
+
+            // Clear existing
+            foreach (Transform child in cosmeticsGrid)
+                Destroy(child.gameObject);
+
+            if (ShopManager.Instance == null) return;
 
             foreach (var item in ShopManager.Instance.shopItems)
             {
-                var card = Instantiate(itemCardPrefab, itemGrid);
+                if (cosmeticCardPrefab == null) break;
+
+                var card = Instantiate(cosmeticCardPrefab, cosmeticsGrid);
                 var capturedItem = item;
 
-                // Name
                 var texts = card.GetComponentsInChildren<TextMeshProUGUI>();
                 if (texts.Length > 0) texts[0].text = item.itemName;
                 if (texts.Length > 1) texts[1].text = $"{item.price} coin";
 
-                // Icon
                 var icon = card.transform.Find("Icon")?.GetComponent<Image>();
                 if (icon != null && item.icon != null)
                     icon.sprite = item.icon;
 
-                // Owned badge
                 bool owned = ShopManager.Instance.IsOwned(item);
                 var ownedBadge = card.transform.Find("OwnedBadge");
                 if (ownedBadge != null)
                     ownedBadge.gameObject.SetActive(owned);
 
-                // Button
                 var btn = card.GetComponent<Button>();
                 if (btn != null)
                 {
                     btn.interactable = !owned;
-                    btn.onClick.AddListener(() => ShowConfirm(capturedItem));
+                    btn.onClick.AddListener(() => ShowConfirmItem(capturedItem));
                 }
             }
         }
 
-        void ShowConfirm(ShopItemData item)
-        {
-            pendingItem = item;
-            if (confirmPopup == null) { ShopManager.Instance.TryPurchase(item); return; }
+        // --- Characters Tab ---
 
+        void PopulateCharacters()
+        {
+            if (charactersGrid == null) return;
+
+            foreach (Transform child in charactersGrid)
+                Destroy(child.gameObject);
+
+            var allChars = Resources.LoadAll<CharacterData>("Characters");
+            if (allChars == null) return;
+
+            foreach (var charData in allChars)
+            {
+                if (characterCardPrefab == null) break;
+
+                var card = Instantiate(characterCardPrefab, charactersGrid);
+                bool unlocked = charData.unlockedByDefault ||
+                    (CharacterUnlockManager.Instance != null && CharacterUnlockManager.Instance.IsUnlocked(charData));
+
+                var texts = card.GetComponentsInChildren<TextMeshProUGUI>();
+                if (texts.Length > 0) texts[0].text = charData.characterName;
+                if (texts.Length > 1)
+                    texts[1].text = unlocked ? "ACIK" : GetUnlockCostText(charData);
+
+                var portrait = card.transform.Find("Portrait")?.GetComponent<Image>();
+                if (portrait != null && charData.portrait != null)
+                    portrait.sprite = charData.portrait;
+
+                // Lock overlay
+                var lockOverlay = card.transform.Find("LockOverlay");
+                if (lockOverlay != null)
+                    lockOverlay.gameObject.SetActive(!unlocked);
+
+                var btn = card.GetComponent<Button>();
+                if (btn != null)
+                {
+                    var captured = charData;
+                    btn.interactable = !unlocked;
+                    btn.onClick.AddListener(() => ShowConfirmCharacter(captured));
+                }
+            }
+        }
+
+        string GetUnlockCostText(CharacterData charData)
+        {
+            return charData.unlockType switch
+            {
+                UnlockCondition.Currency => $"{charData.unlockValue} gem",
+                UnlockCondition.StoryProgress => $"Bolum {charData.unlockValue}",
+                UnlockCondition.WinCount => $"{charData.unlockValue} galibiyet",
+                _ => "KILITLI"
+            };
+        }
+
+        // --- Confirm Popup ---
+
+        void ShowConfirmItem(ShopItemData item)
+        {
+            pendingShopItem = item;
+            pendingCharacter = null;
+            if (confirmPopup == null) { ShopManager.Instance?.TryPurchase(item); return; }
             confirmPopup.SetActive(true);
-            if (confirmText != null)
-                confirmText.text = $"{item.itemName}\n{item.price} coin\nSatin al?";
+            if (confirmText) confirmText.text = $"{item.itemName}\n{item.price} coin\nSatin al?";
+        }
+
+        void ShowConfirmCharacter(CharacterData charData)
+        {
+            pendingCharacter = charData;
+            pendingShopItem = null;
+            if (confirmPopup == null) return;
+            confirmPopup.SetActive(true);
+            if (confirmText) confirmText.text = $"{charData.characterName}\n{GetUnlockCostText(charData)}\nAc?";
         }
 
         void OnConfirmPurchase()
         {
-            if (pendingItem != null)
+            if (pendingShopItem != null)
             {
-                ShopManager.Instance.TryPurchase(pendingItem);
-                pendingItem = null;
+                ShopManager.Instance?.TryPurchase(pendingShopItem);
+                pendingShopItem = null;
             }
-            confirmPopup.SetActive(false);
+            else if (pendingCharacter != null)
+            {
+                TryUnlockCharacter(pendingCharacter);
+                pendingCharacter = null;
+            }
+            confirmPopup?.SetActive(false);
         }
 
-        void OnPurchased(ShopItemData item)
+        void TryUnlockCharacter(CharacterData charData)
         {
-            // Rebuild shop to reflect ownership
-            foreach (Transform child in itemGrid)
-                Destroy(child.gameObject);
-            PopulateShop();
+            if (CharacterUnlockManager.Instance == null) return;
+            bool success = CharacterUnlockManager.Instance.TryUnlock(charData);
+            if (!success)
+            {
+                OnFailed("Karakter acilamadi");
+                return;
+            }
+            PopulateCharacters();
+            UpdateCurrency();
+        }
+
+        // --- Events ---
+
+        void OnItemPurchased(ShopItemData item)
+        {
+            PopulateCosmetics();
             UpdateCurrency();
         }
 
@@ -131,10 +281,15 @@ namespace Volk.UI
             Debug.Log($"[Shop] Purchase failed: {reason}");
         }
 
+        // --- Currency ---
+
         void UpdateCurrency()
         {
-            if (currencyText != null && ShopManager.Instance != null)
-                currencyText.text = $"{ShopManager.Instance.GetPlayerCurrency()} coin";
+            if (CurrencyManager.Instance != null)
+            {
+                if (coinText) coinText.text = CurrencyManager.Instance.Coins.ToString();
+                if (gemText) gemText.text = CurrencyManager.Instance.Gems.ToString();
+            }
         }
     }
 }
