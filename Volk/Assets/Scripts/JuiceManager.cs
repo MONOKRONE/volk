@@ -65,7 +65,24 @@ public class JuiceManager : MonoBehaviour
         target.localPosition = originalLocal;
     }
 
-    // --- 3. SLOW MOTION (KO) ---
+    // --- 3. LEAN/TILT (PLA-92) ---
+    public void ApplyLeanTilt(Transform meshTransform, Vector3 velocity, float maxAngle = 8f)
+    {
+        if (meshTransform == null) return;
+        float lateralSpeed = new Vector2(velocity.x, velocity.z).magnitude;
+        float tiltFactor = Mathf.Clamp01(lateralSpeed / 6f);
+        float targetTilt = tiltFactor * maxAngle;
+
+        // Tilt in movement direction relative to forward
+        Vector3 localVel = meshTransform.InverseTransformDirection(velocity);
+        float sideways = Mathf.Clamp(localVel.x, -1f, 1f);
+        float forward = Mathf.Clamp(localVel.z, -1f, 1f);
+
+        Quaternion tilt = Quaternion.Euler(-forward * targetTilt, 0f, -sideways * targetTilt);
+        meshTransform.localRotation = Quaternion.Slerp(meshTransform.localRotation, tilt, Time.deltaTime * 10f);
+    }
+
+    // --- 4. SLOW MOTION (KO) ---
     public void SlowMotionKO(float timeScale = 0.2f, float durationRealtime = 1f)
     {
         StartCoroutine(DoSlowMotion(timeScale, durationRealtime));
