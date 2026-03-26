@@ -235,6 +235,16 @@ public class Fighter : MonoBehaviour
                 comboWindowOpen = false;
         }
 
+        if (isStunned)
+        {
+            stunTimer -= Time.deltaTime;
+            if (stunTimer <= 0f) isStunned = false;
+            cc.Move(new Vector3(0, yVelocity, 0) * Time.deltaTime);
+            anim.SetBool(hWalk, false);
+            anim.SetBool(hRun, false);
+            return;
+        }
+
         if (postAttackCooldown > 0f)
         {
             postAttackCooldown -= Time.deltaTime;

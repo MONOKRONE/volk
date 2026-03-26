@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Volk.Core
 {
-    public enum EquipmentSlot { Gloves, Boots, Chest, Headband, Accessory }
+    public enum EquipmentSlot { Gloves, Boots, Chest, Headband, Accessory, Guard, Headgear }
     public enum EquipmentRarity { Common, Rare, Epic, Legendary }
     public enum EquipmentSpecialEffect { None, Lifesteal, StunChance, ExpBoost }
 
