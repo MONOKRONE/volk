@@ -16,7 +16,13 @@ namespace Volk.Core
         None,
         MirrorMatch,
         AggressiveClone,
-        DefensiveClone
+        DefensiveClone,
+        LowHPPressure,
+        CornerTrap,
+        SkillPressure,
+        ComboChain,
+        ParryCounter,
+        AdaptiveClone
     }
 
     [CreateAssetMenu(fileName = "NewStage", menuName = "VOLK/Stage Data")]
