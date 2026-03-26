@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using Volk.Core;
 
 namespace Volk.UI
 {
@@ -24,6 +25,8 @@ namespace Volk.UI
         public Image skill2CooldownFill;
         public TextMeshProUGUI skill1Label;
         public TextMeshProUGUI skill2Label;
+        public Image skill1ReadyGlow;
+        public Image skill2ReadyGlow;
 
         [Header("Combo Display")]
         public TextMeshProUGUI comboText;
@@ -34,9 +37,17 @@ namespace Volk.UI
         public TextMeshProUGUI roundText;
         public TextMeshProUGUI timerText;
 
+        [Header("Round Dots")]
+        public Image[] playerRoundDots;
+        public Image[] enemyRoundDots;
+
         [Header("KO Effect")]
         public CanvasGroup koOverlay;
         public TextMeshProUGUI koText;
+
+        [Header("Ghost Indicator")]
+        public CanvasGroup ghostIndicatorGroup;
+        public TextMeshProUGUI ghostIndicatorText;
 
         [Header("References")]
         public Fighter playerFighter;
@@ -48,11 +59,13 @@ namespace Volk.UI
         private float targetEnemyHP = 1f;
         private float displayPlayerHP = 1f;
         private float displayEnemyHP = 1f;
+        private float displaySkill1 = 0f;
+        private float displaySkill2 = 0f;
         private Coroutine shakeCoroutine;
+        private bool ghostMode;
 
         void Start()
         {
-            // Apply VTheme colors
             if (playerHPFill) playerHPFill.color = VTheme.Green;
             if (enemyHPFill) enemyHPFill.color = VTheme.Red;
 
@@ -75,6 +88,23 @@ namespace Volk.UI
                 skill1Label.text = playerFighter.characterData.skill1.skillName;
             if (skill2Label && playerFighter?.characterData?.skill2 != null)
                 skill2Label.text = playerFighter.characterData.skill2.skillName;
+
+            // Ready glow initial state
+            if (skill1ReadyGlow) skill1ReadyGlow.color = new Color(VTheme.Blue.r, VTheme.Blue.g, VTheme.Blue.b, 0f);
+            if (skill2ReadyGlow) skill2ReadyGlow.color = new Color(VTheme.Red.r, VTheme.Red.g, VTheme.Red.b, 0f);
+
+            // Round dots initial state
+            InitRoundDots(playerRoundDots);
+            InitRoundDots(enemyRoundDots);
+
+            // Ghost indicator
+            ghostMode = GameSettings.Instance != null && GameSettings.Instance.currentMode == GameSettings.GameMode.Ghost;
+            if (ghostIndicatorGroup)
+            {
+                ghostIndicatorGroup.alpha = ghostMode ? 1f : 0f;
+                if (ghostIndicatorText) ghostIndicatorText.text = "REC";
+                if (ghostIndicatorText) ghostIndicatorText.color = VTheme.Red;
+            }
         }
 
         void Update()
@@ -82,6 +112,7 @@ namespace Volk.UI
             UpdateHPBars();
             UpdateSkillCooldowns();
             UpdateComboDisplay();
+            if (ghostMode) PulseGhostIndicator();
         }
 
         void UpdateHPBars()
@@ -91,10 +122,7 @@ namespace Volk.UI
                 targetPlayerHP = playerFighter.maxHP > 0 ? playerFighter.currentHP / playerFighter.maxHP : 0;
                 displayPlayerHP = Mathf.Lerp(displayPlayerHP, targetPlayerHP, Time.deltaTime * 8f);
                 if (playerHPBar) playerHPBar.value = displayPlayerHP;
-
-                // Gradient color: green → yellow → red
-                if (playerHPFill)
-                    playerHPFill.color = GetHPColor(displayPlayerHP);
+                if (playerHPFill) playerHPFill.color = GetHPColor(displayPlayerHP);
             }
 
             if (enemyFighter != null)
@@ -102,9 +130,7 @@ namespace Volk.UI
                 targetEnemyHP = enemyFighter.maxHP > 0 ? enemyFighter.currentHP / enemyFighter.maxHP : 0;
                 displayEnemyHP = Mathf.Lerp(displayEnemyHP, targetEnemyHP, Time.deltaTime * 8f);
                 if (enemyHPBar) enemyHPBar.value = displayEnemyHP;
-
-                if (enemyHPFill)
-                    enemyHPFill.color = GetHPColor(displayEnemyHP);
+                if (enemyHPFill) enemyHPFill.color = GetHPColor(displayEnemyHP);
             }
         }
 
@@ -120,15 +146,33 @@ namespace Volk.UI
         {
             if (playerFighter == null) return;
 
+            // Smooth fill animation
+            float target1 = playerFighter.Skill1CooldownRatio;
+            float target2 = playerFighter.Skill2CooldownRatio;
+            displaySkill1 = Mathf.Lerp(displaySkill1, target1, Time.deltaTime * 12f);
+            displaySkill2 = Mathf.Lerp(displaySkill2, target2, Time.deltaTime * 12f);
+
             if (skill1CooldownFill)
             {
-                skill1CooldownFill.fillAmount = playerFighter.Skill1CooldownRatio;
-                skill1CooldownFill.color = playerFighter.Skill1CooldownRatio > 0 ? VTheme.TextMuted : VTheme.Blue;
+                skill1CooldownFill.fillAmount = displaySkill1;
+                skill1CooldownFill.color = displaySkill1 > 0.01f ? VTheme.TextMuted : VTheme.Blue;
             }
             if (skill2CooldownFill)
             {
-                skill2CooldownFill.fillAmount = playerFighter.Skill2CooldownRatio;
-                skill2CooldownFill.color = playerFighter.Skill2CooldownRatio > 0 ? VTheme.TextMuted : VTheme.Red;
+                skill2CooldownFill.fillAmount = displaySkill2;
+                skill2CooldownFill.color = displaySkill2 > 0.01f ? VTheme.TextMuted : VTheme.Red;
+            }
+
+            // Ready glow pulse when skill is available
+            if (skill1ReadyGlow)
+            {
+                float alpha1 = target1 < 0.01f ? (0.3f + Mathf.Sin(Time.time * 4f) * 0.3f) : 0f;
+                skill1ReadyGlow.color = new Color(VTheme.Blue.r, VTheme.Blue.g, VTheme.Blue.b, alpha1);
+            }
+            if (skill2ReadyGlow)
+            {
+                float alpha2 = target2 < 0.01f ? (0.3f + Mathf.Sin(Time.time * 4f) * 0.3f) : 0f;
+                skill2ReadyGlow.color = new Color(VTheme.Red.r, VTheme.Red.g, VTheme.Red.b, alpha2);
             }
         }
 
@@ -158,7 +202,6 @@ namespace Volk.UI
                 if (comboGroup)
                 {
                     comboGroup.alpha = 1;
-                    // Punch scale
                     StartCoroutine(PunchScaleText(comboText.transform));
                 }
             }
@@ -166,7 +209,6 @@ namespace Volk.UI
 
         public void OnHPChanged(bool isPlayer)
         {
-            // Shake HP bar
             RectTransform bar = isPlayer ? playerHPBarRect : enemyHPBarRect;
             if (bar != null)
             {
@@ -179,7 +221,6 @@ namespace Volk.UI
         {
             if (koOverlay == null || koText == null) yield break;
 
-            // Slow motion
             Time.timeScale = 0.2f;
             koText.text = "K.O.";
             koText.color = VTheme.Red;
@@ -198,7 +239,6 @@ namespace Volk.UI
             yield return new WaitForSecondsRealtime(1f);
             Time.timeScale = 1f;
 
-            // Fade out
             t = 0;
             while (t < 0.3f)
             {
@@ -208,6 +248,69 @@ namespace Volk.UI
             }
             koOverlay.alpha = 0;
         }
+
+        // --- Round Dots ---
+
+        void InitRoundDots(Image[] dots)
+        {
+            if (dots == null) return;
+            foreach (var dot in dots)
+            {
+                if (dot == null) continue;
+                dot.color = VTheme.TextMuted;
+            }
+        }
+
+        public void UpdateRoundDots(int playerWins, int enemyWins)
+        {
+            SetDotWins(playerRoundDots, playerWins, VTheme.Blue);
+            SetDotWins(enemyRoundDots, enemyWins, VTheme.Red);
+        }
+
+        void SetDotWins(Image[] dots, int wins, Color winColor)
+        {
+            if (dots == null) return;
+            for (int i = 0; i < dots.Length; i++)
+            {
+                if (dots[i] == null) continue;
+                dots[i].color = i < wins ? winColor : VTheme.TextMuted;
+            }
+        }
+
+        public void UpdateRound(int currentRound, int totalRounds, int playerWins, int enemyWins)
+        {
+            if (roundText != null)
+                roundText.text = $"Round {currentRound}";
+            UpdateRoundDots(playerWins, enemyWins);
+        }
+
+        public void UpdateTimer(float seconds)
+        {
+            if (timerText != null)
+            {
+                int secs = Mathf.CeilToInt(seconds);
+                timerText.text = secs.ToString();
+                timerText.color = secs <= 10 ? VTheme.Red : VTheme.TextPrimary;
+            }
+        }
+
+        public void SetHUDVisible(bool visible)
+        {
+            var cg = GetComponent<CanvasGroup>();
+            if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = visible ? 1f : 0f;
+        }
+
+        // --- Ghost Indicator ---
+
+        void PulseGhostIndicator()
+        {
+            if (ghostIndicatorGroup == null) return;
+            float pulse = 0.6f + Mathf.Sin(Time.time * 3f) * 0.4f;
+            ghostIndicatorGroup.alpha = pulse;
+        }
+
+        // --- Helpers ---
 
         IEnumerator ShakeBar(RectTransform bar)
         {
@@ -227,29 +330,9 @@ namespace Volk.UI
         Color GetComboColor(int hits)
         {
             if (hits >= 5) return VTheme.Red;
-            if (hits >= 4) return new Color(1f, 0.5f, 0f); // orange
+            if (hits >= 4) return VTheme.Orange;
             if (hits >= 3) return VTheme.Gold;
             return Color.white;
-        }
-
-        public void UpdateRound(int currentRound, int totalRounds, int playerWins, int enemyWins)
-        {
-            if (roundText != null)
-                roundText.text = $"Round {currentRound}/{totalRounds}  {playerWins}-{enemyWins}";
-        }
-
-        public void UpdateTimer(float seconds)
-        {
-            if (timerText != null)
-                timerText.text = Mathf.CeilToInt(seconds).ToString();
-        }
-
-        public void SetHUDVisible(bool visible)
-        {
-            // For NG+ NoHUD modifier
-            var cg = GetComponent<CanvasGroup>();
-            if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
-            cg.alpha = visible ? 1f : 0f;
         }
 
         IEnumerator PunchScaleText(Transform t)

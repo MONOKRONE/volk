@@ -17,6 +17,8 @@ namespace Volk.UI
         public static readonly Color Blue = HexColor("#00D4FF");
         public static readonly Color Green = HexColor("#00E676");
         public static readonly Color Orange = HexColor("#FF6D00");
+        public static readonly Color Purple = HexColor("#9B59B6");
+        public static readonly Color Cyan = HexColor("#00BCD4");
 
         // Text
         public static readonly Color TextPrimary = HexColor("#FFFFFF");

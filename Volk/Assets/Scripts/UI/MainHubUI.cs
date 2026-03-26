@@ -15,24 +15,32 @@ namespace Volk.UI
         [Header("Mode Cards")]
         public Button storyCard;
         public Button quickFightCard;
+        public Button onlineCard;
+        public Button ghostCard;
         public Button survivalCard;
         public Button trainingCard;
 
         [Header("Card Titles")]
         public TextMeshProUGUI storyTitle;
         public TextMeshProUGUI quickFightTitle;
+        public TextMeshProUGUI onlineTitle;
+        public TextMeshProUGUI ghostTitle;
         public TextMeshProUGUI survivalTitle;
         public TextMeshProUGUI trainingTitle;
 
         [Header("Card Subtitles")]
         public TextMeshProUGUI storySubtitle;
         public TextMeshProUGUI quickFightSubtitle;
+        public TextMeshProUGUI onlineSubtitle;
+        public TextMeshProUGUI ghostSubtitle;
         public TextMeshProUGUI survivalSubtitle;
         public TextMeshProUGUI trainingSubtitle;
 
         [Header("Card Icons")]
         public Image storyIcon;
         public Image quickFightIcon;
+        public Image onlineIcon;
+        public Image ghostIcon;
         public Image survivalIcon;
         public Image trainingIcon;
 
@@ -58,29 +66,28 @@ namespace Volk.UI
 
         void Start()
         {
-            // Ensure singletons
             EnsureSingletons();
 
-            // Background
             if (backgroundImage)
                 backgroundImage.color = VTheme.Background;
 
             // Card setup
             SetupCard(storyCard, storyTitle, storySubtitle, "HIKAYE", GetStorySubtitle(), VTheme.Red);
             SetupCard(quickFightCard, quickFightTitle, quickFightSubtitle, "SERBEST DOVUS", "Karakter ve arena sec", VTheme.Blue);
+            SetupCard(onlineCard, onlineTitle, onlineSubtitle, "ONLINE", "1v1 canli dovus", VTheme.Purple);
+            SetupCard(ghostCard, ghostTitle, ghostSubtitle, "GHOST", "Hayalet verisiyle dovus", VTheme.Cyan);
             SetupCard(survivalCard, survivalTitle, survivalSubtitle, "HAYATTA KAL", GetSurvivalSubtitle(), VTheme.Orange);
             SetupCard(trainingCard, trainingTitle, trainingSubtitle, "ANTRENMAN", "Kombolari pratik yap", VTheme.Green);
 
             // Card click listeners
             if (storyCard) storyCard.onClick.AddListener(() => LoadScene(storyScene));
             if (quickFightCard) quickFightCard.onClick.AddListener(() => LoadScene(quickFightScene));
+            if (onlineCard) onlineCard.onClick.AddListener(OnOnlineClick);
+            if (ghostCard) ghostCard.onClick.AddListener(StartGhost);
             if (survivalCard) survivalCard.onClick.AddListener(StartSurvival);
             if (trainingCard) trainingCard.onClick.AddListener(StartTraining);
 
-            // Quest badge
             UpdateQuestBadge();
-
-            // Fade in
             StartCoroutine(AnimateCardsIn());
         }
 
@@ -136,6 +143,19 @@ namespace Volk.UI
             return $"En yuksek: {highScore} puan";
         }
 
+        void OnOnlineClick()
+        {
+            UIAudio.Instance?.PlayClick();
+            // Online not yet implemented — show coming soon feedback
+            Debug.Log("[VOLK] Online mode coming soon");
+        }
+
+        void StartGhost()
+        {
+            GameSettings.Instance.currentMode = GameSettings.GameMode.Ghost;
+            LoadScene("CombatTest");
+        }
+
         void StartSurvival()
         {
             GameSettings.Instance.currentMode = GameSettings.GameMode.Survival;
@@ -170,12 +190,10 @@ namespace Volk.UI
 
         IEnumerator AnimateCardsIn()
         {
-            Button[] cards = { storyCard, quickFightCard, survivalCard, trainingCard };
+            Button[] cards = { storyCard, quickFightCard, onlineCard, ghostCard, survivalCard, trainingCard };
             foreach (var card in cards)
             {
                 if (card == null) continue;
-                var rt = card.GetComponent<RectTransform>();
-                if (rt == null) continue;
                 var cg = card.GetComponent<CanvasGroup>();
                 if (cg == null) cg = card.gameObject.AddComponent<CanvasGroup>();
                 cg.alpha = 0;
