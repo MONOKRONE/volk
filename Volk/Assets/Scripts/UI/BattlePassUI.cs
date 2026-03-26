@@ -47,7 +47,7 @@ namespace Volk.UI
             }
 
             if (purchasePremiumButton != null)
-                purchasePremiumButton.interactable = !bp.IsPremium;
+                purchasePremiumButton.SetInteractable(!bp.IsPremium);
         }
 
         public void OnPurchasePremium()

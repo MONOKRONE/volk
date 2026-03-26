@@ -70,7 +70,7 @@ public class RagdollController : MonoBehaviour
 
             // Apply launch velocity in attack direction + slight upward (single force only)
             Vector3 launchDir = (attackDir.normalized + Vector3.up * 0.3f).normalized;
-            rb.linearVelocity = launchDir * force;
+            rb.velocity = launchDir * force;
 
             bodyCount++;
             if (bodyCount >= 8) break; // Mobile limit
