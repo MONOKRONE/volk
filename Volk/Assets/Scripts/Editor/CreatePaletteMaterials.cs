@@ -6,12 +6,12 @@ public class CreatePaletteMaterials
 {
     static readonly (string name, float hueShift, float saturation, float valueMod, Color tint)[] Palettes = new[]
     {
-        ("YILDIZ", 45f,   1.0f,  0.1f,  new Color(1f, 0.9f, 0.5f)),   // gold/yellow
-        ("KAYA",   0f,    1.2f,  0.0f,  new Color(1f, 0.4f, 0.3f)),   // red
-        ("RUZGAR", 240f,  1.0f,  0.0f,  new Color(0.4f, 0.6f, 1f)),   // blue
-        ("CELIK",  0f,    -0.5f, 0.15f, new Color(0.8f, 0.8f, 0.85f)),// silver/grey
-        ("SIS",    270f,  0.8f,  -0.1f, new Color(0.7f, 0.4f, 1f)),   // purple
-        ("TOPRAK", 30f,   0.9f,  -0.1f, new Color(0.7f, 0.5f, 0.3f)), // brown
+        ("YILDIZ", 25f,   1.1f,  0.05f, new Color(1f, 0.6f, 0.2f)),   // turuncu (orange)
+        ("KAYA",   0f,    -0.6f, 0.1f,  new Color(0.6f, 0.6f, 0.65f)),// gri (grey)
+        ("RUZGAR", 210f,  1.0f,  0.0f,  new Color(0.3f, 0.6f, 1f)),   // mavi (blue)
+        ("CELIK",  0f,    -0.4f, 0.2f,  new Color(0.82f, 0.82f, 0.88f)),// gumus (silver)
+        ("SIS",    280f,  0.9f,  -0.1f, new Color(0.6f, 0.3f, 0.9f)), // mor (purple)
+        ("TOPRAK", 30f,   0.8f,  -0.15f,new Color(0.6f, 0.4f, 0.2f)), // kahve (brown)
     };
 
     [MenuItem("VOLK/Create Palette Materials")]
