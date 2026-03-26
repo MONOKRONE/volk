@@ -24,6 +24,14 @@ MonoBehaviour:
   walkSpeed: 4
   runSpeed: 7
   knockbackForce: 2
+  rotationSpeed: 1800
+  characterMaterial: {fileID: 0}
+  animationSpeedMult: 1.0
+  attackKnockbackForce: 2.5
+  knockbackResistance: 0.4
+  hitstopMultiplier: 1.0
+  cameraShakeMultiplier: 1.0
+  soundPitchOffset: 0.0
   animController: {fileID: 0}
   skill1: {fileID: 11400000, guid: a6c456e50e9e41b7a3fb346978ef00f1, type: 2}
   skill2: {fileID: 11400000, guid: ae163f80571b4deca7b5f8ca4f1ef1d8, type: 2}

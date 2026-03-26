@@ -137,6 +137,11 @@ public class Fighter : MonoBehaviour
         if (characterData != null)
             ApplyCharacterData(characterData);
 
+        // NG+ HP modifier
+        float ngHPMult = Volk.Core.NewGamePlusManager.Instance?.GetHPMultiplier() ?? 1f;
+        if (ngHPMult < 1f)
+            maxHP *= ngHPMult;
+
         currentHP = maxHP;
         normalHeight = cc.height;
         crouchHeight = cc.height * 0.55f;

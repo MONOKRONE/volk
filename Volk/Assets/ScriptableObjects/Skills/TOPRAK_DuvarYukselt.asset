@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Duvar Yukselt
   damage: 20
   cooldown: 8
-  animationTrigger: 
+  animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Firtina Serisi
   damage: 25
   cooldown: 5
-  animationTrigger: 
+  animationTrigger: MMAKick
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Girdap Tekme
   damage: 28
   cooldown: 5
-  animationTrigger: 
+  animationTrigger: MMAKick
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

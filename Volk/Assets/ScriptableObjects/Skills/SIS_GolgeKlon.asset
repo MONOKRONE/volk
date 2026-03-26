@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Golge Klon
   damage: 22
   cooldown: 7
-  animationTrigger: 
+  animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

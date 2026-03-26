@@ -120,6 +120,9 @@ namespace Volk.Story
             if (CurrentChapter.boss != null)
                 CurrencyManager.Instance?.OnBossKill();
 
+            // NG+ chapter tracking
+            NewGamePlusManager.Instance?.MarkChapterCleared(CurrentChapterIndex);
+
             // Check story-based character unlocks
             if (CharacterUnlockManager.Instance != null && GameSettings.Instance != null)
                 CharacterUnlockManager.Instance.CheckStoryUnlocks(
@@ -228,8 +231,14 @@ namespace Volk.Story
 
         public void OnStageWon()
         {
-            // Progression rewards (single source of truth: CurrencyManager)
+            // Progression rewards with NG+ multiplier
             CurrencyManager.Instance?.OnStageClear();
+            float rewardMult = NewGamePlusManager.Instance?.GetRewardMultiplier() ?? 1f;
+            if (rewardMult > 1f)
+            {
+                int bonus = (int)(CurrencyManager.STAGE_CLEAR_COINS * (rewardMult - 1f));
+                CurrencyManager.Instance?.AddCoins(bonus);
+            }
 
             // Advance to next stage
             CurrentStageIndex++;

@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Tas Firlatma
   damage: 32
   cooldown: 5
-  animationTrigger: 
+  animationTrigger: MMAKick
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

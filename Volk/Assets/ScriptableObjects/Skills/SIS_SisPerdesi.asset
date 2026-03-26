@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Sis Perdesi
   damage: 18
   cooldown: 5
-  animationTrigger: 
+  animationTrigger: BodyBlock
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

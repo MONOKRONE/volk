@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Deprem Darbesi
   damage: 45
   cooldown: 8
-  animationTrigger: 
+  animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Hassas Vurus
   damage: 40
   cooldown: 9
-  animationTrigger: 
+  animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}

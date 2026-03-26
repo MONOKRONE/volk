@@ -15,6 +15,6 @@ MonoBehaviour:
   skillName: Alev Yumruk
   damage: 35
   cooldown: 6
-  animationTrigger: 
+  animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}
