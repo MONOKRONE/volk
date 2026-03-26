@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: KAYA
   portrait: {fileID: 0}
-  prefab: {fileID: 0}
+  prefab: {fileID: 765513308272161670, guid: 17be0327151324f9d9777272a38c1c22, type: 3}
   speed: 3
   power: 8
   defense: 7
@@ -25,14 +25,14 @@ MonoBehaviour:
   runSpeed: 5.5
   knockbackForce: 3
   rotationSpeed: 1800
-  characterMaterial: {fileID: 0}
   animationSpeedMult: 0.7
-  attackKnockbackForce: 5.0
+  attackKnockbackForce: 5
   knockbackResistance: 0.8
   hitstopMultiplier: 1.4
   cameraShakeMultiplier: 1.5
   soundPitchOffset: -0.3
-  animController: {fileID: 0}
+  animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
+  characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: 9e8bcc0741ba4e3aa153af56d8c8c01d, type: 2}
   skill2: {fileID: 11400000, guid: 7820b5d282db4d70bc0e4006ce9edcf9, type: 2}
   unlockedByDefault: 1

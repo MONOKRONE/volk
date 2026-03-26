@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: TOPRAK
   portrait: {fileID: 0}
-  prefab: {fileID: 0}
+  prefab: {fileID: 7770855612427137435, guid: b157f8799a36b486f967001b8ac332c0, type: 3}
   speed: 4
   power: 7
   defense: 7
@@ -25,14 +25,14 @@ MonoBehaviour:
   runSpeed: 6
   knockbackForce: 2.5
   rotationSpeed: 1800
-  characterMaterial: {fileID: 0}
   animationSpeedMult: 0.85
-  attackKnockbackForce: 4.0
+  attackKnockbackForce: 4
   knockbackResistance: 0.7
   hitstopMultiplier: 1.2
   cameraShakeMultiplier: 1.2
   soundPitchOffset: -0.15
-  animController: {fileID: 0}
+  animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
+  characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: 14a5b4746d1d47338be94c36c15960a5, type: 2}
   skill2: {fileID: 11400000, guid: 528a3b278b884c17b1a974b6d6de8eff, type: 2}
   unlockedByDefault: 0

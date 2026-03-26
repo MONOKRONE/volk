@@ -14,25 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: CELIK
   portrait: {fileID: 0}
-  prefab: {fileID: 0}
+  prefab: {fileID: 8424223847577997001, guid: db76df42485904c71886e3519dc845a4, type: 3}
   speed: 5
   power: 6
   defense: 7
   maxHP: 100
-  attackDamage: 10.0
+  attackDamage: 10
   attackRange: 1.2
   walkSpeed: 4
   runSpeed: 6.5
   knockbackForce: 1.8
   rotationSpeed: 1800
-  characterMaterial: {fileID: 0}
   animationSpeedMult: 1.1
-  attackKnockbackForce: 2.0
+  attackKnockbackForce: 2
   knockbackResistance: 0.6
   hitstopMultiplier: 1.1
   cameraShakeMultiplier: 0.8
   soundPitchOffset: 0.1
-  animController: {fileID: 0}
+  animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
+  characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: dfb0705d69704c5b84db3817584dd567, type: 2}
   skill2: {fileID: 11400000, guid: ec95cb1df7a94562a23bf3ba39ef2a99, type: 2}
   unlockedByDefault: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: SIS
   portrait: {fileID: 0}
-  prefab: {fileID: 0}
+  prefab: {fileID: 2390199787815868895, guid: 43a2be24cfb8141a8ae02efdc95a5955, type: 3}
   speed: 8
   power: 6
   defense: 4
@@ -25,14 +25,14 @@ MonoBehaviour:
   runSpeed: 8.5
   knockbackForce: 1.5
   rotationSpeed: 1800
-  characterMaterial: {fileID: 0}
   animationSpeedMult: 1.2
   attackKnockbackForce: 1.8
   knockbackResistance: 0.3
   hitstopMultiplier: 0.8
   cameraShakeMultiplier: 0.6
   soundPitchOffset: 0.15
-  animController: {fileID: 0}
+  animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
+  characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: 9110e9b7b223447a91df9eff05591e2f, type: 2}
   skill2: {fileID: 11400000, guid: 5b17914855a04b7bad4786443f0e4ea4, type: 2}
   unlockedByDefault: 0

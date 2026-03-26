@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: RUZGAR
   portrait: {fileID: 0}
-  prefab: {fileID: 0}
+  prefab: {fileID: 1781377885522771029, guid: f1eff29ed9d7648abadc6d60df058567, type: 3}
   speed: 10
   power: 5
   defense: 3
@@ -25,14 +25,14 @@ MonoBehaviour:
   runSpeed: 9
   knockbackForce: 1.5
   rotationSpeed: 1800
-  characterMaterial: {fileID: 0}
   animationSpeedMult: 1.4
   attackKnockbackForce: 1.5
   knockbackResistance: 0.2
   hitstopMultiplier: 0.6
   cameraShakeMultiplier: 0.5
   soundPitchOffset: 0.2
-  animController: {fileID: 0}
+  animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
+  characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: ef60276bf555468199b38e3bb19810ff, type: 2}
   skill2: {fileID: 11400000, guid: 9f8b67c426804a718fa85c784add25db, type: 2}
   unlockedByDefault: 0
