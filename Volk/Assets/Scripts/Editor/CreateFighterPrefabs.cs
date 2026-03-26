@@ -4,16 +4,44 @@ using Volk.Core;
 
 public class CreateFighterPrefabs
 {
-    // Character → Model mapping
+    // Character → Model mapping (Mixamo characters)
     static readonly (string charName, string modelPath, string modelChildName)[] CharacterModels = new[]
     {
-        ("YILDIZ",  "Assets/Characters/Kachujin/Kachujin.fbx", "Kachujin"),
-        ("KAYA",    "Assets/Characters/XBot/XBot.fbx",         "XBot"),
-        ("RUZGAR",  "Assets/Characters/YBot/YBot.fbx",         "YBot"),
-        ("CELIK",   "Assets/Characters/Remy/Remy.fbx",         "Remy"),
-        ("SIS",     "Assets/Characters/Maria/Maria.fbx",       "Maria"),
-        ("TOPRAK",  "Assets/Characters/Remy/Remy.fbx",         "Remy"),  // Remy variant
+        ("YILDIZ",  "Assets/Characters/YILDIZ/Dreyar.fbx",         "Dreyar"),
+        ("KAYA",    "Assets/Characters/KAYA/AlienSoldier.fbx",     "AlienSoldier"),
+        ("RUZGAR",  "Assets/Characters/RUZGAR/Ninja.fbx",          "Ninja"),
+        ("CELIK",   "Assets/Characters/CELIK/Ely.fbx",             "Ely"),
+        ("SIS",     "Assets/Characters/SIS/Medea.fbx",             "Medea"),
+        ("TOPRAK",  "Assets/Characters/TOPRAK/Astra.fbx",          "Astra"),
     };
+
+    [MenuItem("VOLK/Setup Humanoid Rigs + Create Prefabs")]
+    public static void SetupAndCreate()
+    {
+        // First ensure all FBX files are imported as Humanoid
+        int rigsFixed = 0;
+        foreach (var (charName, modelPath, _) in CharacterModels)
+        {
+            var importer = AssetImporter.GetAtPath(modelPath) as ModelImporter;
+            if (importer == null)
+            {
+                Debug.LogWarning($"[VOLK] Importer not found for {modelPath}, skipping rig setup");
+                continue;
+            }
+            if (importer.animationType != ModelImporterAnimationType.Human)
+            {
+                importer.animationType = ModelImporterAnimationType.Human;
+                importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                importer.SaveAndReimport();
+                rigsFixed++;
+                Debug.Log($"[VOLK] Set Humanoid rig: {modelPath}");
+            }
+        }
+        if (rigsFixed > 0)
+            Debug.Log($"[VOLK] {rigsFixed} models set to Humanoid. Now creating prefabs...");
+
+        CreateAll();
+    }
 
     [MenuItem("VOLK/Create 6 Fighter Prefabs")]
     public static void CreateAll()
