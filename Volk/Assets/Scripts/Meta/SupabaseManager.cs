@@ -38,6 +38,18 @@ namespace Volk.Meta
             StartCoroutine(AnonymousLogin());
         }
 
+        void OnApplicationPause(bool paused)
+        {
+            if (!paused) // Resuming from background
+                OfflineSyncQueue.Instance?.ProcessQueue();
+        }
+
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus)
+                OfflineSyncQueue.Instance?.ProcessQueue();
+        }
+
         // === AUTH ===
 
         IEnumerator AnonymousLogin()
@@ -56,6 +68,9 @@ namespace Volk.Meta
                 playerId = response.user?.id;
                 OnAuthSuccess?.Invoke();
                 Debug.Log($"[Supabase] Auth success. Player: {playerId}");
+
+                // Flush any operations queued while offline
+                OfflineSyncQueue.Instance?.ProcessQueue();
 
                 // Ensure player record exists
                 StartCoroutine(UpsertPlayer());
@@ -83,6 +98,9 @@ namespace Volk.Meta
                 playerId = response.user?.id;
                 OnAuthSuccess?.Invoke();
                 Debug.Log($"[Supabase] Login success. Player: {playerId}");
+
+                // Flush any operations queued while offline
+                OfflineSyncQueue.Instance?.ProcessQueue();
             }
             else
             {
@@ -106,7 +124,14 @@ namespace Volk.Meta
 
         public void SaveToCloud(SaveData data, Action onSuccess = null, Action<string> onError = null)
         {
-            if (!IsAuthenticated) { onError?.Invoke("Not authenticated"); return; }
+            // If offline or not authenticated, enqueue for later
+            if (!IsAuthenticated || Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                string payload = JsonUtility.ToJson(data);
+                OfflineSyncQueue.Instance?.EnqueueOperation("save_data", payload);
+                onError?.Invoke("Queued for offline sync");
+                return;
+            }
             StartCoroutine(DoSaveToCloud(data, onSuccess, onError));
         }
 

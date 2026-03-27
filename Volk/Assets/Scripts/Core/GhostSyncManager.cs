@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.Networking;
+using System;
 using System.Collections;
 using System.IO;
+using Volk.Meta;
 
 namespace Volk.Core
 {
@@ -98,14 +100,23 @@ namespace Volk.Core
             string playerId = GetPlayerId();
             string localJson = LoadLocal();
 
-            // Upload local profile
+            // Upload local profile — route through queue if offline
             if (!string.IsNullOrEmpty(localJson))
             {
-                yield return UploadProfile(playerId, localJson);
+                if (Application.internetReachability == NetworkReachability.NotReachable)
+                {
+                    OfflineSyncQueue.Instance?.EnqueueOperation("ghost_profile", localJson);
+                    Debug.Log("[GhostSync] Offline — queued profile upload for later");
+                }
+                else
+                {
+                    yield return UploadProfile(playerId, localJson);
+                }
             }
 
-            // Download latest (in case another device updated)
-            yield return DownloadProfile(playerId);
+            // Download latest (in case another device updated) — skip if offline
+            if (Application.internetReachability != NetworkReachability.NotReachable)
+                yield return DownloadProfile(playerId);
 
             isSyncing = false;
         }
@@ -152,17 +163,29 @@ namespace Volk.Core
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string response = request.downloadHandler.text;
-                // Parse response array
                 if (response.Length > 10 && response.Contains("profile_data"))
                 {
-                    // Simple extraction — in production use proper JSON parser
-                    Debug.Log("[GhostSync] Download success — remote profile available");
-                    // Compare timestamps and use newer version
-                    // For now, local-first: only overwrite if local doesn't exist
-                    if (!HasLocalProfile())
+                    // Extract updated_at from remote response for conflict resolution
+                    string remoteTimestamp = ExtractJsonField(response, "updated_at");
+                    string localTimestamp = HasLocalProfile()
+                        ? new FileInfo(localPath).LastWriteTimeUtc.ToString("o")
+                        : null;
+
+                    bool remoteNewer = OfflineSyncQueue.IsRemoteNewer(localTimestamp, remoteTimestamp);
+
+                    if (remoteNewer || !HasLocalProfile())
                     {
-                        Debug.Log("[GhostSync] No local profile — using remote");
-                        // Extract profile_data from response and save locally
+                        // Extract profile_data and save locally
+                        string remoteProfileData = ExtractJsonField(response, "profile_data");
+                        if (!string.IsNullOrEmpty(remoteProfileData))
+                        {
+                            SaveLocal(remoteProfileData);
+                            Debug.Log("[GhostSync] Remote profile is newer — updated local");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("[GhostSync] Local profile is newer — keeping local");
                     }
                 }
             }
@@ -172,6 +195,45 @@ namespace Volk.Core
             }
 
             request.Dispose();
+        }
+
+        /// <summary>
+        /// Upload a profile payload on behalf of OfflineSyncQueue retry.
+        /// Reports success/failure via callback.
+        /// </summary>
+        public IEnumerator UploadProfileQueued(string playerId, string profileJson, Action<bool> onResult)
+        {
+            bool success = false;
+            yield return UploadProfileWithResult(playerId, profileJson, result => success = result);
+            onResult(success);
+        }
+
+        IEnumerator UploadProfileWithResult(string playerId, string profileJson, Action<bool> onResult)
+        {
+            string url = $"{supabaseUrl}/rest/v1/{tableName}";
+            string payload = JsonUtility.ToJson(new GhostProfileRow
+            {
+                player_id = playerId,
+                profile_data = profileJson,
+                updated_at = System.DateTime.UtcNow.ToString("o")
+            });
+
+            var request = new UnityWebRequest(url, "POST");
+            request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(payload));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("apikey", supabaseAnonKey);
+            request.SetRequestHeader("Authorization", $"Bearer {supabaseAnonKey}");
+            request.SetRequestHeader("Prefer", "resolution=merge-duplicates");
+
+            yield return request.SendWebRequest();
+
+            bool ok = request.result == UnityWebRequest.Result.Success;
+            if (ok) Debug.Log("[GhostSync] Upload (queued retry) success");
+            else Debug.LogWarning($"[GhostSync] Upload (queued retry) failed: {request.error}");
+
+            request.Dispose();
+            onResult(ok);
         }
 
         /// <summary>
@@ -191,6 +253,17 @@ namespace Volk.Core
         public void ForceDownload()
         {
             StartCoroutine(DownloadProfile(GetPlayerId()));
+        }
+
+        /// <summary>Simple field extractor for flat JSON strings (avoids full JSON parser dependency).</summary>
+        string ExtractJsonField(string json, string fieldName)
+        {
+            string search = $"\"{fieldName}\":\"";
+            int start = json.IndexOf(search, StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += search.Length;
+            int end = json.IndexOf('"', start);
+            return end > start ? json.Substring(start, end - start) : null;
         }
 
         string GetPlayerId()
