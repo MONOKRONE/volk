@@ -558,6 +558,11 @@ namespace Volk.Core
             var chars = allCharacters;
             int total = chars != null ? chars.Length : 0;
 
+            // Track card images for highlight update
+            var cardImages = new UnityEngine.UI.Image[total];
+            var cardAccents = new Color[total];
+            Button fightBtn = null;
+
             for (int i = 0; i < total && i < cols * 2; i++)
             {
                 int col = i % cols;
@@ -574,35 +579,18 @@ namespace Volk.Core
                 string letter = GetCharEmoji(charData.characterName);
                 string charName = charData.characterName ?? $"F{i+1}";
                 int idx = i;
-                bool isSelected = (selectedCharacterIndex == i);
+                cardAccents[i] = accent;
 
-                // Card bg — bright border if selected
                 Color cardBg = unlocked
                     ? new Color(accent.r * 0.25f, accent.g * 0.25f, accent.b * 0.25f, 1f)
                     : new Color(0.07f, 0.07f, 0.11f);
+
                 var card = ui.CreatePanel(canvas,
                     new Vector2(xMin + pad, yMin + pad),
                     new Vector2(xMax - pad, yMax - pad),
                     cardBg);
-
-                // Selected highlight border (bright accent outline)
-                if (isSelected)
-                {
-                    float b = 0.008f;
-                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMax - pad - b), new Vector2(xMax - pad, yMax - pad), accent); // top
-                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMin + pad), new Vector2(xMax - pad, yMin + pad + b), accent); // bot
-                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMin + pad), new Vector2(xMin + pad + b, yMax - pad), accent); // left
-                    ui.CreatePanel(canvas, new Vector2(xMax - pad - b, yMin + pad), new Vector2(xMax - pad, yMax - pad), accent); // right
-
-                    // Checkmark
-                    var checkTMP = ui.CreateText(card.transform, "✓", 28, accent, TextAlignmentOptions.TopRight);
-                    var cRect = checkTMP.GetComponent<RectTransform>();
-                    cRect.anchorMin = new Vector2(0.6f, 0.72f);
-                    cRect.anchorMax = new Vector2(0.98f, 1f);
-                    cRect.offsetMin = Vector2.zero;
-                    cRect.offsetMax = Vector2.zero;
-                    checkTMP.fontStyle = FontStyles.Bold;
-                }
+                card.raycastTarget = true;
+                cardImages[i] = card;
 
                 // Colored top stripe
                 ui.CreatePanel(card.transform, new Vector2(0f, 0.72f), Vector2.one,
@@ -628,30 +616,44 @@ namespace Volk.Core
                 nRect.offsetMax = Vector2.zero;
                 nameTMP.fontStyle = FontStyles.Bold;
 
-                // Tap to select
+                // Tap to select — NO rebuild, just update visuals
                 if (unlocked)
                 {
                     var btn = card.gameObject.AddComponent<Button>();
+                    btn.transition = Selectable.Transition.None;
                     btn.onClick.AddListener(() => {
                         selectedCharacterIndex = idx;
                         if (GameSettings.Instance != null && allCharacters != null && idx < allCharacters.Length)
                             GameSettings.Instance.selectedCharacter = allCharacters[idx];
-                        ChangeState(GameState.CharacterSelect); // rebuild with highlight
+                        // Update all card highlights without rebuild
+                        for (int j = 0; j < cardImages.Length; j++)
+                        {
+                            if (cardImages[j] == null) continue;
+                            Color a = cardAccents[j];
+                            cardImages[j].color = (j == idx)
+                                ? new Color(a.r * 0.6f, a.g * 0.6f, a.b * 0.6f, 1f)
+                                : new Color(a.r * 0.25f, a.g * 0.25f, a.b * 0.25f, 1f);
+                        }
+                        // Update header text
+                        if (selText != null)
+                            selText.text = allCharacters[idx].characterName;
+                        // Update fight button
+                        if (fightBtn != null)
+                        {
+                            fightBtn.GetComponentInChildren<TextMeshProUGUI>().text = "FIGHT!";
+                            var img = fightBtn.GetComponent<Image>();
+                            if (img) img.color = RuntimeUIBuilder.Accent;
+                        }
                     });
-                    card.raycastTarget = true;
                 }
             }
 
-            // FIGHT button — always present, checks selection at click time
-            bool hasSelection = selectedCharacterIndex >= 0;
-            Color fightBg = hasSelection ? RuntimeUIBuilder.Accent : new Color(0.3f, 0.1f, 0.1f);
-            string fightLabel = hasSelection ? "FIGHT!" : "SELECT A FIGHTER";
-            ui.CreateButton(canvas, fightLabel, fightBg, Color.white,
+            // FIGHT button
+            fightBtn = ui.CreateButton(canvas, selectedCharacterIndex >= 0 ? "FIGHT!" : "SELECT A FIGHTER",
+                selectedCharacterIndex >= 0 ? RuntimeUIBuilder.Accent : new Color(0.3f, 0.1f, 0.1f),
+                Color.white,
                 new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.12f),
-                () => {
-                    if (selectedCharacterIndex >= 0)
-                        StartCombat();
-                });
+                () => { if (selectedCharacterIndex >= 0) StartCombat(); });
         }
 
         void BuildCharacterCard(RectTransform content, int index, ref GameObject selectedBorder)
