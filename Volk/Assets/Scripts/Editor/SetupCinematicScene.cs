@@ -135,18 +135,24 @@ public class SetupCinematicScene
         directorGO.AddComponent<Volk.Cinematic.CinematicVFXReceiver>();
 
 #if UNITY_EDITOR
-        // Cinemachine tracks for each shot
-        AddCinemachineTrack(timelineAsset, "Shot1_Opening", 0, 5);
-        AddCinemachineTrack(timelineAsset, "Shot2_YILDIZ", 5, 5);
-        AddCinemachineTrack(timelineAsset, "Shot3_KAYA", 10, 5);
-        AddCinemachineTrack(timelineAsset, "Shot4_Fight", 15, 20);
-        AddCinemachineTrack(timelineAsset, "Shot5_Ghost", 35, 10);
+        // PLA-122: Cinemachine tracks bound to actual vcam objects
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot1_Opening", shot1, 0, 5);
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot2_YILDIZ", shot2, 5, 5);
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot3_KAYA", shot3, 10, 5);
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot4_Fight", shot4, 15, 20);
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot5_Ghost", shot5, 35, 10);
         // Shot6: 6 sub-cameras, ~1.17s each over 7s total
         for (int i = 0; i < AllChars.Length; i++)
         {
-            AddCinemachineTrack(timelineAsset, $"Shot6_{AllChars[i]}", 45 + i * 1.167f, 1.167f);
+            var rCamObj = rosterParent.transform.Find($"Shot6_{AllChars[i]}");
+            var rVcam = rCamObj != null ? rCamObj.GetComponent<CinemachineVirtualCamera>() : null;
+            BindCinemachineTrack(timelineAsset, playableDir, $"Shot6_{AllChars[i]}", rVcam,
+                45 + i * 1.167f, 1.167f);
         }
-        AddCinemachineTrack(timelineAsset, "Shot7_Logo", 52, 8);
+        BindCinemachineTrack(timelineAsset, playableDir, "Shot7_Logo", shot7, 52, 8);
+
+        // PLA-122: Set wrap mode to Loop so timeline doesn't stall
+        playableDir.extrapolationMode = DirectorWrapMode.Loop;
 #endif
 
         // Animator Tracks — detailed per-shot animation
@@ -268,11 +274,16 @@ public class SetupCinematicScene
         if (lightningHit != null) hitMgr.heavyHitPrefab = lightningHit;
         if (shadowHit != null) hitMgr.skillHitPrefab = shadowHit;
 
-        // Wire VFX receiver to HitEffectManager
+        // PLA-122: Create JuiceManager in scene
+        var juiceMgrGO = new GameObject("JuiceManager");
+        var juiceMgr = juiceMgrGO.AddComponent<JuiceManager>();
+
+        // PLA-122: Wire VFX receiver to both HitEffectManager and JuiceManager
         var vfxReceiver = directorGO.GetComponent<Volk.Cinematic.CinematicVFXReceiver>();
         if (vfxReceiver != null)
         {
             vfxReceiver.hitEffectManager = hitMgr;
+            vfxReceiver.juiceManager = juiceMgr;
             vfxReceiver.hitSpawnPoint = hitPoint.transform;
         }
 
@@ -339,13 +350,19 @@ public class SetupCinematicScene
         return vcam;
     }
 
-    static void AddCinemachineTrack(TimelineAsset timeline, string shotName, float startSec, float durationSec)
+    // PLA-122: Create track and bind to actual vcam object
+    static void BindCinemachineTrack(TimelineAsset timeline, PlayableDirector director,
+        string shotName, CinemachineVirtualCamera vcam, float startSec, float durationSec)
     {
         var track = timeline.CreateTrack<CinemachineTrack>(null, shotName);
         var clip = track.CreateClip<CinemachineShot>();
         clip.start = startSec;
         clip.duration = durationSec;
         clip.displayName = shotName;
+
+        // Bind the track output to the vcam so Cinemachine Brain switches correctly
+        if (vcam != null)
+            director.SetGenericBinding(track, vcam);
     }
 #endif
 
@@ -383,8 +400,7 @@ public class SetupCinematicScene
             instance.transform.position = position;
             instance.transform.rotation = Quaternion.Euler(0, charName == "YILDIZ" ? -30f : 30f, 0);
 
-            // PLA-121: Scale normalization
-            // SIS model is small — scale up to 10f
+            // PLA-122: Scale normalization per character model size
             if (charName == "SIS")
             {
                 instance.transform.localScale = Vector3.one * 10f;
@@ -425,12 +441,13 @@ public class SetupCinematicScene
                 }
                 mat.color = charColor;
 
-                foreach (var smr in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
+                // PLA-122: Apply material to ALL renderers (SkinnedMeshRenderer + MeshRenderer)
+                foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
                 {
-                    var mats = smr.sharedMaterials;
+                    var mats = renderer.sharedMaterials;
                     for (int i = 0; i < mats.Length; i++)
                         mats[i] = mat;
-                    smr.sharedMaterials = mats;
+                    renderer.sharedMaterials = mats;
                 }
             }
         }
