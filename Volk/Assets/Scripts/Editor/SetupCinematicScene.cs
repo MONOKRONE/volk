@@ -383,8 +383,20 @@ public class SetupCinematicScene
             instance.transform.position = position;
             instance.transform.rotation = Quaternion.Euler(0, charName == "YILDIZ" ? -30f : 30f, 0);
 
-            // PLA-121: Normalize scale to prevent giant characters
-            instance.transform.localScale = Vector3.one;
+            // PLA-121: Scale normalization
+            // SIS model is small — scale up to 10f
+            if (charName == "SIS")
+            {
+                instance.transform.localScale = Vector3.one * 10f;
+            }
+            else
+            {
+                // Big FBX models (bounds.size.y > 5f) get scaled down to 0.1f
+                instance.transform.localScale = Vector3.one;
+                var smrForBounds = instance.GetComponentInChildren<SkinnedMeshRenderer>();
+                if (smrForBounds != null && smrForBounds.bounds.size.y > 5f)
+                    instance.transform.localScale = Vector3.one * 0.1f;
+            }
 
             // Disable AI/input
             var fighter = instance.GetComponent<Fighter>();
