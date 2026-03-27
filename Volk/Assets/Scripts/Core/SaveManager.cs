@@ -26,7 +26,8 @@ namespace Volk.Core
         {
             Data.lastSaveTime = DateTime.UtcNow.ToString("o");
             string json = JsonUtility.ToJson(Data);
-            PlayerPrefs.SetString(SAVE_KEY, json);
+            string encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
+            PlayerPrefs.SetString(SAVE_KEY, encoded);
             PlayerPrefs.Save();
             OnSaveUpdated?.Invoke();
             SyncToCloud();
@@ -66,7 +67,8 @@ namespace Volk.Core
                         {
                             Data = cloudData;
                             string json = JsonUtility.ToJson(Data);
-                            PlayerPrefs.SetString(SAVE_KEY, json);
+                            string encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
+                            PlayerPrefs.SetString(SAVE_KEY, encoded);
                             PlayerPrefs.Save();
                             OnSaveLoaded?.Invoke();
                         }
@@ -78,9 +80,20 @@ namespace Volk.Core
 
         public void Load()
         {
-            string json = PlayerPrefs.GetString(SAVE_KEY, "");
-            if (!string.IsNullOrEmpty(json))
+            string raw = PlayerPrefs.GetString(SAVE_KEY, "");
+            if (!string.IsNullOrEmpty(raw))
             {
+                // Decode Base64; fall back to plain JSON for legacy saves
+                string json;
+                try
+                {
+                    byte[] bytes = Convert.FromBase64String(raw);
+                    json = System.Text.Encoding.UTF8.GetString(bytes);
+                }
+                catch (FormatException)
+                {
+                    json = raw; // Legacy unencoded save — migrate on next Save()
+                }
                 Data = JsonUtility.FromJson<SaveData>(json);
             }
             else

@@ -46,6 +46,9 @@ namespace Volk.Core
         [Header("Visual")]
         public Material characterMaterial;
 
+        [Header("Projectile")]
+        public float maxProjectileRange = 6f; // Cap for zoner balance
+
         [Header("Skills")]
         public SkillBase skill1;
         public SkillBase skill2;

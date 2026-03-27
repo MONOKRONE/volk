@@ -38,6 +38,7 @@ MonoBehaviour:
   soundPitchOffset: -0.15
   animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
   characterMaterial: {fileID: 0}
+  maxProjectileRange: 4
   skill1: {fileID: 11400000, guid: 14a5b4746d1d47338be94c36c15960a5, type: 2}
   skill2: {fileID: 11400000, guid: 528a3b278b884c17b1a974b6d6de8eff, type: 2}
   exDamageMultiplier: 1.5
