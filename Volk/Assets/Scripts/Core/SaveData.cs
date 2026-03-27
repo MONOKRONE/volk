@@ -17,7 +17,7 @@ namespace Volk.Core
         public int playerLevel = 1;
         public int playerXP;
 
-        // Character Mastery — "CHARNAME:level:xp" pairs
+        // Character Mastery — "charId:nodeIdx:completed:progress" per node
         public List<string> masteryData = new List<string>();
 
         // Survival Tower

@@ -53,6 +53,10 @@ namespace Volk.Core
         [Header("Mastery Data")]
         public CharacterMasteryData[] allMasteries;
 
+        // In-memory cache: "charId:nodeIdx" -> (completed, progress)
+        private Dictionary<string, (bool completed, int progress)> _cache = new Dictionary<string, (bool, int)>();
+        private bool _migrated;
+
         void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -60,12 +64,116 @@ namespace Volk.Core
             DontDestroyOnLoad(gameObject);
         }
 
-        string Key(string charId, int nodeIdx) => $"mastery_{charId}_{nodeIdx}";
-        string ProgressKey(string charId, int nodeIdx) => $"mastery_{charId}_{nodeIdx}_prog";
+        void Start()
+        {
+            LoadFromSaveData();
+            MigrateLegacyPlayerPrefs();
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.OnSaveLoaded += LoadFromSaveData;
+        }
+
+        void OnDestroy()
+        {
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.OnSaveLoaded -= LoadFromSaveData;
+        }
+
+        string CacheKey(string charId, int nodeIdx) => $"{charId}:{nodeIdx}";
+
+        void LoadFromSaveData()
+        {
+            _cache.Clear();
+            if (SaveManager.Instance == null || SaveManager.Instance.Data == null) return;
+
+            var list = SaveManager.Instance.Data.masteryData;
+            if (list == null) return;
+
+            foreach (string entry in list)
+            {
+                // Format: "charId:nodeIdx:completed:progress"
+                string[] parts = entry.Split(':');
+                if (parts.Length < 4) continue;
+                string charId = parts[0];
+                if (!int.TryParse(parts[1], out int nodeIdx)) continue;
+                bool completed = parts[2] == "1";
+                int.TryParse(parts[3], out int progress);
+                _cache[CacheKey(charId, nodeIdx)] = (completed, progress);
+            }
+        }
+
+        void WriteToSaveData()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.Data == null) return;
+
+            var list = new List<string>();
+            foreach (var kvp in _cache)
+            {
+                var (completed, progress) = kvp.Value;
+                if (!completed && progress == 0) continue; // Skip default entries
+                list.Add($"{kvp.Key}:{(completed ? "1" : "0")}:{progress}");
+            }
+            SaveManager.Instance.Data.masteryData = list;
+            SaveManager.Instance.Save();
+        }
+
+        void MigrateLegacyPlayerPrefs()
+        {
+            if (_migrated) return;
+            if (allMasteries == null || SaveManager.Instance == null) return;
+
+            // If SaveData already has mastery entries, skip migration
+            if (SaveManager.Instance.Data.masteryData != null && SaveManager.Instance.Data.masteryData.Count > 0)
+            {
+                _migrated = true;
+                return;
+            }
+
+            bool found = false;
+            foreach (var mastery in allMasteries)
+            {
+                if (mastery == null) continue;
+                for (int i = 0; i < mastery.nodes.Length; i++)
+                {
+                    string legacyKey = $"mastery_{mastery.characterId}_{i}";
+                    string legacyProgKey = $"mastery_{mastery.characterId}_{i}_prog";
+
+                    bool completed = PlayerPrefs.GetInt(legacyKey, 0) == 1;
+                    int progress = PlayerPrefs.GetInt(legacyProgKey, 0);
+
+                    if (completed || progress > 0)
+                    {
+                        _cache[CacheKey(mastery.characterId, i)] = (completed, progress);
+                        found = true;
+                    }
+
+                    // Clean up legacy keys
+                    if (PlayerPrefs.HasKey(legacyKey)) PlayerPrefs.DeleteKey(legacyKey);
+                    if (PlayerPrefs.HasKey(legacyProgKey)) PlayerPrefs.DeleteKey(legacyProgKey);
+                }
+            }
+
+            if (found)
+            {
+                WriteToSaveData();
+                PlayerPrefs.Save();
+                Debug.Log("[Mastery] Migrated legacy PlayerPrefs data to SaveManager");
+            }
+            _migrated = true;
+        }
 
         public bool IsCompleted(string characterId, int nodeIndex)
         {
-            return PlayerPrefs.GetInt(Key(characterId, nodeIndex), 0) == 1;
+            return _cache.TryGetValue(CacheKey(characterId, nodeIndex), out var val) && val.completed;
+        }
+
+        int GetRawProgress(string characterId, int nodeIndex)
+        {
+            return _cache.TryGetValue(CacheKey(characterId, nodeIndex), out var val) ? val.progress : 0;
+        }
+
+        void SetNodeData(string characterId, int nodeIndex, bool completed, int progress)
+        {
+            _cache[CacheKey(characterId, nodeIndex)] = (completed, progress);
         }
 
         public float GetProgress(string characterId, int nodeIndex)
@@ -75,7 +183,7 @@ namespace Volk.Core
 
             if (IsCompleted(characterId, nodeIndex)) return 1f;
 
-            int current = PlayerPrefs.GetInt(ProgressKey(characterId, nodeIndex), 0);
+            int current = GetRawProgress(characterId, nodeIndex);
             int target = mastery.nodes[nodeIndex].targetValue;
             return target > 0 ? Mathf.Clamp01((float)current / target) : 0f;
         }
@@ -87,14 +195,13 @@ namespace Volk.Core
             var mastery = GetMastery(characterId);
             if (mastery == null || nodeIndex >= mastery.nodes.Length) return;
 
-            string pKey = ProgressKey(characterId, nodeIndex);
-            int current = PlayerPrefs.GetInt(pKey, 0) + amount;
-            PlayerPrefs.SetInt(pKey, current);
+            int current = GetRawProgress(characterId, nodeIndex) + amount;
+            SetNodeData(characterId, nodeIndex, false, current);
 
             if (current >= mastery.nodes[nodeIndex].targetValue)
                 TryComplete(characterId, nodeIndex);
             else
-                PlayerPrefs.Save();
+                WriteToSaveData();
         }
 
         public bool TryComplete(string characterId, int nodeIndex)
@@ -109,7 +216,7 @@ namespace Volk.Core
             // Check prerequisites
             if (!ArePrerequisitesMet(characterId, node)) return false;
 
-            int current = PlayerPrefs.GetInt(ProgressKey(characterId, nodeIndex), 0);
+            int current = GetRawProgress(characterId, nodeIndex);
             if (current < node.targetValue) return false;
 
             // Coin cost
@@ -120,8 +227,8 @@ namespace Volk.Core
                 CurrencyManager.Instance.SpendCoins(node.coinCost);
             }
 
-            PlayerPrefs.SetInt(Key(characterId, nodeIndex), 1);
-            PlayerPrefs.Save();
+            SetNodeData(characterId, nodeIndex, true, current);
+            WriteToSaveData();
 
             GrantReward(node);
             Debug.Log($"[Mastery] {characterId} node {nodeIndex} completed: {node.description}");
@@ -146,8 +253,8 @@ namespace Volk.Core
                 return false;
 
             CurrencyManager.Instance.SpendCoins(node.coinCost);
-            PlayerPrefs.SetInt(Key(characterId, nodeIndex), 1);
-            PlayerPrefs.Save();
+            SetNodeData(characterId, nodeIndex, true, node.targetValue);
+            WriteToSaveData();
 
             GrantReward(node);
             Debug.Log($"[Mastery] {characterId} node {nodeIndex} purchased for {node.coinCost} coins");
