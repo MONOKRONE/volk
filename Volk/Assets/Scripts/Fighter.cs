@@ -628,6 +628,10 @@ public class Fighter : MonoBehaviour
                         if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
                             Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(attackDamage);
 
+                        // Combo tracker
+                        if (!isAI && Volk.Core.ComboTracker.Instance != null)
+                            Volk.Core.ComboTracker.Instance.RegisterInput(animHash == hPunch ? AttackType.Punch : AttackType.Kick);
+
                         // Sound only on confirmed hit
                         if (animHash == hKick) AudioManager.Instance?.PlayKick();
                         else AudioManager.Instance?.PlayPunch();

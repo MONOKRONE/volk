@@ -207,8 +207,7 @@ public class GameManager : MonoBehaviour
             LevelSystem.Instance?.AddMatchXP(playerWonMatch);
 
             // Currency reward
-            if (playerWonMatch)
-                CurrencyManager.Instance?.OnStageClear();
+            CurrencyManager.Instance?.AddCoins(playerWonMatch ? 100 : 25);
 
             // Battle Pass XP
             if (BattlePassManager.Instance != null)

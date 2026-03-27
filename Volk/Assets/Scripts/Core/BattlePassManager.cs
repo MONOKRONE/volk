@@ -42,8 +42,17 @@ namespace Volk.Core
 
         void LoadState()
         {
-            CurrentXP = PlayerPrefs.GetInt("bp_xp", 0);
-            IsPremium = PlayerPrefs.GetInt("bp_premium", 0) == 1;
+            // Prefer SaveManager, fallback to PlayerPrefs
+            if (SaveManager.Instance != null)
+            {
+                CurrentXP = SaveManager.Instance.Data.battlePassXP;
+                IsPremium = SaveManager.Instance.Data.battlePassPremium;
+            }
+            else
+            {
+                CurrentXP = PlayerPrefs.GetInt("bp_xp", 0);
+                IsPremium = PlayerPrefs.GetInt("bp_premium", 0) == 1;
+            }
             RecalculateTier();
         }
 
@@ -62,6 +71,13 @@ namespace Volk.Core
                     ClaimTierReward(t);
             }
 
+            // Persist to SaveManager
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.Data.battlePassXP = CurrentXP;
+                SaveManager.Instance.Data.battlePassTier = CurrentTier;
+                SaveManager.Instance.Save();
+            }
             PlayerPrefs.Save();
         }
 
@@ -99,6 +115,11 @@ namespace Volk.Core
         {
             IsPremium = true;
             PlayerPrefs.SetInt("bp_premium", 1);
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.Data.battlePassPremium = true;
+                SaveManager.Instance.Save();
+            }
             PlayerPrefs.Save();
             Debug.Log("[BattlePass] Premium activated!");
 
