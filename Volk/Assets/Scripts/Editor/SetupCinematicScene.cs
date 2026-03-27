@@ -15,14 +15,25 @@ using UnityEditor.Recorder.Input;
 #endif
 
 /// <summary>
-/// PLA-119/PLA-120: Creates the Cinematic.unity scene with all 7 Cinemachine shots,
-/// Timeline, character materials, VFX signals, letterbox, post-processing, and recorder.
+/// PLA-119/PLA-120/PLA-121: Creates the Cinematic.unity scene with all 7 Cinemachine shots,
+/// Timeline, character materials (URP/Lit), MMA Arena, VFX signals, letterbox, post-processing, and recorder.
 /// Menu: VOLK > Cinematic > Setup Cinematic Scene
 /// </summary>
 public class SetupCinematicScene
 {
     static readonly string TimelineDir = "Assets/Cinematic";
     static readonly string[] AllChars = { "YILDIZ", "KAYA", "RUZGAR", "CELIK", "SIS", "TOPRAK" };
+
+    // PLA-121: URP/Lit character colors
+    static readonly System.Collections.Generic.Dictionary<string, Color> CharColors = new()
+    {
+        { "YILDIZ", new Color(1f, 0.55f, 0f) },       // turuncu
+        { "KAYA",   new Color(0.29f, 0.29f, 0.29f) },  // koyu gri
+        { "RUZGAR", new Color(0f, 0.4f, 1f) },         // mavi
+        { "CELIK",  new Color(0.75f, 0.75f, 0.75f) },  // gumus
+        { "SIS",    new Color(0.55f, 0f, 1f) },         // mor
+        { "TOPRAK", new Color(0.55f, 0.27f, 0.07f) },  // kahverengi
+    };
 
     [MenuItem("VOLK/Cinematic/Setup Cinematic Scene")]
     public static void Setup()
@@ -51,38 +62,41 @@ public class SetupCinematicScene
         var vcams = new GameObject("VirtualCameras");
 
 #if UNITY_EDITOR
-        // Shot 1: Opening — low angle, arena ground, upward tilt
+        // PLA-121: Fixed camera positions
+        // Shot 1: Opening — wide angle arena view
         var shot1 = CreateVCam("Shot1_Opening", vcams.transform);
         shot1.m_Lens.FieldOfView = 60f;
-        shot1.transform.position = new Vector3(0, 0.3f, -5f);
-        shot1.transform.rotation = Quaternion.Euler(-15f, 0, 0);
+        shot1.transform.position = new Vector3(0, 0.5f, -8f);
+        shot1.transform.rotation = Quaternion.Euler(10f, 0, 0);
 
-        // Shot 2: YILDIZ — orbital dolly
+        // Shot 2: YILDIZ — 3/4 angle character shot
         var shot2 = CreateVCam("Shot2_YILDIZ", vcams.transform);
         shot2.m_Lens.FieldOfView = 40f;
-        shot2.transform.position = new Vector3(3, 1.5f, -3f);
+        shot2.transform.position = new Vector3(2f, 1.5f, -4f);
+        shot2.transform.rotation = Quaternion.Euler(10f, -20f, 0);
 
-        // Shot 3: KAYA — low angle static close-up, slow dolly in
+        // Shot 3: KAYA — low angle dramatic
         var shot3 = CreateVCam("Shot3_KAYA", vcams.transform);
         shot3.m_Lens.FieldOfView = 35f;
-        shot3.transform.position = new Vector3(-2, 0.5f, -1.5f);
-        shot3.transform.rotation = Quaternion.Euler(-10f, 15f, 0);
+        shot3.transform.position = new Vector3(-1f, 1f, -3f);
+        shot3.transform.rotation = Quaternion.Euler(5f, 15f, 0);
 
-        // Shot 4: Fight — dynamic handheld
+        // Shot 4: Fight — two characters in frame
         var shot4 = CreateVCam("Shot4_Fight", vcams.transform);
         shot4.m_Lens.FieldOfView = 55f;
-        shot4.transform.position = new Vector3(0, 1.8f, -4f);
+        shot4.transform.position = new Vector3(0f, 1.2f, -5f);
+        shot4.transform.rotation = Quaternion.Euler(8f, 0, 0);
         var noise = shot4.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
         if (noise == null)
             noise = shot4.AddCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
         noise.m_AmplitudeGain = 0.5f;
         noise.m_FrequencyGain = 0.3f;
 
-        // Shot 5: Ghost — wide shot, SIS ghost effect
+        // Shot 5: Ghost — wide shot
         var shot5 = CreateVCam("Shot5_Ghost", vcams.transform);
         shot5.m_Lens.FieldOfView = 70f;
-        shot5.transform.position = new Vector3(0, 3f, -8f);
-        shot5.transform.rotation = Quaternion.Euler(10f, 0, 0);
+        shot5.transform.position = new Vector3(0f, 2f, -10f);
+        shot5.transform.rotation = Quaternion.Euler(15f, 0, 0);
 
         // Shot 6: Roster — 6 rapid-cut cameras (1s each)
         var rosterParent = new GameObject("Shot6_Roster");
@@ -95,10 +109,11 @@ public class SetupCinematicScene
             rCam.Priority = 0;
         }
 
-        // Shot 7: Logo — fade to black
+        // Shot 7: Logo — upward looking wide shot
         var shot7 = CreateVCam("Shot7_Logo", vcams.transform);
         shot7.m_Lens.FieldOfView = 50f;
-        shot7.transform.position = new Vector3(0, 2f, -6f);
+        shot7.transform.position = new Vector3(0f, 3f, -12f);
+        shot7.transform.rotation = Quaternion.Euler(20f, 0, 0);
 #endif
 
         // 4. Create Timeline + PlayableDirector
@@ -191,11 +206,41 @@ public class SetupCinematicScene
 
         volume.profile = profile;
 
-        // Spawn YILDIZ + KAYA for fight shots, apply palette materials
+        // PLA-121: MMA Arena setup using MarpaStudio meshes
+        var arenaRoot = new GameObject("MMA_Arena");
+        SpawnArenaMesh("Assets/MarpaStudio/Mesh/OctagonFloor.fbx", arenaRoot.transform,
+            Vector3.zero, Vector3.one);
+        SpawnArenaMesh("Assets/MarpaStudio/Mesh/OctagonCage.fbx", arenaRoot.transform,
+            Vector3.zero, Vector3.one);
+        SpawnArenaMesh("Assets/MarpaStudio/Mesh/RingFloor.fbx", arenaRoot.transform,
+            new Vector3(0, -0.01f, 0), Vector3.one);
+        SpawnArenaMesh("Assets/MarpaStudio/Mesh/RingPillarsBase.fbx", arenaRoot.transform,
+            Vector3.zero, Vector3.one);
+
+        // PLA-121: Lighting — Directional Light
+        var existingLights = Object.FindObjectsOfType<Light>();
+        foreach (var l in existingLights)
+        {
+            if (l.type == LightType.Directional)
+            {
+                l.intensity = 1.2f;
+                l.transform.rotation = Quaternion.Euler(-30f, 45f, 0);
+                l.color = new Color(1f, 0.95f, 0.8f);
+            }
+        }
+
+        // PLA-121: Rim Light (blue point light behind fighters)
+        var rimLightGO = new GameObject("RimLight");
+        var rimLight = rimLightGO.AddComponent<Light>();
+        rimLight.type = LightType.Point;
+        rimLightGO.transform.position = new Vector3(0, 2f, 3f);
+        rimLight.intensity = 2f;
+        rimLight.color = new Color(0.5f, 0.7f, 1f);
+        rimLight.range = 15f;
+
+        // Spawn characters with URP/Lit color materials and normalized scale
         SpawnCharacterPrefab("YILDIZ", new Vector3(1, 0, 0));
         SpawnCharacterPrefab("KAYA", new Vector3(-1, 0, 0));
-
-        // Spawn remaining roster characters for Shot6
         SpawnCharacterPrefab("RUZGAR", new Vector3(-3, 0, 3));
         SpawnCharacterPrefab("CELIK", new Vector3(-1, 0, 3));
         SpawnCharacterPrefab("SIS", new Vector3(1, 0, 3));
@@ -204,6 +249,32 @@ public class SetupCinematicScene
         // HitSpawnPoint for VFX
         var hitPoint = new GameObject("HitSpawnPoint");
         hitPoint.transform.position = new Vector3(0, 1f, 0);
+
+        // PLA-121: Wire up Matthew Guz hit effect prefabs to HitEffectManager
+        var hitMgrGO = new GameObject("HitEffectManager");
+        var hitMgr = hitMgrGO.AddComponent<HitEffectManager>();
+        var basicHit = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Matthew Guz/Hits Effects FREE/Prefab/Basic Hit .prefab");
+        var fireHit = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Matthew Guz/Hits Effects FREE/Prefab/Fire Hit .prefab");
+        var lightningHit = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Matthew Guz/Hits Effects FREE/Prefab/Lightning Hit Blue.prefab");
+        var shadowHit = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Matthew Guz/Hits Effects FREE/Prefab/1.2/Shadow Hit (NEW).prefab");
+        if (basicHit != null) hitMgr.punchHitPrefab = basicHit;
+        if (fireHit != null) hitMgr.kickHitPrefab = fireHit;
+        if (basicHit != null) hitMgr.lightHitPrefab = basicHit;
+        if (fireHit != null) hitMgr.mediumHitPrefab = fireHit;
+        if (lightningHit != null) hitMgr.heavyHitPrefab = lightningHit;
+        if (shadowHit != null) hitMgr.skillHitPrefab = shadowHit;
+
+        // Wire VFX receiver to HitEffectManager
+        var vfxReceiver = directorGO.GetComponent<Volk.Cinematic.CinematicVFXReceiver>();
+        if (vfxReceiver != null)
+        {
+            vfxReceiver.hitEffectManager = hitMgr;
+            vfxReceiver.hitSpawnPoint = hitPoint.transform;
+        }
 
         // Save scene
         string scenePath = "Assets/Scenes/Cinematic.unity";
@@ -312,6 +383,9 @@ public class SetupCinematicScene
             instance.transform.position = position;
             instance.transform.rotation = Quaternion.Euler(0, charName == "YILDIZ" ? -30f : 30f, 0);
 
+            // PLA-121: Normalize scale to prevent giant characters
+            instance.transform.localScale = Vector3.one;
+
             // Disable AI/input
             var fighter = instance.GetComponent<Fighter>();
             if (fighter != null)
@@ -320,11 +394,25 @@ public class SetupCinematicScene
                 fighter.enabled = false;
             }
 
-            // Apply palette material if it exists
-            string matPath = $"Assets/Materials/Characters/{charName}_Mat.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-            if (mat != null)
+            // PLA-121: Create URP/Lit material with character-specific color
+            if (CharColors.TryGetValue(charName, out Color charColor))
             {
+                // Create material dir if needed
+                if (!AssetDatabase.IsValidFolder("Assets/Materials"))
+                    AssetDatabase.CreateFolder("Assets", "Materials");
+                if (!AssetDatabase.IsValidFolder("Assets/Materials/Characters"))
+                    AssetDatabase.CreateFolder("Assets/Materials", "Characters");
+
+                string matPath = $"Assets/Materials/Characters/{charName}_Mat.mat";
+                var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+                if (mat == null)
+                {
+                    var urpLitShader = Shader.Find("Universal Render Pipeline/Lit");
+                    mat = new Material(urpLitShader != null ? urpLitShader : Shader.Find("Standard"));
+                    AssetDatabase.CreateAsset(mat, matPath);
+                }
+                mat.color = charColor;
+
                 foreach (var smr in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
                 {
                     var mats = smr.sharedMaterials;
@@ -337,6 +425,22 @@ public class SetupCinematicScene
         else
         {
             Debug.LogWarning($"[Cinematic] Prefab not found: {prefabPath}");
+        }
+    }
+
+    static void SpawnArenaMesh(string meshPath, Transform parent, Vector3 position, Vector3 scale)
+    {
+        var meshPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(meshPath);
+        if (meshPrefab != null)
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(meshPrefab);
+            instance.transform.SetParent(parent);
+            instance.transform.position = position;
+            instance.transform.localScale = scale;
+        }
+        else
+        {
+            Debug.LogWarning($"[Cinematic] Arena mesh not found: {meshPath}");
         }
     }
 }
