@@ -34,9 +34,21 @@ namespace Volk.Core
     }
 
     [System.Serializable]
+    public class BehaviorMetrics
+    {
+        public float aggressionScore;    // 0-1: ratio of attack actions to total
+        public float avgReactionDelay;   // Average time between situation change and action
+        public float comboDropRate;      // Ratio of combos dropped (no follow-up in window)
+        public int totalActions;
+        public int totalMatches;
+        public float avgActionsPerMatch;
+    }
+
+    [System.Serializable]
     public class BehaviorProfile
     {
         public List<SituationHistory> situations = new List<SituationHistory>();
+        public BehaviorMetrics metrics = new BehaviorMetrics();
     }
 
     public class PlayerBehaviorTracker : MonoBehaviour
@@ -45,6 +57,17 @@ namespace Volk.Core
 
         private Dictionary<string, List<ActionRecord>> situationTable = new Dictionary<string, List<ActionRecord>>();
         private string currentMatchup = "unknown";
+
+        // Per-match metrics tracking
+        private int matchActionCount;
+        private int matchAttackCount;
+        private int matchComboAttempts;
+        private int matchComboDrops;
+        private float lastSituationChangeTime;
+        private List<float> reactionDelays = new List<float>();
+
+        // Running metrics
+        public BehaviorMetrics Metrics { get; private set; } = new BehaviorMetrics();
 
         void Awake()
         {
@@ -56,6 +79,12 @@ namespace Volk.Core
         public void SetMatchup(string playerChar, string enemyChar)
         {
             currentMatchup = $"{playerChar}_vs_{enemyChar}";
+            matchActionCount = 0;
+            matchAttackCount = 0;
+            matchComboAttempts = 0;
+            matchComboDrops = 0;
+            reactionDelays.Clear();
+            lastSituationChangeTime = Time.time;
         }
 
         public void Record(GameSituation situation, PlayerAction action)
@@ -64,16 +93,70 @@ namespace Volk.Core
             if (!situationTable.ContainsKey(key))
                 situationTable[key] = new List<ActionRecord>();
 
+            float now = Time.time;
             situationTable[key].Add(new ActionRecord
             {
                 action = action,
-                timestamp = Time.time
+                timestamp = now
             });
+
+            // Track metrics
+            matchActionCount++;
+            bool isAttack = action == PlayerAction.Punch || action == PlayerAction.Kick ||
+                           action == PlayerAction.HeavyPunch || action == PlayerAction.Skill1 ||
+                           action == PlayerAction.Skill2;
+            if (isAttack) matchAttackCount++;
+
+            // Reaction delay
+            float reactionDelay = now - lastSituationChangeTime;
+            if (reactionDelay > 0 && reactionDelay < 5f) // Filter out stale values
+                reactionDelays.Add(reactionDelay);
         }
 
-        /// <summary>
-        /// Get the most common action for a situation (for Ghost AI).
-        /// </summary>
+        public void OnSituationChanged()
+        {
+            lastSituationChangeTime = Time.time;
+        }
+
+        public void OnComboAttempt(bool completed)
+        {
+            matchComboAttempts++;
+            if (!completed) matchComboDrops++;
+        }
+
+        public void OnMatchEnd()
+        {
+            Metrics.totalMatches++;
+            Metrics.totalActions += matchActionCount;
+
+            // Aggression: ratio of attacks to total actions
+            if (matchActionCount > 0)
+            {
+                float matchAggression = (float)matchAttackCount / matchActionCount;
+                // Exponential moving average
+                Metrics.aggressionScore = Metrics.aggressionScore * 0.8f + matchAggression * 0.2f;
+            }
+
+            // Reaction delay average
+            if (reactionDelays.Count > 0)
+            {
+                float sum = 0;
+                foreach (float d in reactionDelays) sum += d;
+                float matchAvg = sum / reactionDelays.Count;
+                Metrics.avgReactionDelay = Metrics.avgReactionDelay * 0.7f + matchAvg * 0.3f;
+            }
+
+            // Combo drop rate
+            if (matchComboAttempts > 0)
+            {
+                float matchDropRate = (float)matchComboDrops / matchComboAttempts;
+                Metrics.comboDropRate = Metrics.comboDropRate * 0.7f + matchDropRate * 0.3f;
+            }
+
+            Metrics.avgActionsPerMatch = Metrics.totalMatches > 0
+                ? (float)Metrics.totalActions / Metrics.totalMatches : 0f;
+        }
+
         public PlayerAction? GetMostLikelyAction(string matchup, GameSituation situation)
         {
             string key = $"{matchup}_{situation}";
@@ -101,6 +184,35 @@ namespace Volk.Core
             return best;
         }
 
+        /// <summary>
+        /// Get action distribution weights for a situation (for GhostFSM).
+        /// </summary>
+        public Dictionary<PlayerAction, float> GetActionWeights(string matchup, GameSituation situation)
+        {
+            var weights = new Dictionary<PlayerAction, float>();
+            string key = $"{matchup}_{situation}";
+
+            if (!situationTable.ContainsKey(key) || situationTable[key].Count == 0)
+                return weights;
+
+            var counts = new Dictionary<PlayerAction, int>();
+            int total = 0;
+            foreach (var record in situationTable[key])
+            {
+                if (!counts.ContainsKey(record.action))
+                    counts[record.action] = 0;
+                counts[record.action]++;
+                total++;
+            }
+
+            if (total > 0)
+            {
+                foreach (var kvp in counts)
+                    weights[kvp.Key] = (float)kvp.Value / total;
+            }
+            return weights;
+        }
+
         public void SaveProfile()
         {
             var profile = new BehaviorProfile();
@@ -112,11 +224,12 @@ namespace Volk.Core
                     actions = kvp.Value
                 });
             }
+            profile.metrics = Metrics;
 
             string json = JsonUtility.ToJson(profile, true);
             string path = Path.Combine(Application.persistentDataPath, "ghost_profile.json");
             File.WriteAllText(path, json);
-            Debug.Log($"[Behavior] Profile saved: {path} ({situationTable.Count} situations)");
+            Debug.Log($"[Behavior] Profile saved: {path} ({situationTable.Count} situations, aggression={Metrics.aggressionScore:F2})");
         }
 
         public void LoadProfile()
@@ -131,13 +244,23 @@ namespace Volk.Core
             foreach (var sit in profile.situations)
                 situationTable[sit.key] = sit.actions;
 
-            Debug.Log($"[Behavior] Profile loaded: {situationTable.Count} situations");
+            if (profile.metrics != null)
+                Metrics = profile.metrics;
+
+            Debug.Log($"[Behavior] Profile loaded: {situationTable.Count} situations, {Metrics.totalMatches} matches");
         }
 
         public void ClearMatch()
         {
-            // Keep accumulated data, just reset matchup for next match
             currentMatchup = "unknown";
+        }
+
+        public int GetTotalRecordedActions()
+        {
+            int total = 0;
+            foreach (var kvp in situationTable)
+                total += kvp.Value.Count;
+            return total;
         }
     }
 }
