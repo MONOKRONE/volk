@@ -5,10 +5,14 @@ namespace Volk.Core
 {
     public enum MasteryNodeType
     {
-        Trial,
-        ArchetypeChallenge,
-        LoreUnlock,
-        BonusReward
+        Damage,             // Attack power nodes
+        Defense,            // Defense/HP nodes
+        Speed,              // Movement/attack speed nodes
+        Special,            // Unique character abilities
+        Trial,              // Legacy: combat trial
+        ArchetypeChallenge, // Legacy: archetype challenge
+        LoreUnlock,         // Legacy: lore unlock
+        BonusReward         // Legacy: bonus reward
     }
 
     public enum MasteryRewardType
@@ -29,8 +33,10 @@ namespace Volk.Core
         public string description;
         public string requirement; // e.g. "10_parry", "5_wins_no_skill"
         public int targetValue;
+        public int coinCost;       // Coin cost to unlock (0 = free/auto)
         public MasteryRewardType rewardType;
         public string rewardValue; // e.g. "500", "Skin_YILDIZ_Gold"
+        public int[] prerequisites; // Node indices that must be completed first
     }
 
     [CreateAssetMenu(fileName = "NewMastery", menuName = "VOLK/Character Mastery")]
@@ -99,15 +105,62 @@ namespace Volk.Core
             if (mastery == null || nodeIndex >= mastery.nodes.Length) return false;
 
             var node = mastery.nodes[nodeIndex];
+
+            // Check prerequisites
+            if (!ArePrerequisitesMet(characterId, node)) return false;
+
             int current = PlayerPrefs.GetInt(ProgressKey(characterId, nodeIndex), 0);
             if (current < node.targetValue) return false;
+
+            // Coin cost
+            if (node.coinCost > 0)
+            {
+                if (CurrencyManager.Instance == null || CurrencyManager.Instance.Coins < node.coinCost)
+                    return false;
+                CurrencyManager.Instance.SpendCoins(node.coinCost);
+            }
 
             PlayerPrefs.SetInt(Key(characterId, nodeIndex), 1);
             PlayerPrefs.Save();
 
-            // Grant reward
             GrantReward(node);
             Debug.Log($"[Mastery] {characterId} node {nodeIndex} completed: {node.description}");
+            return true;
+        }
+
+        /// <summary>
+        /// Unlock a node by paying coin cost directly (no progress requirement).
+        /// </summary>
+        public bool TryPurchaseNode(string characterId, int nodeIndex)
+        {
+            if (IsCompleted(characterId, nodeIndex)) return true;
+
+            var mastery = GetMastery(characterId);
+            if (mastery == null || nodeIndex >= mastery.nodes.Length) return false;
+
+            var node = mastery.nodes[nodeIndex];
+            if (!ArePrerequisitesMet(characterId, node)) return false;
+            if (node.coinCost <= 0) return false;
+
+            if (CurrencyManager.Instance == null || CurrencyManager.Instance.Coins < node.coinCost)
+                return false;
+
+            CurrencyManager.Instance.SpendCoins(node.coinCost);
+            PlayerPrefs.SetInt(Key(characterId, nodeIndex), 1);
+            PlayerPrefs.Save();
+
+            GrantReward(node);
+            Debug.Log($"[Mastery] {characterId} node {nodeIndex} purchased for {node.coinCost} coins");
+            return true;
+        }
+
+        bool ArePrerequisitesMet(string characterId, MasteryNode node)
+        {
+            if (node.prerequisites == null || node.prerequisites.Length == 0) return true;
+            foreach (int prereq in node.prerequisites)
+            {
+                if (!IsCompleted(characterId, prereq)) return false;
+            }
             return true;
         }
 
