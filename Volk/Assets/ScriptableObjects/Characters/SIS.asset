@@ -19,7 +19,7 @@ MonoBehaviour:
   power: 6
   defense: 4
   maxHP: 80
-  attackDamage: 10.0199995
+  attackDamage: 8.8
   attackRange: 1.2
   walkSpeed: 5
   runSpeed: 8.5
