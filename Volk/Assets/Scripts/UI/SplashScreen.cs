@@ -25,7 +25,7 @@ namespace Volk.UI
         public RectTransform rightSilhouette;
 
         [Header("Settings")]
-        public string nextScene = "MainHub";
+        public string nextScene = "MainMenu";
         public float titleFadeInDuration = 1.5f;
 
         private bool canProceed;

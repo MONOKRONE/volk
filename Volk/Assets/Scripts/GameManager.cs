@@ -39,7 +39,25 @@ public class GameManager : MonoBehaviour
         ApplySelectedCharacter();
     }
 
-    void Start() { StartCoroutine(StartRound()); }
+    void Start()
+    {
+        // Wire ComboTracker to player fighter
+        if (Volk.Core.ComboTracker.Instance != null && playerFighter != null)
+            Volk.Core.ComboTracker.Instance.SetTrackedFighter(playerFighter);
+
+        // Ghost mode: attach GhostFSM to enemy if in Ghost mode
+        if (GameSettings.Instance?.currentMode == GameSettings.GameMode.Ghost && enemyFighter != null)
+        {
+            var ghostFSM = enemyFighter.GetComponent<Volk.Core.GhostFSM>();
+            if (ghostFSM == null)
+                ghostFSM = enemyFighter.gameObject.AddComponent<Volk.Core.GhostFSM>();
+
+            string matchup = $"{playerFighter?.characterData?.characterName ?? "unknown"}_vs_{enemyFighter?.characterData?.characterName ?? "unknown"}";
+            ghostFSM.LoadProfile(matchup);
+        }
+
+        StartCoroutine(StartRound());
+    }
 
     void ApplySelectedCharacter()
     {
@@ -234,6 +252,23 @@ public class GameManager : MonoBehaviour
             // DLC grind tracking
             if (CharacterDLCManager.Instance != null && playerFighter?.characterData != null)
                 CharacterDLCManager.Instance.RecordMatchPlayed(playerFighter.characterData.characterName, roundDuration * currentRound / 60f);
+
+            // Mastery progress
+            if (Volk.Core.CharacterMasteryManager.Instance != null && playerFighter?.characterData != null)
+            {
+                string charId = playerFighter.characterData.characterName;
+                if (playerWonMatch)
+                    Volk.Core.CharacterMasteryManager.Instance.AddProgress(charId, 0); // Node 0 = wins
+            }
+
+            // Character unlock popup for story mode unlocks
+            if (Volk.UI.CharacterUnlockPopup.Instance != null && StoryManager.Instance != null
+                && StoryManager.Instance.IsStoryMode && StoryManager.Instance.CurrentChapter != null)
+            {
+                var reward = StoryManager.Instance.CurrentChapter.characterUnlockReward;
+                if (reward != null && playerWonMatch)
+                    Volk.UI.CharacterUnlockPopup.Instance.Show(reward);
+            }
 
             // Submit leaderboard score
             LeaderboardManager.Instance?.SubmitScore();

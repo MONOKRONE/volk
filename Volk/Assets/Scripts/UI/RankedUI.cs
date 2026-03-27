@@ -59,7 +59,7 @@ namespace Volk.UI
         void Start()
         {
             if (backButton)
-                backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
+                backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
 
             if (findMatchButton)
                 findMatchButton.onClick.AddListener(OnFindMatch);

@@ -132,7 +132,7 @@ public class Fighter : MonoBehaviour
     {
         cc = GetComponent<CharacterController>();
         anim = GetComponentInChildren<Animator>();
-        anim.applyRootMotion = false;
+        if (anim != null) anim.applyRootMotion = false;
 
         // Apply CharacterData SO if assigned
         if (characterData != null)

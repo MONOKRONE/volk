@@ -46,7 +46,7 @@ namespace Volk.UI
         {
             if (backgroundImage) backgroundImage.color = VTheme.Background;
             if (xpFill) xpFill.color = VTheme.Blue;
-            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
+            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
             if (achievementsButton) achievementsButton.onClick.AddListener(() => SceneManager.LoadScene("Achievements"));
             if (equipmentButton) equipmentButton.onClick.AddListener(() => SceneManager.LoadScene("Equipment"));
 

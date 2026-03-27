@@ -55,7 +55,7 @@ namespace Volk.UI
             if (backgroundImage) backgroundImage.color = VTheme.Background;
             if (headerTitle) { headerTitle.text = "HIKAYE MODU"; headerTitle.color = VTheme.Red; }
             if (detailPanel) detailPanel.SetActive(false);
-            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
+            if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
             if (closeDetailButton) closeDetailButton.onClick.AddListener(() => detailPanel.SetActive(false));
             if (playButton) playButton.onClick.AddListener(OnPlayChapter);
 

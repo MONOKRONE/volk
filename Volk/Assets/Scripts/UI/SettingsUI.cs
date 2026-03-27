@@ -74,7 +74,7 @@ namespace Volk.UI
         void Start()
         {
             if (backButton)
-                backButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
+                backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
 
             // Tab buttons
             if (audioTab) audioTab.onClick.AddListener(() => SwitchTab(0));

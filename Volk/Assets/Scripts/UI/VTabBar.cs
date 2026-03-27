@@ -25,10 +25,10 @@ namespace Volk.UI
         [Header("Scenes")]
         public string storyScene = "StoryMenu";
         public string quickFightScene = "QuickFight";
-        public string onlineScene = "MainHub";
-        public string ghostScene = "MainHub";
+        public string onlineScene = "MainMenu";
+        public string ghostScene = "MainMenu";
         public string shopScene = "Shop";
-        public string profileScene = "MainHub";
+        public string profileScene = "MainMenu";
 
         public event Action<int> OnTabChanged;
 

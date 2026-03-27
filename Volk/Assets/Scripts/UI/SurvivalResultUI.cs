@@ -34,7 +34,7 @@ namespace Volk.UI
             if (panel) panel.SetActive(false);
             if (newRecordBanner) newRecordBanner.SetActive(false);
             if (retryButton) retryButton.onClick.AddListener(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name));
-            if (exitButton) exitButton.onClick.AddListener(() => SceneManager.LoadScene("MainHub"));
+            if (exitButton) exitButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
         }
 
         public void Show(int round, int score, int highScore, bool isNewRecord)
