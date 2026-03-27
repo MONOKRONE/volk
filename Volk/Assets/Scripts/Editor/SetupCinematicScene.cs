@@ -9,6 +9,9 @@ using UnityEngine.Rendering.Universal;
 
 #if UNITY_EDITOR
 using Cinemachine;
+using UnityEditor.Recorder;
+using UnityEditor.Recorder.Encoder;
+using UnityEditor.Recorder.Input;
 #endif
 
 /// <summary>
@@ -126,6 +129,12 @@ public class SetupCinematicScene
         AddCinemachineTrack(timelineAsset, "Shot7_Logo", 52, 8);
 #endif
 
+        // 5. Animator Tracks for YILDIZ and KAYA (Idle + Attack sequences)
+#if UNITY_EDITOR
+        AddAnimationTrack(timelineAsset, "YILDIZ_Cinematic", 0, 15, 25);
+        AddAnimationTrack(timelineAsset, "KAYA_Cinematic", 0, 15, 25);
+#endif
+
         // 7. Post-process Volume
         var ppGO = new GameObject("PostProcessVolume");
         var volume = ppGO.AddComponent<Volume>();
@@ -203,6 +212,57 @@ public class SetupCinematicScene
         clip.displayName = shotName;
     }
 #endif
+
+    static void AddAnimationTrack(TimelineAsset timeline, string gameObjectName, float idleStart, float idleDuration, float attackStart)
+    {
+        var track = timeline.CreateTrack<AnimationTrack>(null, $"{gameObjectName}_Anim");
+
+        // Idle clip
+        var idleClip = track.CreateClip<AnimationPlayableAsset>();
+        idleClip.start = idleStart;
+        idleClip.duration = idleDuration;
+        idleClip.displayName = "Idle";
+
+        // Attack clip
+        var attackClip = track.CreateClip<AnimationPlayableAsset>();
+        attackClip.start = attackStart;
+        attackClip.duration = 10;
+        attackClip.displayName = "Attack";
+    }
+
+    [MenuItem("VOLK/Cinematic/Setup Recorder (MP4 1080p60)")]
+    public static void SetupRecorder()
+    {
+#if UNITY_EDITOR
+        string recorderDir = "Assets/Cinematic";
+        if (!AssetDatabase.IsValidFolder(recorderDir))
+            AssetDatabase.CreateFolder("Assets", "Cinematic");
+
+        var settings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
+        settings.SetRecordModeToTimeInterval(0, 60); // 60 seconds trailer
+        settings.FrameRate = 60f;
+
+        var movieSettings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
+        movieSettings.name = "VOLKTrailer_Recorder";
+        movieSettings.Enabled = true;
+        movieSettings.ImageInputSettings = new GameViewInputSettings
+        {
+            OutputWidth = 1920,
+            OutputHeight = 1080,
+        };
+        movieSettings.EncoderSettings = new CoreEncoderSettings
+        {
+            Codec = CoreEncoderSettings.OutputCodec.MP4,
+            EncodingQuality = CoreEncoderSettings.VideoEncodingQuality.High
+        };
+        movieSettings.OutputFile = "VOLKTrailer";
+
+        settings.AddRecorderSettings(movieSettings);
+        AssetDatabase.CreateAsset(settings, $"{recorderDir}/VOLKRecorderSettings.asset");
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Cinematic] Recorder settings created: Assets/Cinematic/VOLKRecorderSettings.asset. Open Window > General > Recorder > Recorder Window to record.");
+#endif
+    }
 
     static void SpawnCharacterPrefab(string charName, Vector3 position)
     {
