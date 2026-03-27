@@ -22,16 +22,29 @@ namespace Volk.Core
         public const int DAILY_CHALLENGE_TOKENS = 25;
         public const int TOWER_MILESTONE_GEMS = 10;
 
+        private bool _initialized;
+
         void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadFromSave();
         }
 
-        void LoadFromSave()
+        void Start()
         {
+            EnsureInitialized();
+        }
+
+        /// <summary>
+        /// Loads currency from SaveManager (preferred) or PlayerPrefs fallback.
+        /// Safe to call multiple times — only the first call loads data.
+        /// </summary>
+        public void EnsureInitialized()
+        {
+            if (_initialized) return;
+            _initialized = true;
+
             if (SaveManager.Instance != null)
             {
                 Coins = SaveManager.Instance.Data.currency;
@@ -39,6 +52,7 @@ namespace Volk.Core
             }
             else
             {
+                Debug.LogWarning("[CurrencyManager] SaveManager not ready, falling back to PlayerPrefs");
                 Coins = PlayerPrefs.GetInt("currency", 0);
                 Gems = PlayerPrefs.GetInt("gems", 0);
             }
@@ -47,6 +61,7 @@ namespace Volk.Core
 
         public void AddCoins(int amount)
         {
+            EnsureInitialized();
             Coins += amount;
             Sync();
             OnCoinsChanged?.Invoke(Coins, amount);
@@ -54,6 +69,7 @@ namespace Volk.Core
 
         public bool SpendCoins(int amount)
         {
+            EnsureInitialized();
             if (Coins < amount) return false;
             Coins -= amount;
             Sync();
@@ -63,6 +79,7 @@ namespace Volk.Core
 
         public void AddGems(int amount)
         {
+            EnsureInitialized();
             Gems += amount;
             Sync();
             OnGemsChanged?.Invoke(Gems, amount);
@@ -70,6 +87,7 @@ namespace Volk.Core
 
         public bool SpendGems(int amount)
         {
+            EnsureInitialized();
             if (Gems < amount) return false;
             Gems -= amount;
             Sync();
@@ -79,6 +97,7 @@ namespace Volk.Core
 
         public void AddDailyTokens(int amount)
         {
+            EnsureInitialized();
             DailyTokens += amount;
             PlayerPrefs.SetInt("daily_tokens", DailyTokens);
             PlayerPrefs.Save();
@@ -87,6 +106,7 @@ namespace Volk.Core
 
         public bool SpendDailyTokens(int amount)
         {
+            EnsureInitialized();
             if (DailyTokens < amount) return false;
             DailyTokens -= amount;
             PlayerPrefs.SetInt("daily_tokens", DailyTokens);
