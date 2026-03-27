@@ -30,9 +30,71 @@ namespace Volk.Core
             Instance = this;
             DontDestroyOnLoad(gameObject);
             LoadInventory();
+
+            // Re-sync when SaveManager loads (e.g. cloud restore)
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.OnSaveLoaded += OnSaveDataReloaded;
+        }
+
+        void OnDestroy()
+        {
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.OnSaveLoaded -= OnSaveDataReloaded;
+        }
+
+        void OnSaveDataReloaded()
+        {
+            if (SaveManager.Instance?.Data == null) return;
+            LoadFromSaveData(SaveManager.Instance.Data);
+            OnInventoryChanged?.Invoke();
         }
 
         void LoadInventory()
+        {
+            // Primary: load from SaveManager (synced with cloud)
+            if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+            {
+                LoadFromSaveData(SaveManager.Instance.Data);
+                MigrateLegacyPlayerPrefs();
+            }
+            else
+            {
+                // SaveManager not ready yet — load from legacy PlayerPrefs as fallback
+                LoadFromLegacyPlayerPrefs();
+            }
+
+            if (Inventory.Count == 0)
+                GiveStarterEquipment();
+        }
+
+        void LoadFromSaveData(SaveData data)
+        {
+            Inventory.Clear();
+            EquippedSlots.Clear();
+
+            if (data.ownedEquipment != null)
+            {
+                foreach (var entry in data.ownedEquipment)
+                {
+                    var parts = entry.Split(':');
+                    string itemId = parts[0];
+                    int level = parts.Length > 1 && int.TryParse(parts[1], out var l) ? l : 0;
+                    Inventory.Add(new OwnedEquipment { itemId = itemId, upgradeLevel = level });
+                }
+            }
+
+            if (data.equippedItems != null)
+            {
+                foreach (var e in data.equippedItems)
+                {
+                    var parts = e.Split(':');
+                    if (parts.Length == 2 && Enum.TryParse<EquipmentSlot>(parts[0], out var slot))
+                        EquippedSlots[slot] = parts[1];
+                }
+            }
+        }
+
+        void LoadFromLegacyPlayerPrefs()
         {
             string json = PlayerPrefs.GetString("equipment_inventory", "");
             if (!string.IsNullOrEmpty(json))
@@ -52,10 +114,24 @@ namespace Volk.Core
                     }
                 }
             }
+        }
 
-            // Give starter equipment if empty
-            if (Inventory.Count == 0)
-                GiveStarterEquipment();
+        /// <summary>
+        /// One-time migration: if legacy PlayerPrefs equipment data exists,
+        /// move it into SaveData and delete the old key.
+        /// </summary>
+        void MigrateLegacyPlayerPrefs()
+        {
+            if (!PlayerPrefs.HasKey("equipment_inventory")) return;
+            if (Inventory.Count > 0) { PlayerPrefs.DeleteKey("equipment_inventory"); return; }
+
+            LoadFromLegacyPlayerPrefs();
+            if (Inventory.Count > 0)
+            {
+                SaveInventory();
+                Debug.Log("[EquipmentManager] Migrated legacy PlayerPrefs equipment to SaveManager");
+            }
+            PlayerPrefs.DeleteKey("equipment_inventory");
         }
 
         void GiveStarterEquipment()
@@ -226,15 +302,23 @@ namespace Volk.Core
 
         void SaveInventory()
         {
-            var wrapper = new InventoryWrapper();
-            wrapper.items = Inventory;
-            wrapper.equipped = new List<string>();
-            foreach (var kvp in EquippedSlots)
-                wrapper.equipped.Add($"{kvp.Key}:{kvp.Value}");
+            if (SaveManager.Instance == null || SaveManager.Instance.Data == null)
+            {
+                Debug.LogWarning("[EquipmentManager] SaveManager not available — equipment change will not persist");
+                return;
+            }
 
-            string json = JsonUtility.ToJson(wrapper);
-            PlayerPrefs.SetString("equipment_inventory", json);
-            PlayerPrefs.Save();
+            var data = SaveManager.Instance.Data;
+
+            data.ownedEquipment.Clear();
+            foreach (var item in Inventory)
+                data.ownedEquipment.Add($"{item.itemId}:{item.upgradeLevel}");
+
+            data.equippedItems.Clear();
+            foreach (var kvp in EquippedSlots)
+                data.equippedItems.Add($"{kvp.Key}:{kvp.Value}");
+
+            SaveManager.Instance.Save();
         }
 
         [Serializable]
