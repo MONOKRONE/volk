@@ -100,6 +100,21 @@ public class Fighter : MonoBehaviour
     // Skill cooldowns
     private float skill1CooldownTimer;
     private float skill2CooldownTimer;
+
+    // EX Meter (0-100)
+    [HideInInspector] public float exMeter;
+    public const float EX_METER_MAX = 100f;
+    private const float EX_GAIN_ON_HIT_DEALT = 5f;
+    private const float EX_GAIN_ON_HIT_TAKEN = 10f;
+    public float ExMeterRatio => exMeter / EX_METER_MAX;
+
+    // Perfect Block
+    private bool isPerfectBlockWindow;
+    private float perfectBlockTimer;
+    private const float PERFECT_BLOCK_WINDOW = 0.2f; // 200ms
+
+    // Super Armor (active during skill animations)
+    private bool isPlayingSkillAnim;
     public float Skill1CooldownRatio => characterData?.skill1 != null && characterData.skill1.cooldown > 0
         ? Mathf.Clamp01(skill1CooldownTimer / characterData.skill1.cooldown) : 0f;
     public float Skill2CooldownRatio => characterData?.skill2 != null && characterData.skill2.cooldown > 0
@@ -628,6 +643,7 @@ public class Fighter : MonoBehaviour
                         hitLanded = true;
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
+                        exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_DEALT, EX_METER_MAX);
 
                         // Track stats
                         if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
@@ -739,8 +755,16 @@ public class Fighter : MonoBehaviour
             amount = CalculateDamage(amount, attacker.power, defense);
 
         CheckParryOnDamage(ref amount);
+        CheckPerfectBlock(ref amount);
+
+        // Super Armor: take damage but don't stagger during skill animations
+        bool superArmorActive = characterData != null && characterData.hasSuperArmor && isPlayingSkillAnim;
+
         if (amount <= 0f) return;
         currentHP -= amount;
+
+        // EX meter gain on damage taken
+        exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_TAKEN, EX_METER_MAX);
         Debug.Log($"{gameObject.name} took {amount} damage. HP: {currentHP}/{maxHP}");
 
         // Track stats (player receiving damage)
@@ -751,7 +775,8 @@ public class Fighter : MonoBehaviour
         JuiceManager.Instance?.CharacterShake(transform, 0.05f * shakeMult);
         StartCoroutine(ShakeCamera(0.1f, 0.05f * shakeMult));
         AudioManager.Instance?.PlayHit();
-        VibrationManager.Instance?.VibrateLight();
+        float vibMult = attacker?.characterData?.vibrationMultiplier ?? 1f;
+        VibrationManager.Instance?.VibrateLight(vibMult);
 
         // Knockback
         if (hasAttackerPos || attackerPos.sqrMagnitude > 0.001f)
@@ -776,7 +801,7 @@ public class Fighter : MonoBehaviour
             currentHP = 0;
             anim.SetTrigger(hDeath);
             AudioManager.Instance?.PlayKnockout();
-            VibrationManager.Instance?.VibrateHeavy();
+            VibrationManager.Instance?.VibrateKO(vibMult);
             JuiceManager.Instance?.ScreenFlash();
             JuiceManager.Instance?.SlowMotionKO();
             PostProcessAnimator.Instance?.KOPulse();
@@ -794,6 +819,11 @@ public class Fighter : MonoBehaviour
 
             if (GameManager.Instance != null)
                 GameManager.Instance.OnFighterDied(!isAI);
+        }
+        else if (superArmorActive)
+        {
+            // Super Armor: take damage but don't interrupt skill animation
+            Debug.Log($"{gameObject.name} Super Armor absorbed stagger!");
         }
         else
         {
@@ -993,9 +1023,72 @@ public class Fighter : MonoBehaviour
         StartCoroutine(DoSkillAttack(skill, skillIndex));
     }
 
-    IEnumerator DoSkillAttack(Volk.Core.SkillBase skill, int skillIndex)
+    /// <summary>
+    /// EX Skill: Costs full EX meter, deals exDamageMultiplier damage.
+    /// Called on long-press of skill button when meter is full.
+    /// </summary>
+    public void UseSkillEX(int skillIndex)
+    {
+        if (isAttacking || isDead) return;
+        if (exMeter < EX_METER_MAX) return;
+        if (characterData == null) return;
+
+        Volk.Core.SkillBase skill = skillIndex == 1 ? characterData.skill1 : characterData.skill2;
+        if (skill == null) return;
+
+        exMeter = 0f;
+        JuiceManager.Instance?.ExSkillEffect();
+        VibrationManager.Instance?.VibrateEX(characterData.vibrationMultiplier);
+        StartCoroutine(DoSkillAttack(skill, skillIndex, characterData.exDamageMultiplier));
+    }
+
+    /// <summary>
+    /// Perfect Block: 200ms window where blocking negates all damage and stuns attacker.
+    /// </summary>
+    public void AttemptPerfectBlock()
+    {
+        if (isAttacking || isDead || isParrying || isPerfectBlockWindow) return;
+        if (!isAI) OnActionPerformed?.Invoke(Volk.Core.PlayerAction.Parry);
+        StartCoroutine(PerfectBlockWindow());
+    }
+
+    IEnumerator PerfectBlockWindow()
+    {
+        isPerfectBlockWindow = true;
+        anim.SetTrigger(hBlock);
+        perfectBlockTimer = PERFECT_BLOCK_WINDOW;
+
+        while (perfectBlockTimer > 0f)
+        {
+            perfectBlockTimer -= Time.deltaTime;
+            yield return null;
+        }
+
+        isPerfectBlockWindow = false;
+    }
+
+    private void CheckPerfectBlock(ref float amount)
+    {
+        if (!isPerfectBlockWindow || amount <= 0f) return;
+
+        // Perfect block: negate all damage
+        amount = 0f;
+        isPerfectBlockWindow = false;
+
+        // Stun the attacker for 0.5s
+        Fighter attacker = FindAttackerInRange();
+        if (attacker != null)
+            attacker.ApplyStun(0.5f);
+
+        Debug.Log($"{gameObject.name} PERFECT BLOCK!");
+        JuiceManager.Instance?.ScreenFlash(0.3f);
+        AudioManager.Instance?.PlayHit();
+    }
+
+    IEnumerator DoSkillAttack(Volk.Core.SkillBase skill, int skillIndex, float damageMultiplier = 1f)
     {
         isAttacking = true;
+        isPlayingSkillAnim = true;
         anim.applyRootMotion = false;
 
         // Trigger animation if set
@@ -1048,7 +1141,7 @@ public class Fighter : MonoBehaviour
                     {
                         // Legacy path — only for SkillData, specialized skills self-handle
                         if (skill is Volk.Core.SkillData)
-                            target.TakeDamage(skill.damage, transform.position, true, this);
+                            target.TakeDamage(skill.damage * damageMultiplier, transform.position, true, this);
                         hitLanded = true;
                         AudioManager.Instance?.PlaySkillHit();
 
@@ -1067,7 +1160,8 @@ public class Fighter : MonoBehaviour
                         HitstopManager.Instance?.Trigger(HitstopManager.SkillHit);
                         StartCoroutine(HitStop(HitstopManager.SkillHit));
                         target.StartCoroutine(target.HitStop(HitstopManager.SkillHit));
-                        VibrationManager.Instance?.VibrateHeavy();
+                        float skillVibMult = characterData?.vibrationMultiplier ?? 1f;
+                        VibrationManager.Instance?.VibrateHeavy(skillVibMult);
                         break;
                     }
                 }
@@ -1078,6 +1172,7 @@ public class Fighter : MonoBehaviour
         yield return new WaitForSeconds(0.7f);
         anim.applyRootMotion = false;
         isAttacking = false;
+        isPlayingSkillAnim = false;
         postAttackCooldown = 0.2f;
     }
 

@@ -42,6 +42,11 @@ namespace Volk.Core
         [Header("Skills")]
         public SkillBase skill1;
         public SkillBase skill2;
+        public float exDamageMultiplier = 1.5f;
+
+        [Header("Special Traits")]
+        public bool hasSuperArmor;
+        public float vibrationMultiplier = 1f;
 
         [Header("Unlock")]
         public bool unlockedByDefault = true;

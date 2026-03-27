@@ -82,7 +82,23 @@ public class JuiceManager : MonoBehaviour
         meshTransform.localRotation = Quaternion.Slerp(meshTransform.localRotation, tilt, Time.deltaTime * 10f);
     }
 
-    // --- 4. SLOW MOTION (KO) ---
+    // --- 4. EX SKILL EFFECT ---
+    public void ExSkillEffect()
+    {
+        ScreenFlash(0.6f);
+        StartCoroutine(DoExSkillSlowdown());
+    }
+
+    IEnumerator DoExSkillSlowdown()
+    {
+        Time.timeScale = 0.3f;
+        Time.fixedDeltaTime = 0.02f * 0.3f;
+        yield return new WaitForSecondsRealtime(0.15f);
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+    }
+
+    // --- 5. SLOW MOTION (KO) ---
     public void SlowMotionKO(float timeScale = 0.2f, float durationRealtime = 1f)
     {
         StartCoroutine(DoSlowMotion(timeScale, durationRealtime));
