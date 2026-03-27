@@ -116,6 +116,7 @@ public class Fighter : MonoBehaviour
     private bool isPerfectBlockWindow;
     private float perfectBlockTimer;
     private const float PERFECT_BLOCK_WINDOW = 0.2f; // 200ms
+    private const int HURTBOX_LAYER_MASK = 1 << 9; // Layer 9 = Hurtbox
 
     // Super Armor (active during skill animations)
     private bool isPlayingSkillAnim;
@@ -799,7 +800,7 @@ public class Fighter : MonoBehaviour
 
             if (!hasDealtDamage && hitPoint != null)
             {
-                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f);
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f, HURTBOX_LAYER_MASK);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
@@ -899,7 +900,7 @@ public class Fighter : MonoBehaviour
 
             if (!hasDealtDamage && hitPoint != null)
             {
-                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f);
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f, HURTBOX_LAYER_MASK);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
@@ -1174,7 +1175,7 @@ public class Fighter : MonoBehaviour
         Transform hp = hitPoint;
         if (hp == null) return;
 
-        Collider[] hits = Physics.OverlapSphere(hp.position, attackRange * 0.5f);
+        Collider[] hits = Physics.OverlapSphere(hp.position, attackRange * 0.5f, HURTBOX_LAYER_MASK);
         foreach (var hit in hits)
         {
             Fighter target = hit.GetComponentInParent<Fighter>();
@@ -1320,7 +1321,7 @@ public class Fighter : MonoBehaviour
 
             if (!hasDealtDamage && hitPoint != null)
             {
-                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f, HURTBOX_LAYER_MASK);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
@@ -1521,7 +1522,7 @@ public class Fighter : MonoBehaviour
             if (!hitLanded && hitPoint != null)
             {
                 // QUANTUM: Deterministic physics query needed for EX skill hit detection
-                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f, HURTBOX_LAYER_MASK);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
@@ -1640,7 +1641,7 @@ public class Fighter : MonoBehaviour
     // Find nearest enemy for counter
     private Fighter FindAttackerInRange()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, 3f);
+        Collider[] hits = Physics.OverlapSphere(transform.position, 3f, HURTBOX_LAYER_MASK);
         foreach (var h in hits)
         {
             Fighter f = h.GetComponentInParent<Fighter>();
