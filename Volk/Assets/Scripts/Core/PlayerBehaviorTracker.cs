@@ -38,10 +38,16 @@ namespace Volk.Core
     {
         public float aggressionScore;    // 0-1: ratio of attack actions to total
         public float avgReactionDelay;   // Average time between situation change and action
+        public float reactionDelayMs;    // PLA-150: milliseconds for display
         public float comboDropRate;      // Ratio of combos dropped (no follow-up in window)
         public int totalActions;
         public int totalMatches;
         public float avgActionsPerMatch;
+
+        // PLA-149: Distance histogram — how much time at close/mid/far range
+        public float distanceClose;      // 0-1 normalized time at close range
+        public float distanceMid;        // 0-1 normalized time at mid range
+        public float distanceFar;        // 0-1 normalized time at far range
     }
 
     [System.Serializable]
@@ -66,6 +72,12 @@ namespace Volk.Core
         private float lastSituationChangeTime;
         private List<float> reactionDelays = new List<float>();
 
+        // PLA-149: Distance histogram per-match
+        private float matchTimeClose;
+        private float matchTimeMid;
+        private float matchTimeFar;
+        private float lastDistanceUpdate;
+
         // Running metrics
         public BehaviorMetrics Metrics { get; private set; } = new BehaviorMetrics();
 
@@ -83,6 +95,10 @@ namespace Volk.Core
             matchAttackCount = 0;
             matchComboAttempts = 0;
             matchComboDrops = 0;
+            matchTimeClose = 0;
+            matchTimeMid = 0;
+            matchTimeFar = 0;
+            lastDistanceUpdate = Time.time;
             reactionDelays.Clear();
             lastSituationChangeTime = Time.time;
         }
@@ -116,6 +132,20 @@ namespace Volk.Core
         public void OnSituationChanged()
         {
             lastSituationChangeTime = Time.time;
+        }
+
+        /// <summary>
+        /// PLA-149: Call from Fighter.Update() to track distance over time.
+        /// </summary>
+        public void UpdateDistanceHistogram(float distanceToEnemy)
+        {
+            float dt = Time.time - lastDistanceUpdate;
+            lastDistanceUpdate = Time.time;
+            if (dt <= 0 || dt > 1f) return; // skip stale
+
+            if (distanceToEnemy < 2f) matchTimeClose += dt;
+            else if (distanceToEnemy < 4f) matchTimeMid += dt;
+            else matchTimeFar += dt;
         }
 
         public void OnComboAttempt(bool completed)
@@ -155,6 +185,21 @@ namespace Volk.Core
 
             Metrics.avgActionsPerMatch = Metrics.totalMatches > 0
                 ? (float)Metrics.totalActions / Metrics.totalMatches : 0f;
+
+            // PLA-150: Reaction delay in ms
+            Metrics.reactionDelayMs = Metrics.avgReactionDelay * 1000f;
+
+            // PLA-149: Distance histogram (EMA)
+            float totalDist = matchTimeClose + matchTimeMid + matchTimeFar;
+            if (totalDist > 0)
+            {
+                float close = matchTimeClose / totalDist;
+                float mid = matchTimeMid / totalDist;
+                float far = matchTimeFar / totalDist;
+                Metrics.distanceClose = Metrics.distanceClose * 0.7f + close * 0.3f;
+                Metrics.distanceMid = Metrics.distanceMid * 0.7f + mid * 0.3f;
+                Metrics.distanceFar = Metrics.distanceFar * 0.7f + far * 0.3f;
+            }
         }
 
         public PlayerAction? GetMostLikelyAction(string matchup, GameSituation situation)

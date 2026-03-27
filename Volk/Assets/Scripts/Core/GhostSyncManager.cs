@@ -81,6 +81,40 @@ namespace Volk.Core
             return (long)(System.DateTime.Now - info.LastWriteTime).TotalSeconds;
         }
 
+        // PLA-153: Supabase table schema (run via Supabase SQL Editor):
+        // CREATE TABLE IF NOT EXISTS ghost_profiles (
+        //   player_id TEXT PRIMARY KEY,
+        //   profile_data JSONB NOT NULL,
+        //   updated_at TIMESTAMPTZ DEFAULT now()
+        // );
+        // ALTER TABLE ghost_profiles ENABLE ROW LEVEL SECURITY;
+        // CREATE POLICY "Users can manage own profile" ON ghost_profiles
+        //   FOR ALL USING (auth.uid()::text = player_id);
+
+        /// <summary>
+        /// PLA-153: Verify ghost_profiles table exists. Logs setup instructions if missing.
+        /// </summary>
+        public void EnsureTable()
+        {
+            if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseAnonKey)) return;
+            StartCoroutine(EnsureTableCoroutine());
+        }
+
+        IEnumerator EnsureTableCoroutine()
+        {
+            string url = $"{supabaseUrl}/rest/v1/{tableName}?select=player_id&limit=0";
+            var request = UnityWebRequest.Get(url);
+            request.SetRequestHeader("apikey", supabaseAnonKey);
+            request.SetRequestHeader("Authorization", $"Bearer {supabaseAnonKey}");
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+                Debug.Log("[GhostSync] Table exists");
+            else
+                Debug.LogWarning("[GhostSync] Table missing. Run CREATE TABLE from GhostSyncManager.cs comments.");
+            request.Dispose();
+        }
+
         // --- Remote Operations (Supabase) ---
 
         public void TrySync()

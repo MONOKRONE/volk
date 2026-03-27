@@ -191,6 +191,87 @@ namespace Volk.Core
             return null;
         }
 
+        // --- PLA-155: Cross-character generalization ---
+
+        /// <summary>
+        /// Fill gaps for matchups with no data by interpolating from same-archetype profiles.
+        /// </summary>
+        public OptimizedProfile GetOrInterpolateProfile(string matchup)
+        {
+            if (profiles.ContainsKey(matchup))
+                return profiles[matchup];
+
+            // Find any profile to use as baseline
+            OptimizedProfile baseline = null;
+            foreach (var kvp in profiles)
+            {
+                if (kvp.Value.overallConfidence > 0.1f)
+                {
+                    baseline = kvp.Value;
+                    break;
+                }
+            }
+
+            if (baseline == null) return null;
+
+            // Clone baseline with reduced confidence
+            var interpolated = new OptimizedProfile
+            {
+                matchup = matchup,
+                metrics = baseline.metrics,
+                overallConfidence = baseline.overallConfidence * 0.5f
+            };
+            foreach (var b in baseline.buckets)
+            {
+                interpolated.buckets.Add(new ActionBucket
+                {
+                    situation = b.situation,
+                    actionProbabilities = (float[])b.actionProbabilities.Clone(),
+                    sampleCount = b.sampleCount / 2,
+                    confidence = b.confidence * 0.5f
+                });
+            }
+            profiles[matchup] = interpolated;
+            return interpolated;
+        }
+
+        // --- PLA-157: Data quality validation ---
+
+        /// <summary>
+        /// Shannon entropy — below 1.5 bits means the profile is too deterministic / likely corrupt.
+        /// </summary>
+        public static float CalculateEntropy(float[] probs)
+        {
+            float entropy = 0f;
+            foreach (float p in probs)
+            {
+                if (p > 0.001f)
+                    entropy -= p * Mathf.Log(p, 2f);
+            }
+            return entropy;
+        }
+
+        /// <summary>
+        /// Validate profile data quality. Returns false if profile should be discarded.
+        /// </summary>
+        public bool ValidateProfile(string matchup)
+        {
+            if (!profiles.ContainsKey(matchup)) return false;
+            var profile = profiles[matchup];
+
+            foreach (var bucket in profile.buckets)
+            {
+                if (bucket.actionProbabilities == null) continue;
+                float entropy = CalculateEntropy(bucket.actionProbabilities);
+                if (bucket.sampleCount > 10 && entropy < 1.5f)
+                {
+                    Debug.LogWarning($"[GhostProfile] Low entropy ({entropy:F2}) for {matchup}/{bucket.situation} — flagging as unreliable");
+                    bucket.confidence *= 0.3f; // Reduce confidence rather than discard
+                }
+            }
+            return true;
+        }
+
         // --- K-Means Reduction ---
 
         List<ActionBucket> KMeansReduce(List<ActionBucket> buckets, int k, int dimensions)
