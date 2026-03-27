@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
   m_Name: Chapter7
   m_EditorClassIdentifier: 
-  chapterTitle: Sisin Aldatmacasi
-  description: Bolum 7
+  chapterTitle: Sis'in Aldatmacasi
+  description: Sis'in tuzaklarindan kurtul
   chapterNumber: 7
   stages: []
   boss: {fileID: 11400000, guid: b7ff5c98df0744cfad1a06564a280b0c, type: 2}

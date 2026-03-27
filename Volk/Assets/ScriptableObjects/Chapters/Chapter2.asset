@@ -13,16 +13,44 @@ MonoBehaviour:
   m_Name: Chapter2
   m_EditorClassIdentifier: 
   chapterTitle: Yeralti Turnuvasi
-  description: Bolum 2
+  description: Gercek turnuva basliyor
   chapterNumber: 2
   stages: []
   boss: {fileID: 11400000, guid: 66cd5782d9184ae3b1bc0554bbb46704, type: 2}
   enemyCharacter: {fileID: 11400000, guid: 77c466dd3e4b43b29a812e2a994bb91b, type: 2}
   difficulty: 0
-  enemyHPMultiplier: 1.0
+  enemyHPMultiplier: 1
   coinReward: 100
   characterUnlockReward: {fileID: 0}
-  introDialogue: []
-  outroDialogue: []
+  introDialogue:
+  - speakerName: Organizator
+    speakerPortrait: {fileID: 0}
+    text: 'VOLK turnuvasina hosgeldin. Kurallar basit: yenilen gider.'
+    isPlayerSpeaking: 0
+  - speakerName: Kachujin
+    speakerPortrait: {fileID: 0}
+    text: Bir Turk mu? Istanbul'dan gelip burada ne istiyor?
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Ayni seyi sana da sorabilirdim.
+    isPlayerSpeaking: 1
+  - speakerName: Kachujin
+    speakerPortrait: {fileID: 0}
+    text: Ailem icin burdayim. Sen?
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: ...
+    isPlayerSpeaking: 1
+  outroDialogue:
+  - speakerName: Kachujin
+    speakerPortrait: {fileID: 0}
+    text: Guclusun. Ama turnuva daha bitmedi.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Biliyorum.
+    isPlayerSpeaking: 1
   arenaSceneName: CombatTest
   arenaData: {fileID: 0}

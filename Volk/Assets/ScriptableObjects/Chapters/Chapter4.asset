@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
   m_Name: Chapter4
   m_EditorClassIdentifier: 
-  chapterTitle: Kayanin Meydan Okumasi
-  description: Bolum 4
+  chapterTitle: Kaya'nin Meydan Okumasi
+  description: Kaya seni bekliyor
   chapterNumber: 4
   stages: []
   boss: {fileID: 11400000, guid: a83d9dde293e4af9a69bf6c2dfd332ad, type: 2}
@@ -21,8 +21,49 @@ MonoBehaviour:
   difficulty: 1
   enemyHPMultiplier: 1.5
   coinReward: 200
-  characterUnlockReward: {fileID: 11400000, guid: 263f7fc68a794df7888d531e0a167748, type: 2}
-  introDialogue: []
-  outroDialogue: []
+  characterUnlockReward: {fileID: 11400000, guid: 263f7fc68a794df7888d531e0a167748,
+    type: 2}
+  introDialogue:
+  - speakerName: Organizator
+    speakerPortrait: {fileID: 0}
+    text: VOLK turnuvasinin finali! Kazanan bir dilek hakkina sahip olacak.
+    isPlayerSpeaking: 0
+  - speakerName: YBot
+    speakerPortrait: {fileID: 0}
+    text: Sonunda yuzyuze geldik. Bu turnuvayi ben kurdum.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Neden kendi turnuvana katildin?
+    isPlayerSpeaking: 1
+  - speakerName: YBot
+    speakerPortrait: {fileID: 0}
+    text: Cunku dilegi hak eden tek kisi benim. Sen sadece bir pionssun.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Piyon degilim. Ve bu gece bitiyor.
+    isPlayerSpeaking: 1
+  outroDialogue:
+  - speakerName: YBot
+    speakerPortrait: {fileID: 0}
+    text: Bu... mumkun degil...
+    isPlayerSpeaking: 0
+  - speakerName: Organizator
+    speakerPortrait: {fileID: 0}
+    text: 'Kazanan: VOLK! Dilegi nedir?'
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: ...
+    isPlayerSpeaking: 1
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Bir dahaki sefere soylerim.
+    isPlayerSpeaking: 1
+  - speakerName: Organizator
+    speakerPortrait: {fileID: 0}
+    text: VOLK turnuvasi kapanmistir. Bir sonraki sezonda gorusmek uzere!
+    isPlayerSpeaking: 0
   arenaSceneName: CombatTest
   arenaData: {fileID: 0}

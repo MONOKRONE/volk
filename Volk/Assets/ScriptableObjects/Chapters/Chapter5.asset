@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
   m_Name: Chapter5
   m_EditorClassIdentifier: 
-  chapterTitle: Celikin Kalesi
-  description: Bolum 5
+  chapterTitle: Celik'in Kalesi
+  description: Celik'in savunmasini kir
   chapterNumber: 5
   stages: []
   boss: {fileID: 11400000, guid: b8108edcda1a431c9448cd649d9af7e1, type: 2}

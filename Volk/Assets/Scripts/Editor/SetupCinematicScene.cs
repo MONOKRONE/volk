@@ -115,9 +115,11 @@ public class SetupCinematicScene
             var cc = go.GetComponent<CharacterController>();
             if (cc != null)
             {
-                cc.stepOffset = 0.01f;
-                cc.height = 1.8f;
-                cc.radius = 0.3f;
+                float s = ch.scale;
+                cc.height = 1.8f * s;
+                cc.radius = 0.3f * s;
+                cc.stepOffset = Mathf.Min(0.3f * s, (cc.height + cc.radius * 2f) * 0.5f);
+                cc.center = new Vector3(0f, cc.height * 0.5f, 0f);
             }
 
             // URP/Lit material with character color

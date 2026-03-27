@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chapter3
   m_EditorClassIdentifier: 
   chapterTitle: Saha Ustasi
-  description: Bolum 3
+  description: Turnuvanin en guclu rakibi
   chapterNumber: 3
   stages: []
   boss: {fileID: 11400000, guid: edc4a23aab2546e0a35764ccc8afd585, type: 2}
@@ -22,7 +22,31 @@ MonoBehaviour:
   enemyHPMultiplier: 1.2
   coinReward: 150
   characterUnlockReward: {fileID: 0}
-  introDialogue: []
-  outroDialogue: []
+  introDialogue:
+  - speakerName: Organizator
+    speakerPortrait: {fileID: 0}
+    text: Yari finale hosgeldin. Rakibin... ozel biri.
+    isPlayerSpeaking: 0
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Seni izliyordum. Iyi dovusuyorsun ama yeterli degil.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Buna ben karar veririm.
+    isPlayerSpeaking: 1
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Hadi bakalim. Goster.
+    isPlayerSpeaking: 0
+  outroDialogue:
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Imkansiz... Ben nasil kaybederim?
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Herkes kaybedebilir. Onemli olan kalkmak.
+    isPlayerSpeaking: 1
   arenaSceneName: CombatTest
   arenaData: {fileID: 0}

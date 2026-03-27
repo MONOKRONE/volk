@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cd051a67c15b49b0998373c3ccd9994, type: 3}
+  m_Script: {fileID: 11500000, guid: d5cc2915c0c3543bf801485297ee6be4, type: 3}
   m_Name: Ch3_Boss
   m_EditorClassIdentifier: 
   bossCharacter: {fileID: 11400000, guid: 263f7fc68a794df7888d531e0a167748, type: 2}

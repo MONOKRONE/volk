@@ -3,6 +3,6 @@
     "RequestTimeoutSeconds": 10,
     "AutoStartServer": true,
     "EnableInfoLogs": true,
-    "NpmExecutablePath": "/Users/apple/.npm-global/bin/npm",
+    "NpmExecutablePath": "/Users/volk/.nvm/versions/node/v22.22.1/bin/npm",
     "AllowRemoteConnections": true
 }

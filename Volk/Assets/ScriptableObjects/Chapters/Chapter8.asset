@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
   m_Name: Chapter8
   m_EditorClassIdentifier: 
-  chapterTitle: Final VOLK
-  description: Bolum 8
+  chapterTitle: "Final \u2014 VOLK"
+  description: Son savas. Kazanan her seyi alir.
   chapterNumber: 8
   stages: []
   boss: {fileID: 11400000, guid: 26fc59ec431243d7a9bc9134f1f2f921, type: 2}
@@ -21,7 +21,8 @@ MonoBehaviour:
   difficulty: 2
   enemyHPMultiplier: 2.5
   coinReward: 500
-  characterUnlockReward: {fileID: 11400000, guid: 5da69c21bb584a9d983ded7ae6098481, type: 2}
+  characterUnlockReward: {fileID: 11400000, guid: 5da69c21bb584a9d983ded7ae6098481,
+    type: 2}
   introDialogue: []
   outroDialogue: []
   arenaSceneName: CombatTest

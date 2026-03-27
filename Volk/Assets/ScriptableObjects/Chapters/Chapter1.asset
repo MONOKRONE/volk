@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chapter1
   m_EditorClassIdentifier: 
   chapterTitle: Sokak Dovusu
-  description: Bolum 1
+  description: Istanbul sokaklarinda ilk meydan okuma
   chapterNumber: 1
   stages: []
   boss: {fileID: 11400000, guid: 77a5de1a87f1431e9f4779b097768895, type: 2}
@@ -22,7 +22,32 @@ MonoBehaviour:
   enemyHPMultiplier: 0.8
   coinReward: 50
   characterUnlockReward: {fileID: 0}
-  introDialogue: []
-  outroDialogue: []
+  introDialogue:
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Hey sen! Bu mahallede yeni yuzler hosgelir sayilmaz.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Hosgelir arayan yok. Sadece yol ariyorum.
+    isPlayerSpeaking: 1
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Yol mu? VOLK turnuvasina giden yol buradan gecer. Ama once beni gecmen
+      lazim.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: O zaman basla.
+    isPlayerSpeaking: 1
+  outroDialogue:
+  - speakerName: ???
+    speakerPortrait: {fileID: 0}
+    text: Fena degilsin... Turnuva senin icin. Ama ileride cok daha zor olacak.
+    isPlayerSpeaking: 0
+  - speakerName: Volk
+    speakerPortrait: {fileID: 0}
+    text: Her zaman oyle olur.
+    isPlayerSpeaking: 1
   arenaSceneName: CombatTest
   arenaData: {fileID: 0}

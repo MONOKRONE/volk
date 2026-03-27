@@ -13,15 +13,16 @@ MonoBehaviour:
   m_Name: Chapter6
   m_EditorClassIdentifier: 
   chapterTitle: Gizli Usta
-  description: Bolum 6
+  description: Celik seni sinav ediyor
   chapterNumber: 6
   stages: []
   boss: {fileID: 11400000, guid: 85f33ed03a8246e58d1c5b7ce2952386, type: 2}
   enemyCharacter: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b, type: 2}
   difficulty: 2
-  enemyHPMultiplier: 2.0
+  enemyHPMultiplier: 2
   coinReward: 300
-  characterUnlockReward: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b, type: 2}
+  characterUnlockReward: {fileID: 11400000, guid: 9314869480974d65a16ee6c777652e3b,
+    type: 2}
   introDialogue: []
   outroDialogue: []
   arenaSceneName: CombatTest
