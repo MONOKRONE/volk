@@ -15,11 +15,6 @@ namespace Volk.UI
         public Button backButton;
         public CanvasGroup canvasGroup;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backButton != null)

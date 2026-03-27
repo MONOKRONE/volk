@@ -37,11 +37,6 @@ namespace Volk.UI
         public Button equipmentButton;
         public Image backgroundImage;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backgroundImage) backgroundImage.color = VTheme.Background;

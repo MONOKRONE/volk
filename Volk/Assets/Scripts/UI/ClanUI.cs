@@ -56,11 +56,6 @@ namespace Volk.UI
 
         private int activeTab;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backButton)

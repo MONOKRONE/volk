@@ -51,11 +51,6 @@ namespace Volk.UI
         };
         static readonly int[] LeagueThresholds = { 0, 300, 600, 900, 1200, 1500 };
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backButton)

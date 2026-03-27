@@ -53,11 +53,6 @@ namespace Volk.UI
             public float powerScore;
         }
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backButton)

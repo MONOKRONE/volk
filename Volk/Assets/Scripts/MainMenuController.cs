@@ -8,15 +8,6 @@ using Volk.UI;
 
 public class MainMenuController : MonoBehaviour
 {
-    void Awake()
-    {
-        Screen.orientation = ScreenOrientation.LandscapeLeft;
-        Screen.autorotateToPortrait = false;
-        Screen.autorotateToPortraitUpsideDown = false;
-        Screen.autorotateToLandscapeLeft = true;
-        Screen.autorotateToLandscapeRight = true;
-    }
-
     void Start()
     {
         // Ensure singletons exist

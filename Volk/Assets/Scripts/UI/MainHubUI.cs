@@ -59,11 +59,6 @@ namespace Volk.UI
         public string quickFightScene = "QuickFight";
         public string combatScene = "CombatTest";
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             EnsureSingletons();

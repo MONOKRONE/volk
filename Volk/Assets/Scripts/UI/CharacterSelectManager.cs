@@ -31,11 +31,6 @@ namespace Volk.UI
 
         private int selectedIndex = -1;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             // Ensure singletons exist

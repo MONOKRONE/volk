@@ -49,11 +49,6 @@ namespace Volk.UI
         private int arenaIndex;
         private AIDifficulty selectedDifficulty = AIDifficulty.Normal;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (GameSettings.Instance == null)

@@ -45,11 +45,6 @@ namespace Volk.UI
         private ChapterData selectedChapter;
         private int selectedIndex;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (backgroundImage) backgroundImage.color = VTheme.Background;

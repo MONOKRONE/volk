@@ -31,11 +31,6 @@ namespace Volk.UI
         private bool canProceed;
         private float tapPulseTimer;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (studioLogoGroup) studioLogoGroup.alpha = 0;

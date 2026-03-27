@@ -48,11 +48,6 @@ namespace Volk.UI
         private ShopItemData pendingShopItem;
         private CharacterData pendingCharacter;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             // Back button

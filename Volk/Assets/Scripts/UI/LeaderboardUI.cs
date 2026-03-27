@@ -20,11 +20,6 @@ namespace Volk.UI
         public Button allTimeTab;
         public Button weeklyTab;
 
-        void Awake()
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-
         void Start()
         {
             if (refreshButton != null)
