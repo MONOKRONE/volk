@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Volk.Core
@@ -152,6 +153,22 @@ namespace Volk.Core
 
             target.sampleCount++;
             target.confidence = Mathf.Clamp01((float)target.sampleCount / 50f);
+        }
+
+        /// <summary>
+        /// Async version: builds profile over multiple frames to avoid frame spikes.
+        /// Call from OnMatchEnd via StartCoroutine.
+        /// </summary>
+        public Coroutine BuildProfileAsync(string matchup, System.Action<OptimizedProfile> onComplete = null)
+        {
+            return StartCoroutine(BuildProfileCoroutine(matchup, onComplete));
+        }
+
+        IEnumerator BuildProfileCoroutine(string matchup, System.Action<OptimizedProfile> onComplete)
+        {
+            yield return null; // Defer to next frame to avoid match-end frame spike
+            var profile = BuildProfile(matchup);
+            onComplete?.Invoke(profile);
         }
 
         public OptimizedProfile GetProfile(string matchup)

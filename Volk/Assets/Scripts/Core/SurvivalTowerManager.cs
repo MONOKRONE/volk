@@ -34,9 +34,18 @@ namespace Volk.Core
 
         void LoadState()
         {
-            HighestFloor = PlayerPrefs.GetInt("tower_highest", 0);
-            CurrentFloor = PlayerPrefs.GetInt("tower_current", 0);
-            ActiveBuff = (TowerBuff)PlayerPrefs.GetInt("tower_buff", 0);
+            if (SaveManager.Instance != null)
+            {
+                HighestFloor = SaveManager.Instance.Data.survivalHighestFloor;
+                CurrentFloor = PlayerPrefs.GetInt("tower_current", 0); // session-only, OK as PlayerPrefs
+                ActiveBuff = (TowerBuff)PlayerPrefs.GetInt("tower_buff", 0); // session-only
+            }
+            else
+            {
+                HighestFloor = PlayerPrefs.GetInt("tower_highest", 0);
+                CurrentFloor = PlayerPrefs.GetInt("tower_current", 0);
+                ActiveBuff = (TowerBuff)PlayerPrefs.GetInt("tower_buff", 0);
+            }
         }
 
         public void StartNewRun()
@@ -140,6 +149,12 @@ namespace Volk.Core
 
         void SaveState()
         {
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.Data.survivalHighestFloor = Mathf.Max(
+                    SaveManager.Instance.Data.survivalHighestFloor, HighestFloor);
+                SaveManager.Instance.Save();
+            }
             PlayerPrefs.SetInt("tower_highest", HighestFloor);
             PlayerPrefs.SetInt("tower_current", CurrentFloor);
             PlayerPrefs.Save();

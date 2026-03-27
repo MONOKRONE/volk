@@ -28,12 +28,14 @@ public class Fighter : MonoBehaviour
     public Transform rightHandPoint;
     public Transform rightFootPoint;
 
+    // QUANTUM: Movement fields must migrate to FPVector2/FPVector3 in Quantum simulation.
+    // CharacterController.Move() calls replaced by Quantum KCC (Kinematic Character Controller).
     [Header("Movement")]
     public float walkSpeed = 6f;
     public float runSpeed = 8.5f;
     public float rotSpeed = 1200f;
     public float combatRotSpeed = 2400f;
-    private Vector3 currentVelocity;
+    private Vector3 currentVelocity; // QUANTUM: FPVector3, synced via Quantum state
     public float jumpHeight = 1.8f;
 
     [Header("Lock-On")]
@@ -86,7 +88,8 @@ public class Fighter : MonoBehaviour
     private float leanAmount = 0.8f;
     private Transform meshTransform;
 
-    // Knockback
+    // QUANTUM: Knockback must be deterministic. Use FP math for force/velocity.
+    // knockbackVelocity → FPVector3 in Quantum frame data.
     public float knockbackForce = 2f;
     public float knockbackDuration = 0.2f;
     private Vector3 knockbackVelocity;
@@ -279,7 +282,8 @@ public class Fighter : MonoBehaviour
 
         anim.applyRootMotion = false;
 
-        // Gravity
+        // QUANTUM: Gravity must use FP.Gravity and deterministic deltaTime.
+        // Replace Physics.gravity with Quantum fixed-point gravity constant.
         if (cc.isGrounded && yVelocity < 0)
             yVelocity = -2f;
         else
@@ -638,6 +642,8 @@ public class Fighter : MonoBehaviour
 
             if (!hitLanded && hitPoint != null)
             {
+                // QUANTUM: Replace Physics.OverlapSphere with Quantum 3D physics query.
+                // Hit detection must run in Quantum simulation frame, not Unity Update.
                 Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f);
                 foreach (var hit in hits)
                 {
@@ -784,7 +790,8 @@ public class Fighter : MonoBehaviour
         float vibMult = attacker?.characterData?.vibrationMultiplier ?? 1f;
         VibrationManager.Instance?.VibrateLight(vibMult);
 
-        // Knockback — scaled by weight class
+        // QUANTUM: Knockback calculation must use FP math for determinism.
+        // All vector math here → FPVector3, multipliers → FP.
         if (hasAttackerPos || attackerPos.sqrMagnitude > 0.001f)
         {
             Vector3 dir = (transform.position - attackerPos).normalized;
@@ -973,6 +980,7 @@ public class Fighter : MonoBehaviour
 
             if (!hitLanded && hitPoint != null)
             {
+                // QUANTUM: Same as DoAttack — deterministic physics query needed
                 Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
                 foreach (var hit in hits)
                 {
@@ -1148,6 +1156,7 @@ public class Fighter : MonoBehaviour
 
             if (!hitLanded && hitPoint != null)
             {
+                // QUANTUM: Deterministic physics query needed for EX skill hit detection
                 Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
                 foreach (var hit in hits)
                 {

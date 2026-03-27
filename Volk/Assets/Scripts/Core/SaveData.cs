@@ -13,6 +13,16 @@ namespace Volk.Core
         public int currency;
         public int gems;
 
+        // Player Level & XP
+        public int playerLevel = 1;
+        public int playerXP;
+
+        // Character Mastery — "CHARNAME:level:xp" pairs
+        public List<string> masteryData = new List<string>();
+
+        // Survival Tower
+        public int survivalHighestFloor;
+
         // Unlocks
         public List<string> unlockedCharacters = new List<string>();
         public List<string> discoveredCombos = new List<string>();

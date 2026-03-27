@@ -41,6 +41,13 @@ namespace Volk.Core
         {
             if (SaveManager.Instance != null)
             {
+                var data = SaveManager.Instance.Data;
+                CurrentLevel = Mathf.Max(1, data.playerLevel);
+                CurrentXP = data.playerXP;
+            }
+            else
+            {
+                // Fallback: read from PlayerPrefs if SaveManager not ready yet
                 CurrentLevel = Mathf.Max(1, PlayerPrefs.GetInt("player_level", 1));
                 CurrentXP = PlayerPrefs.GetInt("player_xp", 0);
             }
@@ -97,9 +104,20 @@ namespace Volk.Core
 
         void SaveProgress()
         {
-            PlayerPrefs.SetInt("player_level", CurrentLevel);
-            PlayerPrefs.SetInt("player_xp", CurrentXP);
-            PlayerPrefs.Save();
+            if (SaveManager.Instance != null)
+            {
+                var data = SaveManager.Instance.Data;
+                data.playerLevel = CurrentLevel;
+                data.playerXP = CurrentXP;
+                SaveManager.Instance.Save();
+            }
+            else
+            {
+                // Fallback to PlayerPrefs if SaveManager unavailable
+                PlayerPrefs.SetInt("player_level", CurrentLevel);
+                PlayerPrefs.SetInt("player_xp", CurrentXP);
+                PlayerPrefs.Save();
+            }
         }
 
         public string GetLevelTitle()
