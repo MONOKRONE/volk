@@ -21,16 +21,21 @@ public class HitstopManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private bool isHitstopActive;
+
     public void Trigger(float duration)
     {
+        if (isHitstopActive) return;
         StopAllCoroutines();
         StartCoroutine(DoHitstop(duration));
     }
 
     IEnumerator DoHitstop(float duration)
     {
+        isHitstopActive = true;
         Time.timeScale = 0f;
         yield return new WaitForSecondsRealtime(duration);
         Time.timeScale = 1f;
+        isHitstopActive = false;
     }
 }

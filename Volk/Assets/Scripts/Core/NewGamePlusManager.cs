@@ -100,7 +100,7 @@ namespace Volk.Core
         /// <summary>
         /// HP multiplier for GlassCannon: both fighters get 25% HP
         /// </summary>
-        public float GetHPMultiplier() => HasModifier(NGPlusModifier.GlassCannon) ? 0.25f : 1f;
+        public float GetHPMultiplier() => IsActive && HasModifier(NGPlusModifier.GlassCannon) ? 0.25f : 1f;
 
         /// <summary>
         /// Whether HUD should be hidden

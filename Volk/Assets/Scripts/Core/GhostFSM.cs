@@ -214,10 +214,17 @@ namespace Volk.Core
                     if (drift > 0.15f)
                     {
                         Debug.Log($"[GhostFSM] Profile stale (drift={drift:F2}), rebuilding async");
-                        builder.BuildProfileAsync(profileMatchup);
+                        builder.BuildProfileAsync(profileMatchup, _ => ReloadWeights());
                     }
                 }
             }
+        }
+
+        // PLA-130: Reload weight table after async profile rebuild
+        public void ReloadWeights()
+        {
+            BuildWeightTable();
+            Debug.Log("[GhostFSM] Weights reloaded after profile rebuild");
         }
 
         void Update()

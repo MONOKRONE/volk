@@ -35,7 +35,9 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         ApplySelectedCharacter();
     }
 
@@ -151,6 +153,14 @@ public class GameManager : MonoBehaviour
     {
         if (!roundActive) return;
         roundActive = false;
+
+        // PLA-130: Build ghost profile on match end
+        if (playerFighter != null && enemyFighter != null)
+        {
+            string matchup = $"{playerFighter.characterData?.characterName ?? "unknown"}_vs_{enemyFighter.characterData?.characterName ?? "unknown"}";
+            Volk.Core.GhostProfileBuilder.Instance?.BuildProfileAsync(matchup, _ => Volk.Core.GhostSyncManager.Instance?.TrySync());
+        }
+
         StartCoroutine(EndRound(isPlayer ? enemyFighter : playerFighter));
     }
 
@@ -161,7 +171,7 @@ public class GameManager : MonoBehaviour
 
         bool playerWon;
         if (winner == null)
-            playerWon = playerFighter.currentHP > enemyFighter.currentHP;
+            playerWon = (playerFighter != null ? playerFighter.currentHP : 0) > (enemyFighter != null ? enemyFighter.currentHP : 0);
         else
             playerWon = winner == playerFighter;
 

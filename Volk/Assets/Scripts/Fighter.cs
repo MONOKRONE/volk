@@ -809,7 +809,7 @@ public class Fighter : MonoBehaviour
                         HitstopManager.Instance?.Trigger(hitstopDur);
                         AudioManager.Instance?.PauseHitSounds(hitstopDur);
                         StartCoroutine(HitStop(hitstopDur));
-                        target.StartCoroutine(target.HitStop(hitstopDur));
+                        if (target != null && !target.isDead) target.StartCoroutine(target.HitStop(hitstopDur));
 
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, false);
@@ -906,7 +906,7 @@ public class Fighter : MonoBehaviour
                         HitstopManager.Instance?.Trigger(HitstopManager.LightHit);
                         AudioManager.Instance?.PauseHitSounds(HitstopManager.LightHit);
                         StartCoroutine(HitStop(HitstopManager.LightHit));
-                        target.StartCoroutine(target.HitStop(HitstopManager.LightHit));
+                        if (target != null && !target.isDead) target.StartCoroutine(target.HitStop(HitstopManager.LightHit));
 
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, isKick);
@@ -1048,6 +1048,10 @@ public class Fighter : MonoBehaviour
         {
             isDead = true;
             currentHP = 0;
+            StopAllCoroutines();
+            isAttackActive = false;
+            hasDealtDamage = false;
+            attackPhase = AttackPhase.None;
             anim.SetTrigger(hDeath);
             AudioManager.Instance?.PlayKnockout();
             VibrationManager.Instance?.VibrateKO(vibMult);
@@ -1138,6 +1142,11 @@ public class Fighter : MonoBehaviour
         // Damage is already handled in the coroutine active phase.
         // This callback serves as an alternative trigger point for animations
         // that have events baked in. The coroutine's OverlapSphere handles actual damage.
+    }
+
+    void OnDestroy()
+    {
+        OnActionPerformed = null;
     }
 
     public void ResetForRound()
@@ -1261,7 +1270,7 @@ public class Fighter : MonoBehaviour
                         HitstopManager.Instance?.Trigger(HitstopManager.HeavyHit);
                         AudioManager.Instance?.PauseHitSounds(HitstopManager.HeavyHit);
                         StartCoroutine(HitStop(HitstopManager.HeavyHit));
-                        target.StartCoroutine(target.HitStop(HitstopManager.HeavyHit));
+                        if (target != null && !target.isDead) target.StartCoroutine(target.HitStop(HitstopManager.HeavyHit));
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, animHash == hKick);
                         VibrationManager.Instance?.VibrateLight();
@@ -1465,7 +1474,7 @@ public class Fighter : MonoBehaviour
 
                         HitstopManager.Instance?.Trigger(HitstopManager.SkillHit);
                         StartCoroutine(HitStop(HitstopManager.SkillHit));
-                        target.StartCoroutine(target.HitStop(HitstopManager.SkillHit));
+                        if (target != null && !target.isDead) target.StartCoroutine(target.HitStop(HitstopManager.SkillHit));
                         float skillVibMult = characterData?.vibrationMultiplier ?? 1f;
                         VibrationManager.Instance?.VibrateHeavy(skillVibMult);
                         break;

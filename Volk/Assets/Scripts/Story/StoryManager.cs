@@ -231,9 +231,8 @@ namespace Volk.Story
 
         public void OnStageWon()
         {
-            // Progression rewards with NG+ multiplier
+            // Progression rewards with NG+ multiplier (BattlePass XP handled by CurrencyManager.OnStageClear)
             CurrencyManager.Instance?.OnStageClear();
-            BattlePassManager.Instance?.AddXP(BattlePassManager.XP_STAGE_CLEAR);
             float rewardMult = NewGamePlusManager.Instance?.GetRewardMultiplier() ?? 1f;
             if (rewardMult > 1f)
             {

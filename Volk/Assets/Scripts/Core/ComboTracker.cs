@@ -47,6 +47,9 @@ namespace Volk.Core
             float now = Time.time;
             if (now - lastInputTime > comboInputWindow)
             {
+                // PLA-130: Track combo drop
+                if (inputHistory.Count > 0)
+                    Volk.Core.PlayerBehaviorTracker.Instance?.OnComboAttempt(false);
                 inputHistory.Clear();
                 currentComboHits = 0;
             }
@@ -195,6 +198,9 @@ namespace Volk.Core
                 var fx = Instantiate(combo.bonusVfx, pos, Quaternion.identity);
                 Destroy(fx, 3f);
             }
+
+            // PLA-130: Track combo attempt success
+            Volk.Core.PlayerBehaviorTracker.Instance?.OnComboAttempt(true);
         }
 
         public void ResetCombo()
