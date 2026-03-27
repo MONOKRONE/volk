@@ -272,15 +272,113 @@ namespace Volk.Core
             return true;
         }
 
-        // --- K-Means Reduction ---
+        // --- K-Means Clustering (PLA-131) ---
 
         List<ActionBucket> KMeansReduce(List<ActionBucket> buckets, int k, int dimensions)
         {
             if (buckets.Count <= k) return buckets;
 
-            // Simple reduction: keep top-k by sample count
-            buckets.Sort((a, b) => b.sampleCount.CompareTo(a.sampleCount));
-            return buckets.GetRange(0, Mathf.Min(k, buckets.Count));
+            const int MAX_ITERATIONS = 10;
+            const float CONVERGENCE_DELTA = 0.01f;
+            int n = buckets.Count;
+
+            // Initialize centroids from k evenly-spaced buckets (deterministic)
+            float[][] centroids = new float[k][];
+            for (int c = 0; c < k; c++)
+            {
+                int idx = c * n / k;
+                centroids[c] = new float[dimensions];
+                System.Array.Copy(buckets[idx].actionProbabilities, centroids[c], dimensions);
+            }
+
+            int[] assignments = new int[n];
+
+            for (int iter = 0; iter < MAX_ITERATIONS; iter++)
+            {
+                // Assign each bucket to nearest centroid (Euclidean distance)
+                for (int i = 0; i < n; i++)
+                {
+                    float bestDist = float.MaxValue;
+                    int bestC = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        float dist = 0f;
+                        for (int d = 0; d < dimensions; d++)
+                        {
+                            float diff = buckets[i].actionProbabilities[d] - centroids[c][d];
+                            dist += diff * diff;
+                        }
+                        if (dist < bestDist) { bestDist = dist; bestC = c; }
+                    }
+                    assignments[i] = bestC;
+                }
+
+                // Recompute centroids (weighted by sampleCount)
+                float[][] newCentroids = new float[k][];
+                float[] clusterWeight = new float[k];
+                for (int c = 0; c < k; c++)
+                    newCentroids[c] = new float[dimensions];
+
+                for (int i = 0; i < n; i++)
+                {
+                    int c = assignments[i];
+                    float w = Mathf.Max(1f, buckets[i].sampleCount);
+                    clusterWeight[c] += w;
+                    for (int d = 0; d < dimensions; d++)
+                        newCentroids[c][d] += buckets[i].actionProbabilities[d] * w;
+                }
+
+                float maxDelta = 0f;
+                for (int c = 0; c < k; c++)
+                {
+                    if (clusterWeight[c] > 0)
+                    {
+                        for (int d = 0; d < dimensions; d++)
+                        {
+                            newCentroids[c][d] /= clusterWeight[c];
+                            float delta = Mathf.Abs(newCentroids[c][d] - centroids[c][d]);
+                            if (delta > maxDelta) maxDelta = delta;
+                        }
+                    }
+                }
+
+                centroids = newCentroids;
+                if (maxDelta < CONVERGENCE_DELTA) break;
+            }
+
+            // Build merged buckets from clusters
+            var result = new List<ActionBucket>();
+            for (int c = 0; c < k; c++)
+            {
+                ActionBucket rep = null;
+                int totalSamples = 0;
+                float totalConfidence = 0f;
+                int count = 0;
+
+                for (int i = 0; i < n; i++)
+                {
+                    if (assignments[i] != c) continue;
+                    count++;
+                    totalSamples += buckets[i].sampleCount;
+                    totalConfidence += buckets[i].confidence;
+                    if (rep == null || buckets[i].sampleCount > rep.sampleCount)
+                        rep = buckets[i];
+                }
+
+                if (rep == null || count == 0) continue;
+
+                // Use centroid probabilities, keep representative's situation key
+                var merged = new ActionBucket
+                {
+                    situation = rep.situation,
+                    actionProbabilities = centroids[c],
+                    sampleCount = totalSamples,
+                    confidence = totalConfidence / count
+                };
+                result.Add(merged);
+            }
+
+            return result;
         }
     }
 }
