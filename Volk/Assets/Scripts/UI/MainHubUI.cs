@@ -67,12 +67,12 @@ namespace Volk.UI
                 backgroundImage.color = VTheme.Background;
 
             // Card setup
-            SetupCard(storyCard, storyTitle, storySubtitle, "HIKAYE", GetStorySubtitle(), VTheme.Red);
-            SetupCard(quickFightCard, quickFightTitle, quickFightSubtitle, "SERBEST DOVUS", "Karakter ve arena sec", VTheme.Blue);
-            SetupCard(onlineCard, onlineTitle, onlineSubtitle, "ONLINE", "1v1 canli dovus", VTheme.Purple);
-            SetupCard(ghostCard, ghostTitle, ghostSubtitle, "GHOST", "Hayalet verisiyle dovus", VTheme.Cyan);
-            SetupCard(survivalCard, survivalTitle, survivalSubtitle, "HAYATTA KAL", GetSurvivalSubtitle(), VTheme.Orange);
-            SetupCard(trainingCard, trainingTitle, trainingSubtitle, "ANTRENMAN", "Kombolari pratik yap", VTheme.Green);
+            SetupCard(storyCard, storyTitle, storySubtitle, "STORY", GetStorySubtitle(), VTheme.Red);
+            SetupCard(quickFightCard, quickFightTitle, quickFightSubtitle, "QUICK FIGHT", "Pick fighter & arena", VTheme.Blue);
+            SetupCard(onlineCard, onlineTitle, onlineSubtitle, "ONLINE", "Live 1v1 PvP", VTheme.Purple);
+            SetupCard(ghostCard, ghostTitle, ghostSubtitle, "GHOST", "Fight your ghost", VTheme.Cyan);
+            SetupCard(survivalCard, survivalTitle, survivalSubtitle, "SURVIVAL", GetSurvivalSubtitle(), VTheme.Orange);
+            SetupCard(trainingCard, trainingTitle, trainingSubtitle, "TRAINING", "Practice combos", VTheme.Green);
 
             // Card click listeners
             if (storyCard) storyCard.onClick.AddListener(() => LoadScene(storyScene));
@@ -127,15 +127,15 @@ namespace Volk.UI
         string GetStorySubtitle()
         {
             int chapter = SaveManager.Instance?.Data.completedChapter ?? 0;
-            if (chapter == 0) return "Maceraya basla";
-            return $"Bolum {chapter + 1}'e devam et";
+            if (chapter == 0) return "Start the adventure";
+            return $"Chapter {chapter + 1} - continue";
         }
 
         string GetSurvivalSubtitle()
         {
             int highScore = PlayerPrefs.GetInt("survival_highscore", 0);
-            if (highScore == 0) return "Ne kadar dayanabilirsin?";
-            return $"En yuksek: {highScore} puan";
+            if (highScore == 0) return "How long can you last?";
+            return $"Best: {highScore} pts";
         }
 
         void OnOnlineClick()

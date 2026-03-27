@@ -158,7 +158,7 @@ namespace Volk.Core
 
             // Player name + level (left)
             int level = LevelSystem.Instance != null ? LevelSystem.Instance.CurrentLevel : 1;
-            var nameText = ui.CreateText(topBar.transform, $"SAVASCI  Lv.{level}", 26, RuntimeUIBuilder.White,
+            var nameText = ui.CreateText(topBar.transform, $"PLAYER  Lv.{level}", 26, RuntimeUIBuilder.White,
                 TextAlignmentOptions.MidlineLeft);
             var nameRect = nameText.GetComponent<RectTransform>();
             nameRect.anchorMin = new Vector2(0.02f, 0);
@@ -192,7 +192,7 @@ namespace Volk.Core
 
             var cardConfigs = new (string name, Color stripe, string extra, System.Action action)[]
             {
-                ("STORY MODE", RuntimeUIBuilder.Accent,
+                ("STORY", RuntimeUIBuilder.Accent,
                     GetStoryProgress(),
                     () => ChangeState(GameState.StoryMap)),
 
@@ -285,7 +285,7 @@ namespace Volk.Core
         {
             int completed = SaveManager.Instance != null ? SaveManager.Instance.Data.completedChapter : 0;
             int total = allChapters != null && allChapters.Length > 0 ? allChapters.Length : 12;
-            return $"Bolum {completed}/{total}";
+            return $"Chapter {completed}/{total}";
         }
 
         // ============================================================
@@ -301,7 +301,7 @@ namespace Volk.Core
             ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
 
             // Baslik
-            var titleTMP = ui.CreateText(canvas, "HIKAYE MODU", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            var titleTMP = ui.CreateText(canvas, "STORY", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
             titleTMP.fontStyle = FontStyles.Bold;
             var titleRect = titleTMP.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0f, 0.89f);
@@ -310,7 +310,7 @@ namespace Volk.Core
             titleRect.offsetMax = Vector2.zero;
 
             // Geri
-            ui.CreateButton(canvas, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, "< BACK", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ChangeState(GameState.MainHub));
 
             int completedChapter = SaveManager.Instance != null ? SaveManager.Instance.Data.completedChapter : 0;
@@ -332,10 +332,10 @@ namespace Volk.Core
                 bool isCurrent   = i == completedChapter;
                 bool isLocked    = i > completedChapter;
 
-                string chapterTitle = $"BOLUM {i + 1}";
+                string chapterTitle = $"CHAPTER {i + 1}";
                 if (allChapters != null && i < allChapters.Length && allChapters[i] != null
                     && !string.IsNullOrEmpty(allChapters[i].chapterTitle))
-                    chapterTitle = $"B{i+1}  {allChapters[i].chapterTitle}";
+                    chapterTitle = $"CH{i+1}  {allChapters[i].chapterTitle}";
 
                 Color bgColor = isLocked ? new Color(0.08f, 0.08f, 0.12f)
                               : isCurrent ? new Color(0.18f, 0.08f, 0.08f)
@@ -360,7 +360,7 @@ namespace Volk.Core
                 if (!isLocked)
                 {
                     int ci = i;
-                    ui.CreateButton(canvas, isCompleted ? "TEKRAR" : "OYNA", RuntimeUIBuilder.Accent, Color.white,
+                    ui.CreateButton(canvas, isCompleted ? "REPLAY" : "PLAY", RuntimeUIBuilder.Accent, Color.white,
                         new Vector2(0.70f, yMin + 0.01f), new Vector2(0.97f, yMax - 0.01f),
                         () => {
                             selectedChapterIndex = ci;
@@ -371,7 +371,7 @@ namespace Volk.Core
                 }
                 else
                 {
-                    var lockTMP = ui.CreateText(canvas, "KILITLI", 20, RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineRight);
+                    var lockTMP = ui.CreateText(canvas, "LOCKED", 20, RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineRight);
                     var lRect2 = lockTMP.GetComponent<RectTransform>();
                     lRect2.anchorMin = new Vector2(0.70f, yMin);
                     lRect2.anchorMax = new Vector2(0.97f, yMax);
@@ -520,13 +520,11 @@ namespace Volk.Core
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
-            selectedCharacterIndex = -1;
-
             // Background
             ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
 
-            // Baslik
-            var titleTMP = ui.CreateText(canvas, "KARAKTER SEC", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            // Title
+            var titleTMP = ui.CreateText(canvas, "SELECT FIGHTER", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
             titleTMP.fontStyle = FontStyles.Bold;
             var titleRect = titleTMP.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0f, 0.89f);
@@ -534,23 +532,33 @@ namespace Volk.Core
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Geri butonu
-            ui.CreateButton(canvas, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
-                new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ReturnToPrevious());
+            // Back button
+            ui.CreateButton(canvas, "< BACK", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+                new Vector2(0f, 0.89f), new Vector2(0.22f, 1f), () => ReturnToPrevious());
 
-            // 3 kolon grid
+            // Selected character name display
+            string selName = (selectedCharacterIndex >= 0 && allCharacters != null && selectedCharacterIndex < allCharacters.Length)
+                ? allCharacters[selectedCharacterIndex].characterName
+                : "--- SELECT A FIGHTER ---";
+            var selText = ui.CreateText(canvas, selName, 26, RuntimeUIBuilder.Gold, TextAlignmentOptions.Center);
+            selText.fontStyle = FontStyles.Bold;
+            var selRect = selText.GetComponent<RectTransform>();
+            selRect.anchorMin = new Vector2(0.22f, 0.89f);
+            selRect.anchorMax = new Vector2(1f, 1f);
+            selRect.offsetMin = Vector2.zero;
+            selRect.offsetMax = Vector2.zero;
+
+            // 3-column grid
             int cols = 3;
             float cellW = 1f / cols;
             float gridTop = 0.86f;
             float gridBot = 0.13f;
-            float gridH = gridTop - gridBot;
-            int rows = 2;
-            float cellH = gridH / rows;
+            float cellH = (gridTop - gridBot) / 2f;
 
             var chars = allCharacters;
             int total = chars != null ? chars.Length : 0;
 
-            for (int i = 0; i < total && i < cols * rows; i++)
+            for (int i = 0; i < total && i < cols * 2; i++)
             {
                 int col = i % cols;
                 int row = i / cols;
@@ -558,65 +566,89 @@ namespace Volk.Core
                 float xMax = xMin + cellW;
                 float yMax = gridTop - row * cellH;
                 float yMin = yMax - cellH;
+                float pad = 0.012f;
 
-                float pad = 0.01f;
                 var charData = chars[i];
                 bool unlocked = charData.unlockedByDefault;
                 Color accent = GetCharColor(charData.characterName);
                 string letter = GetCharEmoji(charData.characterName);
                 string charName = charData.characterName ?? $"F{i+1}";
                 int idx = i;
+                bool isSelected = (selectedCharacterIndex == i);
 
-                // Kart arkaplan
+                // Card bg — bright border if selected
+                Color cardBg = unlocked
+                    ? new Color(accent.r * 0.25f, accent.g * 0.25f, accent.b * 0.25f, 1f)
+                    : new Color(0.07f, 0.07f, 0.11f);
                 var card = ui.CreatePanel(canvas,
                     new Vector2(xMin + pad, yMin + pad),
                     new Vector2(xMax - pad, yMax - pad),
-                    unlocked ? new Color(accent.r * 0.3f, accent.g * 0.3f, accent.b * 0.3f, 1f)
-                             : new Color(0.08f, 0.08f, 0.12f));
+                    cardBg);
 
-                // Renkli üst şerit
-                ui.CreatePanel(card.transform,
-                    new Vector2(0f, 0.72f), Vector2.one,
+                // Selected highlight border (bright accent outline)
+                if (isSelected)
+                {
+                    float b = 0.008f;
+                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMax - pad - b), new Vector2(xMax - pad, yMax - pad), accent); // top
+                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMin + pad), new Vector2(xMax - pad, yMin + pad + b), accent); // bot
+                    ui.CreatePanel(canvas, new Vector2(xMin + pad, yMin + pad), new Vector2(xMin + pad + b, yMax - pad), accent); // left
+                    ui.CreatePanel(canvas, new Vector2(xMax - pad - b, yMin + pad), new Vector2(xMax - pad, yMax - pad), accent); // right
+
+                    // Checkmark
+                    var checkTMP = ui.CreateText(card.transform, "✓", 28, accent, TextAlignmentOptions.TopRight);
+                    var cRect = checkTMP.GetComponent<RectTransform>();
+                    cRect.anchorMin = new Vector2(0.6f, 0.72f);
+                    cRect.anchorMax = new Vector2(0.98f, 1f);
+                    cRect.offsetMin = Vector2.zero;
+                    cRect.offsetMax = Vector2.zero;
+                    checkTMP.fontStyle = FontStyles.Bold;
+                }
+
+                // Colored top stripe
+                ui.CreatePanel(card.transform, new Vector2(0f, 0.72f), Vector2.one,
                     unlocked ? accent : RuntimeUIBuilder.Gray);
 
-                // Büyük harf/sembol
-                var letterTMP = ui.CreateText(card.transform, letter, 56,
+                // Big letter
+                var letterTMP = ui.CreateText(card.transform, letter, 52,
                     unlocked ? Color.white : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
                 var lRect = letterTMP.GetComponent<RectTransform>();
                 lRect.anchorMin = new Vector2(0f, 0.35f);
-                lRect.anchorMax = new Vector2(1f, 0.75f);
+                lRect.anchorMax = new Vector2(1f, 0.74f);
                 lRect.offsetMin = Vector2.zero;
                 lRect.offsetMax = Vector2.zero;
                 letterTMP.fontStyle = FontStyles.Bold;
 
-                // İsim
-                var nameTMP = ui.CreateText(card.transform, charName, 22,
+                // Name
+                var nameTMP = ui.CreateText(card.transform, charName, 20,
                     unlocked ? Color.white : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
                 var nRect = nameTMP.GetComponent<RectTransform>();
-                nRect.anchorMin = new Vector2(0f, 0.10f);
+                nRect.anchorMin = new Vector2(0f, 0.08f);
                 nRect.anchorMax = new Vector2(1f, 0.36f);
                 nRect.offsetMin = Vector2.zero;
                 nRect.offsetMax = Vector2.zero;
                 nameTMP.fontStyle = FontStyles.Bold;
 
-                // Tıklanabilir buton (kart üstünde tam kaplayan)
+                // Tap to select
                 if (unlocked)
                 {
                     var btn = card.gameObject.AddComponent<Button>();
-                    btn.onClick.AddListener(() => SelectCharacter(idx));
-                    var colors = btn.colors;
-                    colors.normalColor = Color.white;
-                    colors.highlightedColor = new Color(1f, 1f, 1f, 0.8f);
-                    colors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
-                    btn.colors = colors;
+                    btn.onClick.AddListener(() => {
+                        selectedCharacterIndex = idx;
+                        if (GameSettings.Instance != null && allCharacters != null && idx < allCharacters.Length)
+                            GameSettings.Instance.selectedCharacter = allCharacters[idx];
+                        ChangeState(GameState.CharacterSelect); // rebuild with highlight
+                    });
                     card.raycastTarget = true;
                 }
             }
 
-            // FIGHT butonu
-            ui.CreateButton(canvas, "DOVUSE GIR!", RuntimeUIBuilder.Accent, Color.white,
+            // FIGHT button — only enabled when a character is selected
+            bool hasSelection = selectedCharacterIndex >= 0;
+            Color fightBg = hasSelection ? RuntimeUIBuilder.Accent : new Color(0.3f, 0.1f, 0.1f);
+            ui.CreateButton(canvas, hasSelection ? "FIGHT!" : "SELECT A FIGHTER",
+                fightBg, Color.white,
                 new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.12f),
-                () => StartCombat());
+                () => { if (hasSelection) StartCombat(); });
         }
 
         void BuildCharacterCard(RectTransform content, int index, ref GameObject selectedBorder)
@@ -800,7 +832,7 @@ namespace Volk.Core
 
             // Sound toggle
             bool soundOn = SaveManager.Instance != null ? SaveManager.Instance.Data.soundOn : true;
-            ui.CreateButton(canvas, $"Sound: {(soundOn ? "ON" : "OFF")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, $"Sound: {(soundOn ? \"ON\" : \"OFF\")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.70f), new Vector2(0.8f, 0.80f),
                 () => {
                     if (SaveManager.Instance != null)
@@ -822,7 +854,7 @@ namespace Volk.Core
                 });
 
             // Reset save
-            ui.CreateButton(canvas, "Reset Save", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, "RESET SAVE", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
                 new Vector2(0.3f, 0.20f), new Vector2(0.7f, 0.30f),
                 () => {
                     if (SaveManager.Instance != null)
