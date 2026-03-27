@@ -28,56 +28,108 @@ public class HitEffectManager : MonoBehaviour
     public float heavyScale = 1.5f;
     public float skillScale = 1.8f;
 
+    [Header("Pool Settings")]
+    public int poolPreWarm = 10;
+
+    // Object pools
+    private SimplePool punchPool;
+    private SimplePool kickPool;
+    private SimplePool blockPool;
+    private SimplePool lightPool;
+    private SimplePool mediumPool;
+    private SimplePool heavyPool;
+    private SimplePool skillPool;
+
+    // Cached camera reference
+    private CameraFollow cachedCamFollow;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
     }
 
-    // Legacy API — unchanged
+    void Start()
+    {
+        // Pre-warm pools
+        if (punchHitPrefab) punchPool = new SimplePool(punchHitPrefab, poolPreWarm, transform);
+        if (kickHitPrefab) kickPool = new SimplePool(kickHitPrefab, poolPreWarm, transform);
+        if (blockHitPrefab) blockPool = new SimplePool(blockHitPrefab, poolPreWarm / 2, transform);
+        if (lightHitPrefab) lightPool = new SimplePool(lightHitPrefab, poolPreWarm, transform);
+        if (mediumHitPrefab) mediumPool = new SimplePool(mediumHitPrefab, poolPreWarm, transform);
+        if (heavyHitPrefab) heavyPool = new SimplePool(heavyHitPrefab, poolPreWarm / 2, transform);
+        if (skillHitPrefab) skillPool = new SimplePool(skillHitPrefab, poolPreWarm / 2, transform);
+
+        // Cache camera
+        if (Camera.main != null)
+            cachedCamFollow = Camera.main.GetComponent<CameraFollow>();
+    }
+
+    // Legacy API — unchanged signature
     public void SpawnHitEffect(Vector3 position, bool isKick = false, bool isBlock = false)
     {
+        SimplePool pool = isBlock ? blockPool : (isKick ? kickPool : punchPool);
+        if (pool != null)
+        {
+            pool.GetTimed(position, Quaternion.identity, 2f, this);
+            return;
+        }
+
+        // Fallback if no pool (prefab was null)
         GameObject prefab = isBlock ? blockHitPrefab : (isKick ? kickHitPrefab : punchHitPrefab);
         if (prefab == null) return;
-
-        GameObject fx = Instantiate(prefab, position, Quaternion.identity);
+        var fx = Instantiate(prefab, position, Quaternion.identity);
         Destroy(fx, 2f);
     }
 
     // Tier-based VFX system
     public void SpawnTieredEffect(Vector3 position, HitTier tier)
     {
-        GameObject prefab;
+        SimplePool pool;
+        GameObject fallbackPrefab;
         Color color;
         float scale;
 
         switch (tier)
         {
             case HitTier.Light:
-                prefab = lightHitPrefab ?? punchHitPrefab;
+                pool = lightPool ?? punchPool;
+                fallbackPrefab = lightHitPrefab ?? punchHitPrefab;
                 color = lightColor;
                 scale = lightScale;
                 break;
             case HitTier.Heavy:
-                prefab = heavyHitPrefab ?? kickHitPrefab;
+                pool = heavyPool ?? kickPool;
+                fallbackPrefab = heavyHitPrefab ?? kickHitPrefab;
                 color = heavyColor;
                 scale = heavyScale;
                 break;
             case HitTier.Skill:
-                prefab = skillHitPrefab ?? kickHitPrefab;
+                pool = skillPool ?? kickPool;
+                fallbackPrefab = skillHitPrefab ?? kickHitPrefab;
                 color = skillColor;
                 scale = skillScale;
                 break;
             default: // Medium
-                prefab = mediumHitPrefab ?? punchHitPrefab;
+                pool = mediumPool ?? punchPool;
+                fallbackPrefab = mediumHitPrefab ?? punchHitPrefab;
                 color = mediumColor;
                 scale = mediumScale;
                 break;
         }
 
-        if (prefab == null) return;
+        GameObject fx;
+        if (pool != null)
+        {
+            fx = pool.GetTimed(position, Quaternion.identity, 3f, this);
+        }
+        else
+        {
+            if (fallbackPrefab == null) return;
+            fx = Instantiate(fallbackPrefab, position, Quaternion.identity);
+            Destroy(fx, 3f);
+        }
 
-        var fx = Instantiate(prefab, position, Quaternion.identity);
         fx.transform.localScale = Vector3.one * scale;
 
         // Apply color to particle systems
@@ -102,12 +154,8 @@ public class HitEffectManager : MonoBehaviour
         if (tier == HitTier.Heavy || tier == HitTier.Skill)
         {
             JuiceManager.Instance?.ScreenFlash(tier == HitTier.Skill ? 0.5f : 0.3f);
-            if (Camera.main != null)
-            {
-                var camFollow = Camera.main.GetComponent<CameraFollow>();
-                if (camFollow != null)
-                    camFollow.TriggerShake(tier == HitTier.Skill ? 0.15f : 0.1f);
-            }
+            if (cachedCamFollow != null)
+                cachedCamFollow.TriggerShake(tier == HitTier.Skill ? 0.15f : 0.1f);
         }
 
         // Hitstop scaling by tier
@@ -120,7 +168,5 @@ public class HitEffectManager : MonoBehaviour
             _ => HitstopManager.LightHit
         };
         HitstopManager.Instance?.Trigger(hitstopDuration);
-
-        Destroy(fx, 3f);
     }
 }

@@ -425,8 +425,13 @@ public class Fighter : MonoBehaviour
 
     void UpdateAI()
     {
-        if (aiTarget == null) aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
-        if (aiTarget == null) return;
+        if (aiTarget == null)
+        {
+            // Cached lookup — only retry once per second instead of every frame
+            if (Time.frameCount % 60 == 0)
+                aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
+            if (aiTarget == null) return;
+        }
 
         stateTimer += Time.deltaTime;
 
@@ -1010,10 +1015,14 @@ public class Fighter : MonoBehaviour
 
         yield return new WaitForSeconds(0.2f);
 
-        // Find nearest enemy target for skill execution
+        // Find nearest enemy target for skill execution (use cached aiTarget)
         Fighter skillTarget = null;
         if (aiTarget != null) skillTarget = aiTarget.GetComponent<Fighter>();
-        if (skillTarget == null) skillTarget = GameObject.FindWithTag(enemyTag)?.GetComponent<Fighter>();
+        if (skillTarget == null && aiTarget == null)
+        {
+            aiTarget = GameObject.FindWithTag(enemyTag)?.transform;
+            if (aiTarget != null) skillTarget = aiTarget.GetComponent<Fighter>();
+        }
 
         // Execute skill behavior (command pattern)
         skill.Execute(this, skillTarget);
