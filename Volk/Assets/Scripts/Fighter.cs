@@ -586,6 +586,14 @@ public class Fighter : MonoBehaviour
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
 
+        // Record behavior for ghost AI
+        if (!isAI && behaviorTracker != null)
+        {
+            var situation = GetCurrentSituation();
+            var action = animHash == hPunch ? Volk.Core.PlayerAction.Punch : Volk.Core.PlayerAction.Kick;
+            behaviorTracker.Record(situation, action);
+        }
+
         // Whoosh before impact
         AudioManager.Instance?.PlayWhoosh();
 
@@ -662,6 +670,10 @@ public class Fighter : MonoBehaviour
         isAttacking = true;
         anim.SetTrigger(hBlock);
         AudioManager.Instance?.PlayBlock();
+
+        // Record behavior for ghost AI
+        if (!isAI && behaviorTracker != null)
+            behaviorTracker.Record(GetCurrentSituation(), Volk.Core.PlayerAction.Block);
         yield return new WaitForSeconds(0.8f);
         isAttacking = false;
     }
