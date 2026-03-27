@@ -197,7 +197,7 @@ public class SetupVisualSprint
             return;
         }
 
-        int fixed = 0;
+        int fixedCount = 0;
         foreach (var (name, _) in CharDefs)
         {
             string prefabPath = $"Assets/Prefabs/Characters/{name}_Fighter.prefab";
@@ -209,14 +209,14 @@ public class SetupVisualSprint
             if (animator != null && animator.runtimeAnimatorController == null)
             {
                 animator.runtimeAnimatorController = playerAnimController;
-                fixed++;
+                fixedCount++;
                 Debug.Log($"[VisualSprint] Assigned PlayerAnimator to {name}");
             }
             PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
             PrefabUtility.UnloadPrefabContents(prefabRoot);
         }
 
-        Debug.Log($"[VisualSprint] Animator check complete. Fixed: {fixed}");
+        Debug.Log($"[VisualSprint] Animator check complete. Fixed: {fixedCount}");
     }
 
     [MenuItem("VOLK/Visual Sprint/5. Setup CombatTest Scene")]
