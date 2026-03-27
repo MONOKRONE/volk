@@ -146,7 +146,8 @@ MonoBehaviour:
   rightFootPoint: {fileID: 5931262104488890213}
   walkSpeed: 6
   runSpeed: 8.5
-  rotSpeed: 1800
+  rotSpeed: 1200
+  combatRotSpeed: 2400
   jumpHeight: 1.8
   lockOnEnabled: 1
   aiTarget: {fileID: 0}
@@ -161,6 +162,7 @@ MonoBehaviour:
   knockbackDuration: 0.2
   comboWindowOpen: 0
   comboWindowDuration: 0.55
+  exMeter: 0
 --- !u!1001 &6658958232317926231
 PrefabInstance:
   m_ObjectHideFlags: 0

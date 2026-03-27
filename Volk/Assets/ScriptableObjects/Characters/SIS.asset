@@ -25,6 +25,7 @@ MonoBehaviour:
   runSpeed: 8.5
   knockbackForce: 1.5
   rotationSpeed: 1800
+  combatRotationSpeed: 2400
   weightClass: 0
   walkSpeedMultiplier: 1.1
   runSpeedMultiplier: 1.2
@@ -37,9 +38,13 @@ MonoBehaviour:
   cameraShakeMultiplier: 0.6
   soundPitchOffset: 0.15
   animController: {fileID: 9100000, guid: 7d1153f83e759420dbd1be5ec86f6ae9, type: 2}
-  characterMaterial: {fileID: 0}
+  characterMaterial: {fileID: 2100000, guid: ee9e3e26f29564950bda0d510fce5b94, type: 2}
+  maxProjectileRange: 6
   skill1: {fileID: 11400000, guid: 9110e9b7b223447a91df9eff05591e2f, type: 2}
   skill2: {fileID: 11400000, guid: 5b17914855a04b7bad4786443f0e4ea4, type: 2}
+  exDamageMultiplier: 1.5
+  hasSuperArmor: 0
+  vibrationMultiplier: 1
   unlockedByDefault: 0
   unlockType: 1
   unlockValue: 8
