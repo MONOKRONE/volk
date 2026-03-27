@@ -300,28 +300,84 @@ namespace Volk.Core
             // Background
             ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
 
-            // Top bar
-            var topBar = ui.CreatePanel(canvas, new Vector2(0, 0.90f), Vector2.one, RuntimeUIBuilder.Panel);
+            // Baslik
+            var titleTMP = ui.CreateText(canvas, "HIKAYE MODU", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            titleTMP.fontStyle = FontStyles.Bold;
+            var titleRect = titleTMP.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 0.89f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
 
-            // Back button
-            ui.CreateButton(topBar.transform, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
-                new Vector2(0, 0), new Vector2(0.15f, 1), () => ChangeState(GameState.MainHub));
-
-            // Title
-            var titleText = ui.CreateText(topBar.transform, "HIKAYE MODU", 32, RuntimeUIBuilder.Accent,
-                TextAlignmentOptions.Center);
-            titleText.fontStyle = FontStyles.Bold;
-
-            // ScrollRect for chapters
-            var scrollRect = ui.CreateScrollRect(canvas, new Vector2(0.05f, 0.05f), new Vector2(0.95f, 0.88f));
-            var content = scrollRect.content;
+            // Geri
+            ui.CreateButton(canvas, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+                new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ChangeState(GameState.MainHub));
 
             int completedChapter = SaveManager.Instance != null ? SaveManager.Instance.Data.completedChapter : 0;
-            int chapterCount = allChapters != null && allChapters.Length > 0 ? allChapters.Length : 12;
+            int chapterCount = allChapters != null && allChapters.Length > 0 ? allChapters.Length : 8;
+
+            // Chapter listesi - scroll olmadan basit liste
+            float itemH = 0.10f;
+            float startY = 0.87f;
+            float gap = 0.01f;
 
             for (int i = 0; i < chapterCount; i++)
             {
-                BuildChapterRow(content, i, completedChapter, chapterCount);
+                float yMax = startY - i * (itemH + gap);
+                float yMin = yMax - itemH;
+
+                if (yMin < 0.02f) break; // ekrandan taşma
+
+                bool isCompleted = i < completedChapter;
+                bool isCurrent   = i == completedChapter;
+                bool isLocked    = i > completedChapter;
+
+                string chapterTitle = $"BOLUM {i + 1}";
+                if (allChapters != null && i < allChapters.Length && allChapters[i] != null
+                    && !string.IsNullOrEmpty(allChapters[i].chapterTitle))
+                    chapterTitle = $"B{i+1}  {allChapters[i].chapterTitle}";
+
+                Color bgColor = isLocked ? new Color(0.08f, 0.08f, 0.12f)
+                              : isCurrent ? new Color(0.18f, 0.08f, 0.08f)
+                              : RuntimeUIBuilder.Panel;
+                Color textColor = isLocked ? RuntimeUIBuilder.Gray : RuntimeUIBuilder.White;
+
+                ui.CreatePanel(canvas, new Vector2(0.02f, yMin), new Vector2(0.98f, yMax), bgColor);
+
+                // Sol şerit (tamamlandıysa yeşil, mevcut kırmızı)
+                Color stripe = isCompleted ? RuntimeUIBuilder.Green
+                             : isCurrent   ? RuntimeUIBuilder.Accent
+                             : new Color(0.2f, 0.2f, 0.3f);
+                ui.CreatePanel(canvas, new Vector2(0.02f, yMin), new Vector2(0.04f, yMax), stripe);
+
+                var rowText = ui.CreateText(canvas, chapterTitle, 24, textColor, TextAlignmentOptions.MidlineLeft);
+                var rRect = rowText.GetComponent<RectTransform>();
+                rRect.anchorMin = new Vector2(0.05f, yMin);
+                rRect.anchorMax = new Vector2(0.65f, yMax);
+                rRect.offsetMin = Vector2.zero;
+                rRect.offsetMax = Vector2.zero;
+
+                if (!isLocked)
+                {
+                    int ci = i;
+                    ui.CreateButton(canvas, isCompleted ? "TEKRAR" : "OYNA", RuntimeUIBuilder.Accent, Color.white,
+                        new Vector2(0.70f, yMin + 0.01f), new Vector2(0.97f, yMax - 0.01f),
+                        () => {
+                            selectedChapterIndex = ci;
+                            if (GameSettings.Instance != null)
+                                GameSettings.Instance.currentMode = GameSettings.GameMode.Story;
+                            ChangeState(GameState.CharacterSelect);
+                        });
+                }
+                else
+                {
+                    var lockTMP = ui.CreateText(canvas, "KILITLI", 20, RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineRight);
+                    var lRect2 = lockTMP.GetComponent<RectTransform>();
+                    lRect2.anchorMin = new Vector2(0.70f, yMin);
+                    lRect2.anchorMax = new Vector2(0.97f, yMax);
+                    lRect2.offsetMin = Vector2.zero;
+                    lRect2.offsetMax = Vector2.zero;
+                }
             }
         }
 
@@ -426,132 +482,146 @@ namespace Volk.Core
         // ============================================================
         // CHARACTER SELECT
         // ============================================================
+        // Karakter rengi
+        static Color GetCharColor(string name)
+        {
+            if (name == null) return RuntimeUIBuilder.Panel;
+            switch (name.ToUpper())
+            {
+                case "YILDIZ": return new Color(1f, 0.55f, 0f);       // turuncu
+                case "KAYA":   return new Color(0.4f, 0.4f, 0.45f);   // gri
+                case "RUZGAR": return new Color(0f, 0.5f, 1f);        // mavi
+                case "CELIK":  return new Color(0.7f, 0.7f, 0.8f);    // gümüş
+                case "SIS":    return new Color(0.55f, 0f, 1f);       // mor
+                case "TOPRAK": return new Color(0.55f, 0.27f, 0.07f); // kahve
+                default:       return RuntimeUIBuilder.Panel;
+            }
+        }
+
+        // Karakter emojisi
+        static string GetCharEmoji(string name)
+        {
+            if (name == null) return "?";
+            switch (name.ToUpper())
+            {
+                case "YILDIZ": return "Y";
+                case "KAYA":   return "K";
+                case "RUZGAR": return "R";
+                case "CELIK":  return "C";
+                case "SIS":    return "S";
+                case "TOPRAK": return "T";
+                default:       return "?";
+            }
+        }
+
         void BuildCharacterSelect()
         {
             Debug.Log("[GameFlow] BuildCharacterSelect started");
             var ui = RuntimeUIBuilder.Instance;
             var canvas = ui.CanvasRect;
 
+            selectedCharacterIndex = -1;
+
             // Background
             ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
 
-            // Top bar
-            var topBar = ui.CreatePanel(canvas, new Vector2(0, 0.90f), Vector2.one, RuntimeUIBuilder.Panel);
-            ui.CreateButton(topBar.transform, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
-                new Vector2(0, 0), new Vector2(0.15f, 1), () => ReturnToPrevious());
-            var titleText = ui.CreateText(topBar.transform, "KARAKTER SEC", 32, RuntimeUIBuilder.Accent,
-                TextAlignmentOptions.Center);
-            titleText.fontStyle = FontStyles.Bold;
+            // Baslik
+            var titleTMP = ui.CreateText(canvas, "KARAKTER SEC", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            titleTMP.fontStyle = FontStyles.Bold;
+            var titleRect = titleTMP.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 0.89f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
 
-            // ScrollRect for characters
-            var scrollRect = ui.CreateScrollRect(canvas, new Vector2(0.05f, 0.14f), new Vector2(0.95f, 0.88f));
-            var content = scrollRect.content;
+            // Geri butonu
+            ui.CreateButton(canvas, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+                new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ReturnToPrevious());
 
-            selectedCharacterIndex = -1;
-            GameObject selectedBorder = null;
+            // 3 kolon grid
+            int cols = 3;
+            float cellW = 1f / cols;
+            float gridTop = 0.86f;
+            float gridBot = 0.13f;
+            float gridH = gridTop - gridBot;
+            int rows = 2;
+            float cellH = gridH / rows;
 
-            if (allCharacters != null && allCharacters.Length > 0)
+            var chars = allCharacters;
+            int total = chars != null ? chars.Length : 0;
+
+            for (int i = 0; i < total && i < cols * rows; i++)
             {
-                for (int i = 0; i < allCharacters.Length; i++)
+                int col = i % cols;
+                int row = i / cols;
+                float xMin = col * cellW;
+                float xMax = xMin + cellW;
+                float yMax = gridTop - row * cellH;
+                float yMin = yMax - cellH;
+
+                float pad = 0.01f;
+                var charData = chars[i];
+                bool unlocked = charData.unlockedByDefault;
+                Color accent = GetCharColor(charData.characterName);
+                string letter = GetCharEmoji(charData.characterName);
+                string charName = charData.characterName ?? $"F{i+1}";
+                int idx = i;
+
+                // Kart arkaplan
+                var card = ui.CreatePanel(canvas,
+                    new Vector2(xMin + pad, yMin + pad),
+                    new Vector2(xMax - pad, yMax - pad),
+                    unlocked ? new Color(accent.r * 0.3f, accent.g * 0.3f, accent.b * 0.3f, 1f)
+                             : new Color(0.08f, 0.08f, 0.12f));
+
+                // Renkli üst şerit
+                ui.CreatePanel(card.transform,
+                    new Vector2(0f, 0.72f), Vector2.one,
+                    unlocked ? accent : RuntimeUIBuilder.Gray);
+
+                // Büyük harf/sembol
+                var letterTMP = ui.CreateText(card.transform, letter, 56,
+                    unlocked ? Color.white : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+                var lRect = letterTMP.GetComponent<RectTransform>();
+                lRect.anchorMin = new Vector2(0f, 0.35f);
+                lRect.anchorMax = new Vector2(1f, 0.75f);
+                lRect.offsetMin = Vector2.zero;
+                lRect.offsetMax = Vector2.zero;
+                letterTMP.fontStyle = FontStyles.Bold;
+
+                // İsim
+                var nameTMP = ui.CreateText(card.transform, charName, 22,
+                    unlocked ? Color.white : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+                var nRect = nameTMP.GetComponent<RectTransform>();
+                nRect.anchorMin = new Vector2(0f, 0.10f);
+                nRect.anchorMax = new Vector2(1f, 0.36f);
+                nRect.offsetMin = Vector2.zero;
+                nRect.offsetMax = Vector2.zero;
+                nameTMP.fontStyle = FontStyles.Bold;
+
+                // Tıklanabilir buton (kart üstünde tam kaplayan)
+                if (unlocked)
                 {
-                    BuildCharacterCard(content, i, ref selectedBorder);
+                    var btn = card.gameObject.AddComponent<Button>();
+                    btn.onClick.AddListener(() => SelectCharacter(idx));
+                    var colors = btn.colors;
+                    colors.normalColor = Color.white;
+                    colors.highlightedColor = new Color(1f, 1f, 1f, 0.8f);
+                    colors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+                    btn.colors = colors;
+                    card.raycastTarget = true;
                 }
             }
-            else
-            {
-                // No characters found - placeholder
-                ui.CreateText(content, "No character found", 24, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
-            }
 
-            // FIGHT button (bottom)
-            ui.CreateButton(canvas, "FIGHT", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
-                new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.11f),
+            // FIGHT butonu
+            ui.CreateButton(canvas, "DOVUSE GIR!", RuntimeUIBuilder.Accent, Color.white,
+                new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.12f),
                 () => StartCombat());
-        }
-
-        // Placeholder emoji per character name
-        static string GetCharEmoji(string name)
-        {
-            if (name == null) return "?";
-            switch (name.ToUpper())
-            {
-                case "YILDIZ":  return "★";
-                case "KAYA":    return "◆";
-                case "RUZGAR":  return "↯";
-                case "CELIK":   return "⚔";
-                case "SIS":     return "◎";
-                case "TOPRAK":  return "▲";
-                default:        return "●";
-            }
         }
 
         void BuildCharacterCard(RectTransform content, int index, ref GameObject selectedBorder)
         {
-            var ui = RuntimeUIBuilder.Instance;
-            var charData = allCharacters[index];
-            bool unlocked = CharacterUnlockManager.Instance != null
-                ? CharacterUnlockManager.Instance.IsUnlocked(charData)
-                : charData.unlockedByDefault;
-
-            var cardGO = new GameObject($"Char_{index}", typeof(RectTransform));
-            cardGO.transform.SetParent(content, false);
-            var cardRect = cardGO.GetComponent<RectTransform>();
-            cardRect.sizeDelta = new Vector2(0, 160);
-            var le = cardGO.AddComponent<LayoutElement>();
-            le.preferredHeight = 160;
-            le.flexibleWidth = 1;
-
-            var bg = cardGO.AddComponent<Image>();
-            bg.color = unlocked ? RuntimeUIBuilder.Panel : new Color(0.08f, 0.08f, 0.12f);
-            bg.raycastTarget = false;
-
-            // Emoji placeholder (sol taraf, büyük)
-            string emoji = GetCharEmoji(charData.characterName);
-            var emojiText = ui.CreateText(cardGO.transform, emoji, 48,
-                unlocked ? RuntimeUIBuilder.Gold : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
-            var emojiRect = emojiText.GetComponent<RectTransform>();
-            emojiRect.anchorMin = new Vector2(0.0f, 0.0f);
-            emojiRect.anchorMax = new Vector2(0.18f, 1.0f);
-            emojiRect.offsetMin = Vector2.zero;
-            emojiRect.offsetMax = Vector2.zero;
-
-            // Character name
-            var nameText = ui.CreateText(cardGO.transform, charData.characterName ?? $"Fighter {index + 1}", 28,
-                unlocked ? RuntimeUIBuilder.White : RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineLeft);
-            nameText.fontStyle = FontStyles.Bold;
-            var nameRect = nameText.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0.20f, 0.6f);
-            nameRect.anchorMax = new Vector2(0.55f, 0.95f);
-            nameRect.offsetMin = Vector2.zero;
-            nameRect.offsetMax = Vector2.zero;
-
-            if (unlocked)
-            {
-                // Stats bars
-                BuildStatBar(cardGO.transform, "SPD", charData.speed / 10f, RuntimeUIBuilder.Neon, 0.45f, 0.03f);
-                BuildStatBar(cardGO.transform, "PWR", charData.power / 10f, RuntimeUIBuilder.Accent, 0.35f, 0.03f);
-                BuildStatBar(cardGO.transform, "DEF", charData.defense / 10f, RuntimeUIBuilder.Green, 0.25f, 0.03f);
-
-                // SELECT button
-                int charIdx = index;
-                ui.CreateButton(cardGO.transform, "SEC", RuntimeUIBuilder.Neon, RuntimeUIBuilder.BG,
-                    new Vector2(0.78f, 0.2f), new Vector2(0.97f, 0.8f),
-                    () => SelectCharacter(charIdx));
-            }
-            else
-            {
-                // Lock info
-                string desc = CharacterUnlockManager.Instance != null
-                    ? CharacterUnlockManager.Instance.GetUnlockDescription(charData)
-                    : "Locked";
-                var lockText = ui.CreateText(cardGO.transform, $"LOCKED - {desc}", 18,
-                    RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
-                var lockRect = lockText.GetComponent<RectTransform>();
-                lockRect.anchorMin = new Vector2(0.03f, 0.05f);
-                lockRect.anchorMax = new Vector2(0.97f, 0.55f);
-                lockRect.offsetMin = Vector2.zero;
-                lockRect.offsetMax = Vector2.zero;
-            }
+            // Artık kullanılmıyor — BuildCharacterSelect grid kullanıyor
         }
 
         void BuildStatBar(Transform parent, string label, float fill, Color color, float yCenter, float height)
