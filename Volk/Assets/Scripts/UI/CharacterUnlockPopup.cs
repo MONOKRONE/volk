@@ -34,6 +34,7 @@ namespace Volk.UI
 
         void Awake()
         {
+            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             if (popupGroup) popupGroup.alpha = 0;
             if (flashOverlay) flashOverlay.color = new Color(1, 1, 1, 0);
