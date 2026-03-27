@@ -199,6 +199,56 @@ namespace Volk.Core
             return (float)GetCompletedCount(characterId) / mastery.nodes.Length;
         }
 
+        /// <summary>
+        /// Add progress to the first node matching the given type.
+        /// Returns true if a matching node was found and progress was added.
+        /// </summary>
+        public bool AddProgressByNodeType(string characterId, MasteryNodeType nodeType, int amount = 1)
+        {
+            int idx = FindNodeIndexByType(characterId, nodeType);
+            if (idx < 0) return false;
+            AddProgress(characterId, idx, amount);
+            return true;
+        }
+
+        /// <summary>
+        /// Returns the index of the first node matching the given type, or -1 if not found.
+        /// </summary>
+        public int FindNodeIndexByType(string characterId, MasteryNodeType nodeType)
+        {
+            var mastery = GetMastery(characterId);
+            if (mastery == null) return -1;
+            for (int i = 0; i < mastery.nodes.Length; i++)
+            {
+                if (mastery.nodes[i] != null && mastery.nodes[i].nodeType == nodeType)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Add progress to all nodes whose requirement starts with the given prefix.
+        /// E.g. "hit" matches "hit_landed", "hit_parry"; "wins" matches "wins", "wins_no_skill".
+        /// Returns the number of nodes that received progress.
+        /// </summary>
+        public int AddProgressByRequirement(string characterId, string requirementPrefix, int amount = 1)
+        {
+            var mastery = GetMastery(characterId);
+            if (mastery == null) return 0;
+            int matched = 0;
+            for (int i = 0; i < mastery.nodes.Length; i++)
+            {
+                var node = mastery.nodes[i];
+                if (node != null && !string.IsNullOrEmpty(node.requirement)
+                    && node.requirement.StartsWith(requirementPrefix, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    AddProgress(characterId, i, amount);
+                    matched++;
+                }
+            }
+            return matched;
+        }
+
         CharacterMasteryData GetMastery(string characterId)
         {
             if (allMasteries == null) return null;

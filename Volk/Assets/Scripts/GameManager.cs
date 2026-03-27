@@ -269,7 +269,7 @@ public class GameManager : MonoBehaviour
             {
                 string charId = playerFighter.characterData.characterName;
                 if (playerWonMatch)
-                    Volk.Core.CharacterMasteryManager.Instance.AddProgress(charId, 0); // Node 0 = wins
+                    Volk.Core.CharacterMasteryManager.Instance.AddProgressByRequirement(charId, "wins");
             }
 
             // Character unlock popup for story mode unlocks
