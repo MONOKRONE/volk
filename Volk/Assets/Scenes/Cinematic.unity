@@ -190,6 +190,11 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5630043462734238661, guid: b157f8799a36b486f967001b8ac332c0,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -390,6 +395,11 @@ PrefabInstance:
       value: SIS_Cinematic
       objectReference: {fileID: 0}
     - target: {fileID: 4686258183718136879, guid: 43a2be24cfb8141a8ae02efdc95a5955,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7429759393328371600, guid: 43a2be24cfb8141a8ae02efdc95a5955,
         type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -899,6 +909,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: CELIK_Cinematic
       objectReference: {fileID: 0}
+    - target: {fileID: 6243866561769308949, guid: db76df42485904c71886e3519dc845a4,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1301,6 +1316,11 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9138031978394477744, guid: f1eff29ed9d7648abadc6d60df058567,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1460,6 +1480,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: YILDIZ_Cinematic
+      objectReference: {fileID: 0}
+    - target: {fileID: 5280968834093600377, guid: 551b5d4087b88495f91354c51eb325b2,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5280968834093600377, guid: 551b5d4087b88495f91354c51eb325b2,
         type: 3}
@@ -2386,6 +2411,11 @@ PrefabInstance:
     - target: {fileID: 7113332173912702789, guid: 17be0327151324f9d9777272a38c1c22,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7256995144643027185, guid: 17be0327151324f9d9777272a38c1c22,
+        type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
