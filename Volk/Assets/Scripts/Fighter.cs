@@ -128,6 +128,7 @@ public class Fighter : MonoBehaviour
     private Animator anim;
     public bool isAttacking { get; private set; }
     public event System.Action<Volk.Core.PlayerAction> OnActionPerformed;
+    public event System.Action OnAttackWhiff;
     private Volk.Core.PlayerBehaviorTracker behaviorTracker;
     public bool isDead { get; private set; }
     private float yVelocity;
@@ -687,10 +688,12 @@ public class Fighter : MonoBehaviour
             yield return null;
         }
 
-        // Whiff frame: if no hit landed, play whiff sound and keep isAttacking for 2 extra frames
+        // Whiff frame: if no hit landed, play whiff sound + freeze for miss feel
         if (!hitLanded)
         {
             AudioManager.Instance?.PlayWhiff();
+            JuiceManager.Instance?.WhiffFreeze();
+            OnAttackWhiff?.Invoke();
             yield return null;
             yield return null;
         }

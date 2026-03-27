@@ -234,12 +234,13 @@ public class GameManager : MonoBehaviour
                 BattlePassManager.Instance.AddXP(xp);
             }
 
-            // Ghost behavior tracking
+            // Ghost behavior tracking + cloud sync
             if (PlayerBehaviorTracker.Instance != null)
             {
                 PlayerBehaviorTracker.Instance.OnMatchEnd();
                 PlayerBehaviorTracker.Instance.SaveProfile();
             }
+            GhostSyncManager.Instance?.TrySync();
 
             // Ranked ELO update
             if (GameSettings.Instance?.currentMode == GameSettings.GameMode.Online)

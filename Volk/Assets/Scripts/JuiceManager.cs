@@ -98,7 +98,25 @@ public class JuiceManager : MonoBehaviour
         Time.fixedDeltaTime = 0.02f;
     }
 
-    // --- 5. SLOW MOTION (KO) ---
+    // --- 5. WHIFF FREEZE (attack miss feel) ---
+    /// <summary>
+    /// Brief freeze on attack whiff — 2 ghost frames to emphasize the miss.
+    /// </summary>
+    public void WhiffFreeze()
+    {
+        StartCoroutine(DoWhiffFreeze());
+    }
+
+    IEnumerator DoWhiffFreeze()
+    {
+        float savedTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        // 2 frames at 60fps ≈ 33ms
+        yield return new WaitForSecondsRealtime(2f / 60f);
+        Time.timeScale = savedTimeScale;
+    }
+
+    // --- 6. SLOW MOTION (KO) ---
     public void SlowMotionKO(float timeScale = 0.2f, float durationRealtime = 1f)
     {
         StartCoroutine(DoSlowMotion(timeScale, durationRealtime));
