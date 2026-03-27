@@ -136,8 +136,11 @@ namespace Volk.Core
 
         void GiveStarterEquipment()
         {
+            if (SaveManager.Instance?.Data == null) return;
+            if (allEquipment == null) return;
             foreach (var eq in allEquipment)
             {
+                if (eq == null) continue;
                 if (eq.rarity == EquipmentRarity.Common)
                     AddToInventory(eq.itemId);
             }

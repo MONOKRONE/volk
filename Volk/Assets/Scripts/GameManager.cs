@@ -37,11 +37,12 @@ public class GameManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        ApplySelectedCharacter();
     }
 
     void Start()
     {
+        ApplySelectedCharacter();
+
         // Wire ComboTracker to player fighter
         if (Volk.Core.ComboTracker.Instance != null && playerFighter != null)
             Volk.Core.ComboTracker.Instance.SetTrackedFighter(playerFighter);
