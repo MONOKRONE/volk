@@ -12,13 +12,22 @@ namespace Volk.Core
 
         [Header("Settings")]
         public float comboInputWindow = 0.6f;
+        public float holdThreshold = 0.3f;
 
-        private List<AttackType> inputBuffer = new List<AttackType>();
+        // Input tracking
+        private List<ComboInput> inputHistory = new List<ComboInput>();
         private float lastInputTime;
         private Fighter trackedFighter;
+        private int currentComboHits;
 
+        // Hold tracking
+        private AttackType? heldAttack;
+        private float holdStartTime;
+
+        public int CurrentComboHits => currentComboHits;
         public event System.Action<ComboData> OnComboDiscovered;
         public event System.Action<ComboData> OnComboExecuted;
+        public event System.Action<int> OnComboHit; // hit count
 
         void Awake()
         {
@@ -31,17 +40,71 @@ namespace Volk.Core
             trackedFighter = fighter;
         }
 
+        // --- Input Recording ---
+
         public void RegisterInput(AttackType type)
         {
             float now = Time.time;
             if (now - lastInputTime > comboInputWindow)
-                inputBuffer.Clear();
+            {
+                inputHistory.Clear();
+                currentComboHits = 0;
+            }
 
-            inputBuffer.Add(type);
+            // Determine input type
+            ComboInputType inputType = ComboInputType.Tap;
+            float duration = 0f;
+
+            if (heldAttack.HasValue && heldAttack.Value == type)
+            {
+                duration = now - holdStartTime;
+                if (duration >= holdThreshold)
+                    inputType = ComboInputType.Hold;
+            }
+
+            var input = new ComboInput
+            {
+                attackType = type,
+                inputType = inputType,
+                holdDuration = duration
+            };
+
+            inputHistory.Add(input);
+            lastInputTime = now;
+            currentComboHits++;
+
+            OnComboHit?.Invoke(currentComboHits);
+            CheckCombos();
+
+            // Reset hold
+            heldAttack = null;
+        }
+
+        public void RegisterHoldStart(AttackType type)
+        {
+            heldAttack = type;
+            holdStartTime = Time.time;
+        }
+
+        public void RegisterSkillCancel()
+        {
+            if (inputHistory.Count == 0) return;
+
+            float now = Time.time;
+            if (now - lastInputTime > comboInputWindow) return;
+
+            inputHistory.Add(new ComboInput
+            {
+                attackType = AttackType.Punch, // placeholder
+                inputType = ComboInputType.SkillCancel,
+                holdDuration = 0
+            });
             lastInputTime = now;
 
             CheckCombos();
         }
+
+        // --- Combo Detection ---
 
         void CheckCombos()
         {
@@ -49,34 +112,70 @@ namespace Volk.Core
 
             foreach (var combo in allCombos)
             {
-                if (combo.inputSequence == null || combo.inputSequence.Length == 0) continue;
-                if (inputBuffer.Count < combo.inputSequence.Length) continue;
-
-                // Check if buffer ends with combo sequence
-                bool match = true;
-                int bufferStart = inputBuffer.Count - combo.inputSequence.Length;
-                for (int i = 0; i < combo.inputSequence.Length; i++)
-                {
-                    if (inputBuffer[bufferStart + i] != combo.inputSequence[i])
-                    {
-                        match = false;
-                        break;
-                    }
-                }
-
-                if (match)
+                if (CheckAdvancedCombo(combo) || CheckLegacyCombo(combo))
                 {
                     ExecuteCombo(combo);
-                    inputBuffer.Clear();
+                    inputHistory.Clear();
                     break;
                 }
             }
         }
 
+        bool CheckLegacyCombo(ComboData combo)
+        {
+            if (combo.inputSequence == null || combo.inputSequence.Length == 0) return false;
+            if (inputHistory.Count < combo.inputSequence.Length) return false;
+
+            int bufferStart = inputHistory.Count - combo.inputSequence.Length;
+            for (int i = 0; i < combo.inputSequence.Length; i++)
+            {
+                if (inputHistory[bufferStart + i].attackType != combo.inputSequence[i])
+                    return false;
+            }
+            return true;
+        }
+
+        bool CheckAdvancedCombo(ComboData combo)
+        {
+            if (combo.advancedSequence == null || combo.advancedSequence.Length == 0) return false;
+            if (inputHistory.Count < combo.advancedSequence.Length) return false;
+
+            int bufferStart = inputHistory.Count - combo.advancedSequence.Length;
+            for (int i = 0; i < combo.advancedSequence.Length; i++)
+            {
+                var expected = combo.advancedSequence[i];
+                var actual = inputHistory[bufferStart + i];
+
+                // Attack type must match (unless SkillCancel)
+                if (expected.inputType != ComboInputType.SkillCancel &&
+                    actual.attackType != expected.attackType)
+                    return false;
+
+                // Input type must match
+                if (actual.inputType != expected.inputType)
+                    return false;
+
+                // Hold must meet minimum duration
+                if (expected.inputType == ComboInputType.Hold &&
+                    actual.holdDuration < expected.holdDuration * 0.8f) // 80% tolerance
+                    return false;
+            }
+            return true;
+        }
+
+        // --- Execution ---
+
         void ExecuteCombo(ComboData combo)
         {
             OnComboExecuted?.Invoke(combo);
-            Debug.Log($"[Combo] {combo.comboName} executed! x{combo.damageMultiplier}");
+            Debug.Log($"[Combo] {combo.comboName} executed! x{combo.damageMultiplier} (tier: {combo.hitTier})");
+
+            // Spawn tier-appropriate VFX
+            if (HitEffectManager.Instance != null && trackedFighter != null)
+            {
+                Vector3 pos = trackedFighter.transform.position + Vector3.up * 1.2f;
+                HitEffectManager.Instance.SpawnTieredEffect(pos, combo.hitTier);
+            }
 
             // Check if first time discovered
             if (SaveManager.Instance != null && !SaveManager.Instance.Data.discoveredCombos.Contains(combo.comboName))
@@ -87,7 +186,6 @@ namespace Volk.Core
                 Debug.Log($"[Combo] NEW COMBO DISCOVERED: {combo.comboName}!");
             }
 
-            // Play bonus effects
             if (combo.bonusSfx != null)
                 AudioManager.Instance?.PlayOneShot(combo.bonusSfx);
 
@@ -97,6 +195,13 @@ namespace Volk.Core
                 var fx = Instantiate(combo.bonusVfx, pos, Quaternion.identity);
                 Destroy(fx, 3f);
             }
+        }
+
+        public void ResetCombo()
+        {
+            inputHistory.Clear();
+            currentComboHits = 0;
+            heldAttack = null;
         }
 
         public bool IsComboDiscovered(string comboName)
