@@ -15,12 +15,15 @@ using UnityEditor.Recorder.Input;
 #endif
 
 /// <summary>
-/// PLA-119: Creates the Cinematic.unity scene with all 7 Cinemachine shots,
-/// Timeline, post-processing, and CinematicDirector.
+/// PLA-119/PLA-120: Creates the Cinematic.unity scene with all 7 Cinemachine shots,
+/// Timeline, character materials, VFX signals, letterbox, post-processing, and recorder.
 /// Menu: VOLK > Cinematic > Setup Cinematic Scene
 /// </summary>
 public class SetupCinematicScene
 {
+    static readonly string TimelineDir = "Assets/Cinematic";
+    static readonly string[] AllChars = { "YILDIZ", "KAYA", "RUZGAR", "CELIK", "SIS", "TOPRAK" };
+
     [MenuItem("VOLK/Cinematic/Setup Cinematic Scene")]
     public static void Setup()
     {
@@ -37,11 +40,12 @@ public class SetupCinematicScene
             camGO.tag = "MainCamera";
         }
 
-        // 2. Add Cinemachine Brain to main camera
+        // 2. Add Cinemachine Brain + Letterbox to main camera
 #if UNITY_EDITOR
         if (mainCam.GetComponent<CinemachineBrain>() == null)
             mainCam.gameObject.AddComponent<CinemachineBrain>();
 #endif
+        mainCam.gameObject.AddComponent<Volk.Cinematic.CinematicLetterbox>();
 
         // 3. Create 7 virtual cameras
         var vcams = new GameObject("VirtualCameras");
@@ -57,9 +61,8 @@ public class SetupCinematicScene
         var shot2 = CreateVCam("Shot2_YILDIZ", vcams.transform);
         shot2.m_Lens.FieldOfView = 40f;
         shot2.transform.position = new Vector3(3, 1.5f, -3f);
-        // Orbital body would be set at runtime via Cinemachine Transposer
 
-        // Shot 3: KAYA — low angle static close-up
+        // Shot 3: KAYA — low angle static close-up, slow dolly in
         var shot3 = CreateVCam("Shot3_KAYA", vcams.transform);
         shot3.m_Lens.FieldOfView = 35f;
         shot3.transform.position = new Vector3(-2, 0.5f, -1.5f);
@@ -69,29 +72,27 @@ public class SetupCinematicScene
         var shot4 = CreateVCam("Shot4_Fight", vcams.transform);
         shot4.m_Lens.FieldOfView = 55f;
         shot4.transform.position = new Vector3(0, 1.8f, -4f);
-        // Add noise for handheld feel
         var noise = shot4.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
         if (noise == null)
             noise = shot4.AddCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
         noise.m_AmplitudeGain = 0.5f;
         noise.m_FrequencyGain = 0.3f;
 
-        // Shot 5: Ghost — wide shot
+        // Shot 5: Ghost — wide shot, SIS ghost effect
         var shot5 = CreateVCam("Shot5_Ghost", vcams.transform);
         shot5.m_Lens.FieldOfView = 70f;
         shot5.transform.position = new Vector3(0, 3f, -8f);
         shot5.transform.rotation = Quaternion.Euler(10f, 0, 0);
 
-        // Shot 6: Roster — 6 rapid-cut cameras (one parent with 6 children)
+        // Shot 6: Roster — 6 rapid-cut cameras (1s each)
         var rosterParent = new GameObject("Shot6_Roster");
         rosterParent.transform.SetParent(vcams.transform);
-        string[] chars = { "YILDIZ", "KAYA", "RUZGAR", "CELIK", "SIS", "TOPRAK" };
-        for (int i = 0; i < chars.Length; i++)
+        for (int i = 0; i < AllChars.Length; i++)
         {
-            var rCam = CreateVCam($"Shot6_{chars[i]}", rosterParent.transform);
+            var rCam = CreateVCam($"Shot6_{AllChars[i]}", rosterParent.transform);
             rCam.m_Lens.FieldOfView = 35f;
             rCam.transform.position = new Vector3(-3f + i * 1.2f, 1.2f, -2f);
-            rCam.Priority = 0; // Controlled by Timeline
+            rCam.Priority = 0;
         }
 
         // Shot 7: Logo — fade to black
@@ -101,12 +102,11 @@ public class SetupCinematicScene
 #endif
 
         // 4. Create Timeline + PlayableDirector
-        string timelineDir = "Assets/Cinematic";
-        if (!AssetDatabase.IsValidFolder(timelineDir))
+        if (!AssetDatabase.IsValidFolder(TimelineDir))
             AssetDatabase.CreateFolder("Assets", "Cinematic");
 
         var timelineAsset = TimelineAsset.CreateInstance<TimelineAsset>();
-        string timelinePath = $"{timelineDir}/VOLKTrailer.playable";
+        string timelinePath = $"{TimelineDir}/VOLKTrailer.playable";
         AssetDatabase.CreateAsset(timelineAsset, timelinePath);
 
         // Create PlayableDirector
@@ -115,34 +115,55 @@ public class SetupCinematicScene
         playableDir.playableAsset = timelineAsset;
         playableDir.playOnAwake = false;
 
-        // Add CinematicDirector script
+        // Add CinematicDirector + VFX receiver
         directorGO.AddComponent<Volk.Cinematic.CinematicDirector>();
+        directorGO.AddComponent<Volk.Cinematic.CinematicVFXReceiver>();
 
 #if UNITY_EDITOR
-        // Add Cinemachine tracks for each shot
+        // Cinemachine tracks for each shot
         AddCinemachineTrack(timelineAsset, "Shot1_Opening", 0, 5);
         AddCinemachineTrack(timelineAsset, "Shot2_YILDIZ", 5, 5);
         AddCinemachineTrack(timelineAsset, "Shot3_KAYA", 10, 5);
         AddCinemachineTrack(timelineAsset, "Shot4_Fight", 15, 20);
         AddCinemachineTrack(timelineAsset, "Shot5_Ghost", 35, 10);
-        AddCinemachineTrack(timelineAsset, "Shot6_Roster", 45, 7);
+        // Shot6: 6 sub-cameras, ~1.17s each over 7s total
+        for (int i = 0; i < AllChars.Length; i++)
+        {
+            AddCinemachineTrack(timelineAsset, $"Shot6_{AllChars[i]}", 45 + i * 1.167f, 1.167f);
+        }
         AddCinemachineTrack(timelineAsset, "Shot7_Logo", 52, 8);
 #endif
 
-        // 5. Animator Tracks for YILDIZ and KAYA (Idle + Attack sequences)
-#if UNITY_EDITOR
-        AddAnimationTrack(timelineAsset, "YILDIZ_Cinematic", 0, 15, 25);
-        AddAnimationTrack(timelineAsset, "KAYA_Cinematic", 0, 15, 25);
-#endif
+        // Animator Tracks — detailed per-shot animation
+        // YILDIZ: 0-5s Idle, 5-10s Idle, 15-25s Attack (HookPunch), 25-35s Attack
+        AddDetailedAnimTrack(timelineAsset, "YILDIZ_Cinematic", new[]
+        {
+            ("Idle",      0f,  5f),
+            ("Idle",      5f,  5f),
+            ("HookPunch", 15f, 10f),
+            ("HookPunch", 25f, 10f),
+        });
+        // KAYA: 10-15s Idle, 25-35s StaggerHeavy (ReceivingUppercut)
+        AddDetailedAnimTrack(timelineAsset, "KAYA_Cinematic", new[]
+        {
+            ("Idle",              10f, 5f),
+            ("ReceivingUppercut", 25f, 10f),
+        });
 
-        // 7. Post-process Volume
+        // VFX Signal track — HitEffect at 20s, ScreenFlash at 25s, SlowMotionKO at 33s
+        var signalTrack = timelineAsset.CreateTrack<SignalTrack>(null, "VFX_Signals");
+        CreateSignalAsset("HitEffect", 20f, signalTrack);
+        CreateSignalAsset("ScreenFlash", 25f, signalTrack);
+        CreateSignalAsset("SlowMotionKO", 33f, signalTrack);
+
+        // Post-process Volume
         var ppGO = new GameObject("PostProcessVolume");
         var volume = ppGO.AddComponent<Volume>();
         volume.isGlobal = true;
         volume.priority = 10;
 
         var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-        AssetDatabase.CreateAsset(profile, $"{timelineDir}/CinematicPostProcess.asset");
+        AssetDatabase.CreateAsset(profile, $"{TimelineDir}/CinematicPostProcess.asset");
 
         var bloom = profile.Add<Bloom>();
         bloom.intensity.value = 1.5f;
@@ -160,20 +181,29 @@ public class SetupCinematicScene
         colorAdj.contrast.value = 15f;
         colorAdj.contrast.overrideState = true;
 
-        // Teal-orange color grading via split toning
         var splitTone = profile.Add<SplitToning>();
-        splitTone.shadows.value = new Color(0.0f, 0.4f, 0.5f); // Teal shadows
+        splitTone.shadows.value = new Color(0.0f, 0.4f, 0.5f);
         splitTone.shadows.overrideState = true;
-        splitTone.highlights.value = new Color(1.0f, 0.6f, 0.3f); // Orange highlights
+        splitTone.highlights.value = new Color(1.0f, 0.6f, 0.3f);
         splitTone.highlights.overrideState = true;
         splitTone.balance.value = -20f;
         splitTone.balance.overrideState = true;
 
         volume.profile = profile;
 
-        // 5. Spawn character prefabs (YILDIZ + KAYA for key shots)
+        // Spawn YILDIZ + KAYA for fight shots, apply palette materials
         SpawnCharacterPrefab("YILDIZ", new Vector3(1, 0, 0));
         SpawnCharacterPrefab("KAYA", new Vector3(-1, 0, 0));
+
+        // Spawn remaining roster characters for Shot6
+        SpawnCharacterPrefab("RUZGAR", new Vector3(-3, 0, 3));
+        SpawnCharacterPrefab("CELIK", new Vector3(-1, 0, 3));
+        SpawnCharacterPrefab("SIS", new Vector3(1, 0, 3));
+        SpawnCharacterPrefab("TOPRAK", new Vector3(3, 0, 3));
+
+        // HitSpawnPoint for VFX
+        var hitPoint = new GameObject("HitSpawnPoint");
+        hitPoint.transform.position = new Vector3(0, 1f, 0);
 
         // Save scene
         string scenePath = "Assets/Scenes/Cinematic.unity";
@@ -190,56 +220,18 @@ public class SetupCinematicScene
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log("[Cinematic] Scene setup complete! Open Assets/Scenes/Cinematic.unity and run VOLK > Cinematic > Setup Cinematic Scene");
-    }
-
-#if UNITY_EDITOR
-    static CinemachineVirtualCamera CreateVCam(string name, Transform parent)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent);
-        var vcam = go.AddComponent<CinemachineVirtualCamera>();
-        vcam.Priority = 0; // Controlled by Timeline, not priority
-        return vcam;
-    }
-
-    static void AddCinemachineTrack(TimelineAsset timeline, string shotName, float startSec, float durationSec)
-    {
-        var track = timeline.CreateTrack<CinemachineTrack>(null, shotName);
-        var clip = track.CreateClip<CinemachineShot>();
-        clip.start = startSec;
-        clip.duration = durationSec;
-        clip.displayName = shotName;
-    }
-#endif
-
-    static void AddAnimationTrack(TimelineAsset timeline, string gameObjectName, float idleStart, float idleDuration, float attackStart)
-    {
-        var track = timeline.CreateTrack<AnimationTrack>(null, $"{gameObjectName}_Anim");
-
-        // Idle clip
-        var idleClip = track.CreateClip<AnimationPlayableAsset>();
-        idleClip.start = idleStart;
-        idleClip.duration = idleDuration;
-        idleClip.displayName = "Idle";
-
-        // Attack clip
-        var attackClip = track.CreateClip<AnimationPlayableAsset>();
-        attackClip.start = attackStart;
-        attackClip.duration = 10;
-        attackClip.displayName = "Attack";
+        Debug.Log("[Cinematic] Scene setup complete. Run VOLK > Cinematic > Setup Recorder to configure recording.");
     }
 
     [MenuItem("VOLK/Cinematic/Setup Recorder (MP4 1080p60)")]
     public static void SetupRecorder()
     {
 #if UNITY_EDITOR
-        string recorderDir = "Assets/Cinematic";
-        if (!AssetDatabase.IsValidFolder(recorderDir))
+        if (!AssetDatabase.IsValidFolder(TimelineDir))
             AssetDatabase.CreateFolder("Assets", "Cinematic");
 
         var settings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
-        settings.SetRecordModeToTimeInterval(0, 60); // 60 seconds trailer
+        settings.SetRecordModeToTimeInterval(0, 60);
         settings.FrameRate = 60f;
 
         var movieSettings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
@@ -258,10 +250,55 @@ public class SetupCinematicScene
         movieSettings.OutputFile = "VOLKTrailer";
 
         settings.AddRecorderSettings(movieSettings);
-        AssetDatabase.CreateAsset(settings, $"{recorderDir}/VOLKRecorderSettings.asset");
+        AssetDatabase.CreateAsset(settings, $"{TimelineDir}/VOLKRecorderSettings.asset");
         AssetDatabase.SaveAssets();
-        Debug.Log("[Cinematic] Recorder settings created: Assets/Cinematic/VOLKRecorderSettings.asset. Open Window > General > Recorder > Recorder Window to record.");
+        Debug.Log("[Cinematic] Recorder settings saved. Use Window > General > Recorder to record in Play Mode.");
 #endif
+    }
+
+    // --- Helpers ---
+
+#if UNITY_EDITOR
+    static CinemachineVirtualCamera CreateVCam(string name, Transform parent)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent);
+        var vcam = go.AddComponent<CinemachineVirtualCamera>();
+        vcam.Priority = 0;
+        return vcam;
+    }
+
+    static void AddCinemachineTrack(TimelineAsset timeline, string shotName, float startSec, float durationSec)
+    {
+        var track = timeline.CreateTrack<CinemachineTrack>(null, shotName);
+        var clip = track.CreateClip<CinemachineShot>();
+        clip.start = startSec;
+        clip.duration = durationSec;
+        clip.displayName = shotName;
+    }
+#endif
+
+    static void AddDetailedAnimTrack(TimelineAsset timeline, string objectName,
+        (string clipName, float start, float duration)[] clips)
+    {
+        var track = timeline.CreateTrack<AnimationTrack>(null, $"{objectName}_Anim");
+        foreach (var (clipName, start, duration) in clips)
+        {
+            var clip = track.CreateClip<AnimationPlayableAsset>();
+            clip.start = start;
+            clip.duration = duration;
+            clip.displayName = clipName;
+        }
+    }
+
+    static void CreateSignalAsset(string signalName, float timeSec, SignalTrack track)
+    {
+        var signal = ScriptableObject.CreateInstance<SignalAsset>();
+        string path = $"{TimelineDir}/{signalName}Signal.asset";
+        AssetDatabase.CreateAsset(signal, path);
+
+        var marker = track.CreateMarker<SignalEmitter>(timeSec);
+        marker.asset = signal;
     }
 
     static void SpawnCharacterPrefab(string charName, Vector3 position)
@@ -275,12 +312,26 @@ public class SetupCinematicScene
             instance.transform.position = position;
             instance.transform.rotation = Quaternion.Euler(0, charName == "YILDIZ" ? -30f : 30f, 0);
 
-            // Disable AI and input so they just stand in the scene
+            // Disable AI/input
             var fighter = instance.GetComponent<Fighter>();
             if (fighter != null)
             {
                 fighter.isAI = false;
                 fighter.enabled = false;
+            }
+
+            // Apply palette material if it exists
+            string matPath = $"Assets/Materials/Characters/{charName}_Mat.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (mat != null)
+            {
+                foreach (var smr in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
+                {
+                    var mats = smr.sharedMaterials;
+                    for (int i = 0; i < mats.Length; i++)
+                        mats[i] = mat;
+                    smr.sharedMaterials = mats;
+                }
             }
         }
         else

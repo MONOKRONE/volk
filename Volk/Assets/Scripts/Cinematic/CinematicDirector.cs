@@ -28,6 +28,11 @@ namespace Volk.Cinematic
         {
             director = GetComponent<PlayableDirector>();
             director.stopped += OnDirectorStopped;
+
+            // Ensure letterbox is on the main camera
+            var cam = Camera.main;
+            if (cam != null && cam.GetComponent<CinematicLetterbox>() == null)
+                cam.gameObject.AddComponent<CinematicLetterbox>();
         }
 
         void Start()
