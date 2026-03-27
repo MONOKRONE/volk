@@ -164,10 +164,91 @@ namespace Volk.Core
             return StartCoroutine(BuildProfileCoroutine(matchup, onComplete));
         }
 
+        /// <summary>
+        /// Frame budget in milliseconds — yields when exceeded to keep framerate smooth.
+        /// </summary>
+        const float FRAME_BUDGET_MS = 4f;
+
         IEnumerator BuildProfileCoroutine(string matchup, System.Action<OptimizedProfile> onComplete)
         {
             yield return null; // Defer to next frame to avoid match-end frame spike
-            var profile = BuildProfile(matchup);
+
+            var tracker = PlayerBehaviorTracker.Instance;
+            if (tracker == null) { onComplete?.Invoke(null); yield break; }
+
+            int actionCount = System.Enum.GetValues(typeof(PlayerAction)).Length;
+            var profile = new OptimizedProfile
+            {
+                matchup = matchup,
+                metrics = tracker.Metrics
+            };
+
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
+            // Build buckets incrementally, yielding when frame budget exceeded
+            foreach (GameSituation sit in System.Enum.GetValues(typeof(GameSituation)))
+            {
+                var weights = tracker.GetActionWeights(matchup, sit);
+                var bucket = new ActionBucket
+                {
+                    situation = sit,
+                    actionProbabilities = new float[actionCount],
+                    sampleCount = 0
+                };
+
+                float uniformPrior = 1f / actionCount;
+                for (int i = 0; i < actionCount; i++)
+                    bucket.actionProbabilities[i] = uniformPrior * BAYESIAN_PRIOR;
+
+                foreach (var kvp in weights)
+                {
+                    int idx = (int)kvp.Key;
+                    if (idx < actionCount)
+                    {
+                        bucket.actionProbabilities[idx] += kvp.Value * (1f - BAYESIAN_PRIOR);
+                    }
+                    bucket.sampleCount++;
+                }
+
+                float sum = 0;
+                for (int i = 0; i < actionCount; i++) sum += bucket.actionProbabilities[i];
+                if (sum > 0)
+                    for (int i = 0; i < actionCount; i++) bucket.actionProbabilities[i] /= sum;
+
+                bucket.confidence = Mathf.Clamp01((float)bucket.sampleCount / 50f);
+                profile.buckets.Add(bucket);
+
+                if (sw.Elapsed.TotalMilliseconds > FRAME_BUDGET_MS)
+                {
+                    sw.Reset();
+                    yield return null;
+                    sw.Start();
+                }
+            }
+
+            // K-Means clustering spread across frames
+            if (profile.buckets.Count > MAX_BUCKETS)
+            {
+                var kmeansRoutine = KMeansReduceAsync(profile.buckets, MAX_BUCKETS, actionCount);
+                List<ActionBucket> result = null;
+                while (kmeansRoutine.MoveNext())
+                {
+                    if (kmeansRoutine.Current is List<ActionBucket> r)
+                        result = r;
+                    else
+                        yield return kmeansRoutine.Current;
+                }
+                if (result != null)
+                    profile.buckets = result;
+            }
+
+            // Overall confidence
+            float totalConf = 0;
+            foreach (var b in profile.buckets) totalConf += b.confidence;
+            profile.overallConfidence = profile.buckets.Count > 0 ? totalConf / profile.buckets.Count : 0;
+
+            profiles[matchup] = profile;
             onComplete?.Invoke(profile);
         }
 
@@ -273,6 +354,115 @@ namespace Volk.Core
         }
 
         // --- K-Means Clustering (PLA-131) ---
+
+        /// <summary>
+        /// Coroutine-friendly K-Means that yields between iterations to avoid frame spikes.
+        /// Yields null (wait one frame) between iterations; final yield is the result list.
+        /// </summary>
+        IEnumerator KMeansReduceAsync(List<ActionBucket> buckets, int k, int dimensions)
+        {
+            if (buckets.Count <= k) { yield return buckets; yield break; }
+
+            const int MAX_ITERATIONS = 10;
+            const float CONVERGENCE_DELTA = 0.01f;
+            int n = buckets.Count;
+
+            float[][] centroids = new float[k][];
+            for (int c = 0; c < k; c++)
+            {
+                int idx = c * n / k;
+                centroids[c] = new float[dimensions];
+                System.Array.Copy(buckets[idx].actionProbabilities, centroids[c], dimensions);
+            }
+
+            int[] assignments = new int[n];
+
+            for (int iter = 0; iter < MAX_ITERATIONS; iter++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    float bestDist = float.MaxValue;
+                    int bestC = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        float dist = 0f;
+                        for (int d = 0; d < dimensions; d++)
+                        {
+                            float diff = buckets[i].actionProbabilities[d] - centroids[c][d];
+                            dist += diff * diff;
+                        }
+                        if (dist < bestDist) { bestDist = dist; bestC = c; }
+                    }
+                    assignments[i] = bestC;
+                }
+
+                float[][] newCentroids = new float[k][];
+                float[] clusterWeight = new float[k];
+                for (int c = 0; c < k; c++)
+                    newCentroids[c] = new float[dimensions];
+
+                for (int i = 0; i < n; i++)
+                {
+                    int c = assignments[i];
+                    float w = Mathf.Max(1f, buckets[i].sampleCount);
+                    clusterWeight[c] += w;
+                    for (int d = 0; d < dimensions; d++)
+                        newCentroids[c][d] += buckets[i].actionProbabilities[d] * w;
+                }
+
+                float maxDelta = 0f;
+                for (int c = 0; c < k; c++)
+                {
+                    if (clusterWeight[c] > 0)
+                    {
+                        for (int d = 0; d < dimensions; d++)
+                        {
+                            newCentroids[c][d] /= clusterWeight[c];
+                            float delta = Mathf.Abs(newCentroids[c][d] - centroids[c][d]);
+                            if (delta > maxDelta) maxDelta = delta;
+                        }
+                    }
+                }
+
+                centroids = newCentroids;
+                if (maxDelta < CONVERGENCE_DELTA) break;
+
+                yield return null; // Yield between iterations
+            }
+
+            // Build merged buckets
+            var result = new List<ActionBucket>();
+            for (int c = 0; c < k; c++)
+            {
+                ActionBucket rep = null;
+                int totalSamples = 0;
+                float totalConfidence = 0f;
+                int count = 0;
+
+                for (int i = 0; i < n; i++)
+                {
+                    if (assignments[i] != c) continue;
+                    count++;
+                    totalSamples += buckets[i].sampleCount;
+                    totalConfidence += buckets[i].confidence;
+                    if (rep == null || buckets[i].sampleCount > rep.sampleCount)
+                        rep = buckets[i];
+                }
+
+                if (rep == null || count == 0) continue;
+
+                var merged = new ActionBucket
+                {
+                    situation = rep.situation,
+                    actionProbabilities = centroids[c],
+                    sampleCount = totalSamples,
+                    confidence = totalConfidence / count
+                };
+                result.Add(merged);
+            }
+
+            yield return result;
+        }
 
         List<ActionBucket> KMeansReduce(List<ActionBucket> buckets, int k, int dimensions)
         {
