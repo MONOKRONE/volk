@@ -25,6 +25,13 @@ namespace Volk.Core
         public float rotationSpeed = 1200f;
         public float combatRotationSpeed = 2400f;
 
+        [Header("Physics")]
+        public WeightClass weightClass = WeightClass.Medium;
+        public float walkSpeedMultiplier = 1f;
+        public float runSpeedMultiplier = 1f;
+        public float rotationSpeedMultiplier = 1f;
+        public float knockbackMultiplier = 1f;
+
         [Header("Combat Feel")]
         public float animationSpeedMult = 1.0f;
         public float attackKnockbackForce = 2.5f;
@@ -52,6 +59,13 @@ namespace Volk.Core
         public bool unlockedByDefault = true;
         public UnlockCondition unlockType = UnlockCondition.None;
         public int unlockValue;
+    }
+
+    public enum WeightClass
+    {
+        Light,
+        Medium,
+        Heavy
     }
 
     public enum UnlockCondition

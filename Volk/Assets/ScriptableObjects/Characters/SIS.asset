@@ -25,6 +25,11 @@ MonoBehaviour:
   runSpeed: 8.5
   knockbackForce: 1.5
   rotationSpeed: 1800
+  weightClass: 0
+  walkSpeedMultiplier: 1.1
+  runSpeedMultiplier: 1.2
+  rotationSpeedMultiplier: 1.1
+  knockbackMultiplier: 1.1
   animationSpeedMult: 1.2
   attackKnockbackForce: 1.8
   knockbackResistance: 0.3

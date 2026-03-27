@@ -142,6 +142,8 @@ public class Fighter : MonoBehaviour
     static int hDeath = Animator.StringToHash("Death");
     static int hJump = Animator.StringToHash("IsJumping");
     static int hCrouch = Animator.StringToHash("IsCrouching");
+    static int hStaggerLight = Animator.StringToHash("StaggerLight");
+    static int hStaggerHeavy = Animator.StringToHash("StaggerHeavy");
 
     void Awake()
     {
@@ -198,11 +200,11 @@ public class Fighter : MonoBehaviour
         maxHP = data.maxHP;
         attackDamage = data.attackDamage;
         attackRange = data.attackRange;
-        walkSpeed = data.walkSpeed;
-        runSpeed = data.runSpeed;
-        knockbackForce = data.knockbackForce;
-        rotSpeed = data.rotationSpeed;
-        combatRotSpeed = data.combatRotationSpeed;
+        walkSpeed = data.walkSpeed * data.walkSpeedMultiplier;
+        runSpeed = data.runSpeed * data.runSpeedMultiplier;
+        knockbackForce = data.knockbackForce * data.knockbackMultiplier;
+        rotSpeed = data.rotationSpeed * data.rotationSpeedMultiplier;
+        combatRotSpeed = data.combatRotationSpeed * data.rotationSpeedMultiplier;
         power = data.power;
         defense = data.defense;
 
@@ -240,6 +242,10 @@ public class Fighter : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        // Skip update while ragdoll is active
+        var ragdoll = GetComponent<RagdollController>();
+        if (ragdoll != null && ragdoll.IsActive) return;
 
         // Skill cooldown tick
         if (skill1CooldownTimer > 0f) skill1CooldownTimer -= Time.deltaTime;
@@ -778,13 +784,14 @@ public class Fighter : MonoBehaviour
         float vibMult = attacker?.characterData?.vibrationMultiplier ?? 1f;
         VibrationManager.Instance?.VibrateLight(vibMult);
 
-        // Knockback
+        // Knockback — scaled by weight class
         if (hasAttackerPos || attackerPos.sqrMagnitude > 0.001f)
         {
             Vector3 dir = (transform.position - attackerPos).normalized;
             dir.y = 0;
             float kbResist = characterData != null ? (1f - characterData.knockbackResistance) : 1f;
-            knockbackVelocity = dir * knockbackForce * kbResist;
+            float weightMult = GetWeightKnockbackMultiplier();
+            knockbackVelocity = dir * knockbackForce * kbResist * weightMult;
             knockbackTimer = knockbackDuration;
         }
 
@@ -806,12 +813,12 @@ public class Fighter : MonoBehaviour
             JuiceManager.Instance?.SlowMotionKO();
             PostProcessAnimator.Instance?.KOPulse();
 
-            // Ragdoll on KO
+            // Ragdoll on KO — smooth blend from animation to physics
             var ragdoll = GetComponent<RagdollController>();
             if (ragdoll != null && hasAttackerPos)
             {
                 Vector3 attackDir = (transform.position - attackerPos).normalized;
-                ragdoll.ActivateRagdoll(attackDir, knockbackForce * 2f);
+                ragdoll.BlendToRagdoll(0.3f, attackDir, knockbackForce * 2f);
             }
 
             // Save behavior profile on match end
@@ -832,11 +839,19 @@ public class Fighter : MonoBehaviour
             isAttacking = false;
             anim.applyRootMotion = false;
 
-            // Stagger reaction based on damage amount
-            if (amount >= 30f)
-                anim.SetTrigger(hHit2); // Heavy stagger
+            // Stagger reaction based on damage amount + weight class
+            if (amount >= 25f || (hasAttackerPos && knockbackForce > 3f))
+            {
+                anim.SetTrigger(hStaggerHeavy);
+                if (anim.GetCurrentAnimatorStateInfo(0).shortNameHash != hStaggerHeavy)
+                    anim.SetTrigger(hHit2); // Fallback if StaggerHeavy not in controller
+            }
             else
-                anim.SetTrigger(Random.value > 0.5f ? hHit1 : hHit2);
+            {
+                anim.SetTrigger(hStaggerLight);
+                if (anim.GetCurrentAnimatorStateInfo(0).shortNameHash != hStaggerLight)
+                    anim.SetTrigger(hHit1); // Fallback if StaggerLight not in controller
+            }
 
             StartCoroutine(HitRecovery());
         }
@@ -1259,6 +1274,27 @@ public class Fighter : MonoBehaviour
             if (f != null && f != this && h.CompareTag(enemyTag)) return f;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Weight class knockback multiplier: Heavy=0.5x, Medium=1x, Light=1.5x
+    /// </summary>
+    float GetWeightKnockbackMultiplier()
+    {
+        if (characterData == null) return 1f;
+        return characterData.weightClass switch
+        {
+            Volk.Core.WeightClass.Heavy => 0.5f,
+            Volk.Core.WeightClass.Light => 1.5f,
+            _ => 1f
+        };
+    }
+
+    /// <summary>Is the ragdoll currently active (KO state)?</summary>
+    public bool IsRagdollActive()
+    {
+        var ragdoll = GetComponent<RagdollController>();
+        return ragdoll != null && ragdoll.IsActive;
     }
 
     void OnDrawGizmosSelected()
