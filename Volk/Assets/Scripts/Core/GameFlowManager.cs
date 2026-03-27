@@ -469,6 +469,22 @@ namespace Volk.Core
                 () => StartCombat());
         }
 
+        // Placeholder emoji per character name
+        static string GetCharEmoji(string name)
+        {
+            if (name == null) return "?";
+            switch (name.ToUpper())
+            {
+                case "YILDIZ":  return "★";
+                case "KAYA":    return "◆";
+                case "RUZGAR":  return "↯";
+                case "CELIK":   return "⚔";
+                case "SIS":     return "◎";
+                case "TOPRAK":  return "▲";
+                default:        return "●";
+            }
+        }
+
         void BuildCharacterCard(RectTransform content, int index, ref GameObject selectedBorder)
         {
             var ui = RuntimeUIBuilder.Instance;
@@ -487,15 +503,25 @@ namespace Volk.Core
 
             var bg = cardGO.AddComponent<Image>();
             bg.color = unlocked ? RuntimeUIBuilder.Panel : new Color(0.08f, 0.08f, 0.12f);
-            bg.raycastTarget = false; // Don't block child button clicks
+            bg.raycastTarget = false;
+
+            // Emoji placeholder (sol taraf, büyük)
+            string emoji = GetCharEmoji(charData.characterName);
+            var emojiText = ui.CreateText(cardGO.transform, emoji, 48,
+                unlocked ? RuntimeUIBuilder.Gold : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+            var emojiRect = emojiText.GetComponent<RectTransform>();
+            emojiRect.anchorMin = new Vector2(0.0f, 0.0f);
+            emojiRect.anchorMax = new Vector2(0.18f, 1.0f);
+            emojiRect.offsetMin = Vector2.zero;
+            emojiRect.offsetMax = Vector2.zero;
 
             // Character name
             var nameText = ui.CreateText(cardGO.transform, charData.characterName ?? $"Fighter {index + 1}", 28,
                 unlocked ? RuntimeUIBuilder.White : RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineLeft);
             nameText.fontStyle = FontStyles.Bold;
             var nameRect = nameText.GetComponent<RectTransform>();
-            nameRect.anchorMin = new Vector2(0.03f, 0.6f);
-            nameRect.anchorMax = new Vector2(0.4f, 0.95f);
+            nameRect.anchorMin = new Vector2(0.20f, 0.6f);
+            nameRect.anchorMax = new Vector2(0.55f, 0.95f);
             nameRect.offsetMin = Vector2.zero;
             nameRect.offsetMax = Vector2.zero;
 
@@ -508,7 +534,7 @@ namespace Volk.Core
 
                 // SELECT button
                 int charIdx = index;
-                ui.CreateButton(cardGO.transform, "SELECT", RuntimeUIBuilder.Neon, RuntimeUIBuilder.BG,
+                ui.CreateButton(cardGO.transform, "SEC", RuntimeUIBuilder.Neon, RuntimeUIBuilder.BG,
                     new Vector2(0.78f, 0.2f), new Vector2(0.97f, 0.8f),
                     () => SelectCharacter(charIdx));
             }
