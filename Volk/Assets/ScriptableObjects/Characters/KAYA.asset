@@ -35,6 +35,9 @@ MonoBehaviour:
   characterMaterial: {fileID: 0}
   skill1: {fileID: 11400000, guid: 9e8bcc0741ba4e3aa153af56d8c8c01d, type: 2}
   skill2: {fileID: 11400000, guid: 7820b5d282db4d70bc0e4006ce9edcf9, type: 2}
+  exDamageMultiplier: 1.5
+  hasSuperArmor: 1
+  vibrationMultiplier: 1.5
   unlockedByDefault: 1
   unlockType: 0
   unlockValue: 0

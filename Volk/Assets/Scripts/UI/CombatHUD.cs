@@ -45,6 +45,11 @@ namespace Volk.UI
         public CanvasGroup koOverlay;
         public TextMeshProUGUI koText;
 
+        [Header("EX Meter")]
+        public Image exMeterFill;
+        public Image exMeterGlow;
+        public TextMeshProUGUI exReadyText;
+
         [Header("Ghost Indicator")]
         public CanvasGroup ghostIndicatorGroup;
         public TextMeshProUGUI ghostIndicatorText;
@@ -61,6 +66,7 @@ namespace Volk.UI
         private float displayEnemyHP = 1f;
         private float displaySkill1 = 0f;
         private float displaySkill2 = 0f;
+        private float displayExMeter = 0f;
         private Coroutine shakeCoroutine;
         private bool ghostMode;
 
@@ -97,6 +103,11 @@ namespace Volk.UI
             InitRoundDots(playerRoundDots);
             InitRoundDots(enemyRoundDots);
 
+            // EX meter initial state
+            if (exMeterFill) exMeterFill.fillAmount = 0f;
+            if (exMeterGlow) exMeterGlow.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, 0f);
+            if (exReadyText) { exReadyText.text = "EX"; exReadyText.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, 0f); }
+
             // Ghost indicator
             ghostMode = GameSettings.Instance != null && GameSettings.Instance.currentMode == GameSettings.GameMode.Ghost;
             if (ghostIndicatorGroup)
@@ -111,6 +122,7 @@ namespace Volk.UI
         {
             UpdateHPBars();
             UpdateSkillCooldowns();
+            UpdateExMeter();
             UpdateComboDisplay();
             if (ghostMode) PulseGhostIndicator();
         }
@@ -173,6 +185,33 @@ namespace Volk.UI
             {
                 float alpha2 = target2 < 0.01f ? (0.3f + Mathf.Sin(Time.time * 4f) * 0.3f) : 0f;
                 skill2ReadyGlow.color = new Color(VTheme.Red.r, VTheme.Red.g, VTheme.Red.b, alpha2);
+            }
+        }
+
+        void UpdateExMeter()
+        {
+            if (playerFighter == null) return;
+
+            float target = playerFighter.ExMeterRatio;
+            displayExMeter = Mathf.Lerp(displayExMeter, target, Time.deltaTime * 10f);
+
+            if (exMeterFill)
+            {
+                exMeterFill.fillAmount = displayExMeter;
+                exMeterFill.color = target >= 1f ? VTheme.Gold : VTheme.Blue;
+            }
+
+            // Glow pulse when full
+            if (exMeterGlow)
+            {
+                float alpha = target >= 1f ? (0.4f + Mathf.Sin(Time.time * 5f) * 0.4f) : 0f;
+                exMeterGlow.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, alpha);
+            }
+
+            if (exReadyText)
+            {
+                float textAlpha = target >= 1f ? 1f : 0f;
+                exReadyText.color = new Color(VTheme.Gold.r, VTheme.Gold.g, VTheme.Gold.b, textAlpha);
             }
         }
 

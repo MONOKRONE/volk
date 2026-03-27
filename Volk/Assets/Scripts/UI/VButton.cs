@@ -18,6 +18,9 @@ namespace Volk.UI
         private Vector3 originalScale;
         private Coroutine animCoroutine;
 
+        /// <summary>Pass-through to underlying Button.onClick for AddListener compatibility.</summary>
+        public Button.ButtonClickedEvent onClick => button != null ? button.onClick : GetComponent<Button>()?.onClick;
+
         void Awake()
         {
             button = GetComponent<Button>();

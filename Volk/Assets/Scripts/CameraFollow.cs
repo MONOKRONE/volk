@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class CameraFollow : MonoBehaviour
 {
@@ -56,6 +57,25 @@ public class CameraFollow : MonoBehaviour
 
             Vector3 lookTarget = player.position + Vector3.up * lookAheadY;
             transform.LookAt(lookTarget);
+        }
+    }
+
+    public void TriggerShake(float intensity = 0.1f, float duration = 0.15f)
+    {
+        StartCoroutine(DoShake(intensity, duration));
+    }
+
+    IEnumerator DoShake(float intensity, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float decay = 1f - (elapsed / duration);
+            float x = Random.Range(-intensity, intensity) * decay;
+            float y = Random.Range(-intensity, intensity) * decay;
+            transform.localPosition += new Vector3(x, y, 0f);
+            yield return null;
         }
     }
 
