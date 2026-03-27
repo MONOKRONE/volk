@@ -206,6 +206,36 @@ public class GameManager : MonoBehaviour
             // XP reward
             LevelSystem.Instance?.AddMatchXP(playerWonMatch);
 
+            // Currency reward
+            if (playerWonMatch)
+                CurrencyManager.Instance?.OnStageClear();
+
+            // Battle Pass XP
+            if (BattlePassManager.Instance != null)
+            {
+                int xp = playerWonMatch ? BattlePassManager.XP_PVP_WIN : BattlePassManager.XP_PVP_LOSS;
+                BattlePassManager.Instance.AddXP(xp);
+            }
+
+            // Ghost behavior tracking
+            if (PlayerBehaviorTracker.Instance != null)
+            {
+                PlayerBehaviorTracker.Instance.OnMatchEnd();
+                PlayerBehaviorTracker.Instance.SaveProfile();
+            }
+
+            // Ranked ELO update
+            if (GameSettings.Instance?.currentMode == GameSettings.GameMode.Online)
+            {
+                string opponent = enemyFighter?.characterData?.characterName ?? "???";
+                int eloDelta = playerWonMatch ? Random.Range(18, 32) : -Random.Range(14, 26);
+                Volk.UI.RankedUI.RecordMatch(opponent, playerWonMatch, eloDelta);
+            }
+
+            // DLC grind tracking
+            if (CharacterDLCManager.Instance != null && playerFighter?.characterData != null)
+                CharacterDLCManager.Instance.RecordMatchPlayed(playerFighter.characterData.characterName, roundDuration * currentRound / 60f);
+
             // Submit leaderboard score
             LeaderboardManager.Instance?.SubmitScore();
 

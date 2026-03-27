@@ -28,6 +28,12 @@ public class MainMenuController : MonoBehaviour
         EnsureSingleton<StarRatingSystem>("StarRatingSystem");
         EnsureSingleton<CharacterUnlockManager>("CharacterUnlockManager");
         EnsureSingleton<GameSettings>("GameSettings");
+        EnsureSingleton<BattlePassManager>("BattlePassManager");
+        EnsureSingleton<EquipmentManager>("EquipmentManager");
+        EnsureSingleton<CosmeticManager>("CosmeticManager");
+        EnsureSingleton<CharacterDLCManager>("CharacterDLCManager");
+        EnsureSingleton<PlayerBehaviorTracker>("PlayerBehaviorTracker");
+        EnsureSingleton<StageManager>("StageManager");
 
         // Disable any old UI elements on this GameObject
         DisableOldUI();

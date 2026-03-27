@@ -17,11 +17,21 @@ namespace Volk.Core
         public List<string> unlockedCharacters = new List<string>();
         public List<string> discoveredCombos = new List<string>();
 
+        // Stage progress
+        public int completedStage;
+
         // Equipment & Achievements
         public List<string> ownedEquipment = new List<string>();
         public List<string> equippedItems = new List<string>(); // slot:itemId
         public List<string> completedAchievements = new List<string>();
         public int totalStars;
+
+        // Monetization
+        public int battlePassTier;
+        public int battlePassXP;
+        public bool battlePassPremium;
+        public List<string> ownedCosmetics = new List<string>();
+        public List<string> equippedCosmetics = new List<string>(); // type=itemId
 
         // Settings
         public bool soundOn = true;
@@ -30,5 +40,6 @@ namespace Volk.Core
 
         // Meta
         public string lastSaveTime;
+        public float totalPlayTimeSeconds;
     }
 }
