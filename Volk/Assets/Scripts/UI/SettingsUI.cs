@@ -128,12 +128,13 @@ namespace Volk.UI
             }
             if (vibrationToggle)
             {
-                vibrationToggle.isOn = PlayerPrefs.GetInt("vibration", 1) == 1;
+                vibrationToggle.isOn = VibrationManager.Instance != null
+                    ? VibrationManager.Instance.IsEnabled
+                    : true;
                 vibrationToggle.onValueChanged.AddListener(v =>
                 {
-                    PlayerPrefs.SetInt("vibration", v ? 1 : 0);
                     if (VibrationManager.Instance != null)
-                        VibrationManager.Instance.enabled = v;
+                        VibrationManager.Instance.SetVibration(v);
                 });
             }
 

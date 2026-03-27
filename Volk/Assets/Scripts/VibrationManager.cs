@@ -17,7 +17,26 @@ public class VibrationManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        vibrationEnabled = PlayerPrefs.GetInt("VibrationEnabled", 1) == 1;
+        SyncFromSaveData();
+    }
+
+    void OnEnable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnSaveLoaded += SyncFromSaveData;
+    }
+
+    void OnDisable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnSaveLoaded -= SyncFromSaveData;
+    }
+
+    void SyncFromSaveData()
+    {
+        vibrationEnabled = SaveManager.Instance != null
+            ? SaveManager.Instance.Data.vibrationOn
+            : true;
     }
 
     public bool IsEnabled => vibrationEnabled;
@@ -25,7 +44,11 @@ public class VibrationManager : MonoBehaviour
     public void SetVibration(bool enabled)
     {
         vibrationEnabled = enabled;
-        PlayerPrefs.SetInt("VibrationEnabled", enabled ? 1 : 0);
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.Data.vibrationOn = enabled;
+            SaveManager.Instance.Save();
+        }
     }
 
     public void VibrateLight(float multiplier = 1f)

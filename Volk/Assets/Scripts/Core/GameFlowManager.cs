@@ -716,15 +716,12 @@ namespace Volk.Core
                 });
 
             // Vibration toggle
-            bool vibOn = SaveManager.Instance != null ? SaveManager.Instance.Data.vibrationOn : true;
+            bool vibOn = VibrationManager.Instance != null ? VibrationManager.Instance.IsEnabled : true;
             ui.CreateButton(canvas, $"Vibration: {(vibOn ? "ON" : "OFF")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.56f), new Vector2(0.8f, 0.66f),
                 () => {
-                    if (SaveManager.Instance != null)
-                    {
-                        SaveManager.Instance.Data.vibrationOn = !SaveManager.Instance.Data.vibrationOn;
-                        SaveManager.Instance.Save();
-                    }
+                    if (VibrationManager.Instance != null)
+                        VibrationManager.Instance.SetVibration(!VibrationManager.Instance.IsEnabled);
                     ChangeState(GameState.Settings);
                 });
 

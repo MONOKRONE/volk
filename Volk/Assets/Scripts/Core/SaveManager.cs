@@ -118,7 +118,15 @@ namespace Volk.Core
             if (PlayerPrefs.HasKey("SoundEnabled"))
                 Data.soundOn = PlayerPrefs.GetInt("SoundEnabled", 1) == 1;
             if (PlayerPrefs.HasKey("VibrationEnabled"))
+            {
                 Data.vibrationOn = PlayerPrefs.GetInt("VibrationEnabled", 1) == 1;
+                PlayerPrefs.DeleteKey("VibrationEnabled");
+            }
+            if (PlayerPrefs.HasKey("vibration"))
+            {
+                Data.vibrationOn = PlayerPrefs.GetInt("vibration", 1) == 1;
+                PlayerPrefs.DeleteKey("vibration");
+            }
             if (PlayerPrefs.HasKey("AIDifficulty"))
                 Data.difficulty = PlayerPrefs.GetInt("AIDifficulty", 1);
             if (PlayerPrefs.HasKey("total_wins"))
