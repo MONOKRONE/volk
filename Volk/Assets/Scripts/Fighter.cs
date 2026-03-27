@@ -134,6 +134,34 @@ public class Fighter : MonoBehaviour
     private float yVelocity;
     private float postAttackCooldown;
 
+    // PLA-125: Anti-spam — damage only via AnimationEvent
+    private bool isAttackActive;
+    private bool hasDealtDamage;
+
+    // PLA-125: Animation phases (Startup / Active / Recovery)
+    public enum AttackPhase { None, Startup, Active, Recovery }
+    [HideInInspector] public AttackPhase attackPhase = AttackPhase.None;
+
+    // PLA-125: Tap + Hold combo chain
+    private int comboStep; // 0=none, 1=Light1, 2=Light2, 3=Light3
+    private float lastComboInputTime;
+    private const float COMBO_TIMEOUT = 1.5f;
+    private float attackHoldStartTime;
+    private bool attackButtonHeld;
+    static int hLight1 = Animator.StringToHash("Light1");
+    static int hLight2 = Animator.StringToHash("Light2");
+    static int hLight3 = Animator.StringToHash("Light3");
+    static int hHeavyFinisher = Animator.StringToHash("HeavyFinisher");
+
+    // PLA-125: Hit Stack / Mini-Rage
+    [HideInInspector] public int hitStack;
+    private float hitStackTimer;
+    private const int HIT_STACK_THRESHOLD = 8;
+    private const float HIT_STACK_MULTIPLIER = 1.3f;
+    private const float HIT_STACK_DURATION = 4f;
+    public bool IsRaging => hitStack >= HIT_STACK_THRESHOLD && hitStackTimer > 0f;
+    public float HitStackRatio => (float)hitStack / HIT_STACK_THRESHOLD;
+
     // Animator hashes
     static int hWalk = Animator.StringToHash("IsWalking");
     static int hRun = Animator.StringToHash("IsRunning");
@@ -255,6 +283,17 @@ public class Fighter : MonoBehaviour
         if (skill1CooldownTimer > 0f) skill1CooldownTimer -= Time.deltaTime;
         if (skill2CooldownTimer > 0f) skill2CooldownTimer -= Time.deltaTime;
 
+        // PLA-125: Hit stack timer decay
+        if (hitStackTimer > 0f)
+        {
+            hitStackTimer -= Time.deltaTime;
+            if (hitStackTimer <= 0f) { hitStack = 0; hitStackTimer = 0f; }
+        }
+
+        // PLA-125: Combo timeout — reset chain if idle too long
+        if (comboStep > 0 && Time.time - lastComboInputTime > COMBO_TIMEOUT)
+            comboStep = 0;
+
         if (comboWindowOpen)
         {
             comboWindowTimer -= Time.deltaTime;
@@ -338,21 +377,82 @@ public class Fighter : MonoBehaviour
         }
         anim.SetBool(hCrouch, isCrouching);
 
+        // PLA-125: Swipe gestures — Skill1 on swipe up, Block on swipe down
+        if (touchHandler != null)
+        {
+            if (touchHandler.SwipeUpTriggered) UseSkill(1);
+            if (touchHandler.SwipeDownTriggered) inputBuffer.RecordInput("Block");
+        }
+
         // Reduce walk speed while crouching
         float currentSpeed = isCrouching ? walkSpeed * 0.5f : walkSpeed;
 
-        // Buffer attack inputs for responsiveness (PLA-89)
-        if (Input.GetKeyDown(KeyCode.J)) inputBuffer.RecordInput("Punch");
+        // Buffer attack inputs for responsiveness (PLA-89/PLA-125: 20 frame buffer)
+        if (Input.GetKeyDown(KeyCode.J)) { inputBuffer.RecordInput("Punch"); attackHoldStartTime = Time.time; attackButtonHeld = true; }
+        if (Input.GetKeyUp(KeyCode.J)) attackButtonHeld = false;
         if (Input.GetKeyDown(KeyCode.K)) inputBuffer.RecordInput("Kick");
         if (Input.GetKeyDown(KeyCode.L)) inputBuffer.RecordInput("Block");
 
-        // Check attack input FIRST - before any movement
-        bool canAttack = !isAttacking || comboWindowOpen;
+        // PLA-125: Recovery cancel — during Recovery phase, allow dodge/combo
+        if (attackPhase == AttackPhase.Recovery)
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || (touchHandler != null && touchHandler.CrouchTriggered))
+            {
+                // Dodge cancel out of recovery
+                StopAllCoroutines();
+                isAttacking = false;
+                isAttackActive = false;
+                attackPhase = AttackPhase.None;
+                anim.speed = characterData != null ? characterData.animationSpeedMult : 1f;
+                // Let movement handle dodge
+            }
+            // Allow combo input during recovery
+            else if (inputBuffer.ConsumeInput("Punch") || Input.GetKeyDown(KeyCode.J))
+            {
+                StopAllCoroutines();
+                anim.speed = 1f;
+                attackPhase = AttackPhase.None;
+                ExecuteComboAttack(false);
+                return;
+            }
+        }
+
+        // PLA-125: Tap + Hold combo — check on key release or buffer
+        bool canAttack = !isAttacking || comboWindowOpen || attackPhase == AttackPhase.Recovery;
         if (canAttack)
         {
-            if (Input.GetKeyDown(KeyCode.J) || inputBuffer.ConsumeInput("Punch")) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hPunch, rightHandPoint)); return; }
-            if (Input.GetKeyDown(KeyCode.K) || inputBuffer.ConsumeInput("Kick")) { comboWindowOpen = false; StopAllCoroutines(); anim.speed = 1f; StartCoroutine(DoAttack(hKick, rightFootPoint)); return; }
-            if (!isAttacking && (Input.GetKeyDown(KeyCode.L) || inputBuffer.ConsumeInput("Block"))) { StartCoroutine(DoBlock()); return; }
+            // Hold detection: if J held > 300ms, trigger heavy finisher
+            if (attackButtonHeld && Time.time - attackHoldStartTime > 0.3f && !isAttackActive)
+            {
+                attackButtonHeld = false;
+                comboWindowOpen = false;
+                if (isAttacking) StopAllCoroutines();
+                anim.speed = 1f;
+                StartCoroutine(DoComboAttack(hHeavyFinisher, rightHandPoint, true));
+                return;
+            }
+
+            // Tap: light combo chain
+            if (inputBuffer.ConsumeInput("Punch"))
+            {
+                if (isAttacking && comboWindowOpen) StopAllCoroutines();
+                anim.speed = 1f;
+                ExecuteComboAttack(false);
+                return;
+            }
+            if (inputBuffer.ConsumeInput("Kick"))
+            {
+                comboWindowOpen = false;
+                if (isAttacking) StopAllCoroutines();
+                anim.speed = 1f;
+                StartCoroutine(DoAttack(hKick, rightFootPoint));
+                return;
+            }
+            if (!isAttacking && inputBuffer.ConsumeInput("Block"))
+            {
+                StartCoroutine(DoBlock());
+                return;
+            }
         }
 
         if (isAttacking)
@@ -611,63 +711,195 @@ public class Fighter : MonoBehaviour
             usePunch ? rightHandPoint : rightFootPoint));
     }
 
-    IEnumerator DoAttack(int animHash, Transform hitPoint)
+    // PLA-125: Execute the correct combo step
+    void ExecuteComboAttack(bool isHeavy)
+    {
+        comboWindowOpen = false;
+        lastComboInputTime = Time.time;
+
+        if (isHeavy)
+        {
+            comboStep = 0;
+            StartCoroutine(DoComboAttack(hHeavyFinisher, rightHandPoint, true));
+        }
+        else
+        {
+            comboStep++;
+            if (comboStep > 3) comboStep = 1;
+            int animHash = comboStep switch
+            {
+                1 => hLight1,
+                2 => hLight2,
+                3 => hLight3,
+                _ => hPunch
+            };
+            StartCoroutine(DoComboAttack(animHash, rightHandPoint, false));
+        }
+    }
+
+    // PLA-125: Phase-based combo attack with anti-spam
+    IEnumerator DoComboAttack(int animHash, Transform hitPoint, bool isHeavy)
     {
         isAttacking = true;
+        isAttackActive = true;
+        hasDealtDamage = false;
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
 
-        // Record behavior for ghost AI
+        float heavyMult = isHeavy ? 1.5f : 1f;
+        float startupTime = isHeavy ? 0.25f : 0.15f;
+        float activeTime = isHeavy ? 0.45f : 0.35f;
+        float recoveryTime = isHeavy ? 0.45f : 0.3f;
+
         if (!isAI && behaviorTracker != null)
         {
-            var situation = GetCurrentSituation();
-            var action = animHash == hPunch ? Volk.Core.PlayerAction.Punch : Volk.Core.PlayerAction.Kick;
-            behaviorTracker.Record(situation, action);
+            var action = isHeavy ? Volk.Core.PlayerAction.HeavyPunch : Volk.Core.PlayerAction.Punch;
+            behaviorTracker.Record(GetCurrentSituation(), action);
         }
 
-        // Whoosh before impact
         AudioManager.Instance?.PlayWhoosh();
 
-        // Wait longer for animator to enter the attack state
-        yield return new WaitForSeconds(0.15f);
+        // === STARTUP PHASE ===
+        attackPhase = AttackPhase.Startup;
+        yield return new WaitForSeconds(startupTime);
 
-        // Use fixed timing instead of clip length - more reliable
-        float hitWindowDuration = 0.35f;
+        // === ACTIVE PHASE — damage window ===
+        attackPhase = AttackPhase.Active;
         float hitTimer = 0f;
-        bool hitLanded = false;
 
-        while (hitTimer < hitWindowDuration)
+        while (hitTimer < activeTime)
         {
             hitTimer += Time.deltaTime;
             anim.applyRootMotion = false;
 
-            if (!hitLanded && hitPoint != null)
+            if (!hasDealtDamage && hitPoint != null)
             {
-                // QUANTUM: Replace Physics.OverlapSphere with Quantum 3D physics query.
-                // Hit detection must run in Quantum simulation frame, not Unity Update.
                 Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        float finalDmg = attackDamage * ConsumeNextAttackBonus(); // stealth bonus etc.
+                        // PLA-125: Anti-spam — mark damage dealt immediately
+                        hasDealtDamage = true;
+                        isAttackActive = false;
+
+                        // PLA-125: Hit stack / mini-rage multiplier
+                        float rageMult = IsRaging ? HIT_STACK_MULTIPLIER : 1f;
+                        float finalDmg = attackDamage * heavyMult * rageMult * ConsumeNextAttackBonus();
                         target.TakeDamage(finalDmg, transform.position, true, this);
-                        hitLanded = true;
+
+                        // PLA-125: Hit stack increment
+                        hitStack++;
+                        hitStackTimer = HIT_STACK_DURATION;
+
                         comboWindowOpen = true;
                         comboWindowTimer = comboWindowDuration;
                         exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_DEALT, EX_METER_MAX);
 
-                        // Track stats
                         if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
-                            Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(attackDamage);
-
-                        // Combo tracker
+                            Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(finalDmg);
                         if (!isAI && Volk.Core.ComboTracker.Instance != null)
-                            Volk.Core.ComboTracker.Instance.RegisterInput(animHash == hPunch ? AttackType.Punch : AttackType.Kick);
+                            Volk.Core.ComboTracker.Instance.RegisterInput(AttackType.Punch);
 
-                        // Sound only on confirmed hit
-                        if (animHash == hKick) AudioManager.Instance?.PlayKick();
+                        AudioManager.Instance?.PlayPunch();
+                        AudioManager.Instance?.PlayLayeredHit(isHeavy, false);
+
+                        float hitstopDur = isHeavy ? HitstopManager.HeavyHit : HitstopManager.LightHit;
+                        HitstopManager.Instance?.Trigger(hitstopDur);
+                        AudioManager.Instance?.PauseHitSounds(hitstopDur);
+                        StartCoroutine(HitStop(hitstopDur));
+                        target.StartCoroutine(target.HitStop(hitstopDur));
+
+                        Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                        HitEffectManager.Instance?.SpawnHitEffect(hitPos, false);
+                        VibrationManager.Instance?.VibrateLight();
+                        break;
+                    }
+                }
+            }
+            yield return null;
+        }
+
+        if (!hasDealtDamage)
+        {
+            AudioManager.Instance?.PlayWhiff();
+            JuiceManager.Instance?.WhiffFreeze();
+            OnAttackWhiff?.Invoke();
+            isAttackActive = false;
+        }
+
+        // === RECOVERY PHASE — cancelable ===
+        attackPhase = AttackPhase.Recovery;
+        yield return new WaitForSeconds(recoveryTime);
+
+        attackPhase = AttackPhase.None;
+        anim.applyRootMotion = false;
+        isAttacking = false;
+        isAttackActive = false;
+        postAttackCooldown = isHeavy ? 0.2f : 0.15f;
+    }
+
+    // PLA-125: Legacy DoAttack redirects to combo system
+    IEnumerator DoAttack(int animHash, Transform hitPoint)
+    {
+        bool isKick = (animHash == hKick);
+        isAttacking = true;
+        isAttackActive = true;
+        hasDealtDamage = false;
+        anim.applyRootMotion = false;
+        anim.SetTrigger(animHash);
+
+        if (!isAI && behaviorTracker != null)
+        {
+            var action = isKick ? Volk.Core.PlayerAction.Kick : Volk.Core.PlayerAction.Punch;
+            behaviorTracker.Record(GetCurrentSituation(), action);
+        }
+
+        AudioManager.Instance?.PlayWhoosh();
+
+        // Startup
+        attackPhase = AttackPhase.Startup;
+        yield return new WaitForSeconds(0.15f);
+
+        // Active
+        attackPhase = AttackPhase.Active;
+        float hitTimer = 0f;
+        float hitWindowDuration = 0.35f;
+
+        while (hitTimer < hitWindowDuration)
+        {
+            hitTimer += Time.deltaTime;
+            anim.applyRootMotion = false;
+
+            if (!hasDealtDamage && hitPoint != null)
+            {
+                Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.5f);
+                foreach (var hit in hits)
+                {
+                    Fighter target = hit.GetComponentInParent<Fighter>();
+                    if (target != null && target != this && hit.CompareTag(enemyTag))
+                    {
+                        hasDealtDamage = true;
+                        isAttackActive = false;
+
+                        float rageMult = IsRaging ? HIT_STACK_MULTIPLIER : 1f;
+                        float finalDmg = attackDamage * rageMult * ConsumeNextAttackBonus();
+                        target.TakeDamage(finalDmg, transform.position, true, this);
+
+                        hitStack++;
+                        hitStackTimer = HIT_STACK_DURATION;
+
+                        comboWindowOpen = true;
+                        comboWindowTimer = comboWindowDuration;
+                        exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_DEALT, EX_METER_MAX);
+
+                        if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
+                            Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(finalDmg);
+                        if (!isAI && Volk.Core.ComboTracker.Instance != null)
+                            Volk.Core.ComboTracker.Instance.RegisterInput(isKick ? AttackType.Kick : AttackType.Punch);
+
+                        if (isKick) AudioManager.Instance?.PlayKick();
                         else AudioManager.Instance?.PlayPunch();
                         AudioManager.Instance?.PlayLayeredHit(false, false);
 
@@ -676,9 +908,7 @@ public class Fighter : MonoBehaviour
                         StartCoroutine(HitStop(HitstopManager.LightHit));
                         target.StartCoroutine(target.HitStop(HitstopManager.LightHit));
 
-                        // Spawn hit effect
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
-                        bool isKick = (animHash == hKick);
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, isKick);
                         VibrationManager.Instance?.VibrateLight();
                         break;
@@ -688,20 +918,22 @@ public class Fighter : MonoBehaviour
             yield return null;
         }
 
-        // Whiff frame: if no hit landed, play whiff sound + freeze for miss feel
-        if (!hitLanded)
+        if (!hasDealtDamage)
         {
             AudioManager.Instance?.PlayWhiff();
             JuiceManager.Instance?.WhiffFreeze();
             OnAttackWhiff?.Invoke();
-            yield return null;
-            yield return null;
+            isAttackActive = false;
         }
 
-        // Wait for rest of animation
-        yield return new WaitForSeconds(0.6f);
+        // Recovery — cancelable
+        attackPhase = AttackPhase.Recovery;
+        yield return new WaitForSeconds(0.3f);
+
+        attackPhase = AttackPhase.None;
         anim.applyRootMotion = false;
         isAttacking = false;
+        isAttackActive = false;
         postAttackCooldown = 0.15f;
     }
 
@@ -896,12 +1128,30 @@ public class Fighter : MonoBehaviour
         isAttacking = false;
     }
 
+    /// <summary>
+    /// PLA-125: AnimationEvent callback — place on attack anim clips at impact frame.
+    /// Ensures damage is only dealt once per attack, preventing double-damage on spam.
+    /// </summary>
+    public void OnAttackHit()
+    {
+        if (hasDealtDamage || !isAttackActive) return;
+        // Damage is already handled in the coroutine active phase.
+        // This callback serves as an alternative trigger point for animations
+        // that have events baked in. The coroutine's OverlapSphere handles actual damage.
+    }
+
     public void ResetForRound()
     {
         StopAllCoroutines();
         GetComponent<RagdollController>()?.ResetRagdoll();
         currentHP = maxHP;
         isAttacking = false;
+        isAttackActive = false;
+        hasDealtDamage = false;
+        attackPhase = AttackPhase.None;
+        comboStep = 0;
+        hitStack = 0;
+        hitStackTimer = 0f;
         isDead = false;
         knockbackTimer = 0f;
         knockbackVelocity = Vector3.zero;

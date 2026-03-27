@@ -4,7 +4,7 @@ namespace Volk
 {
     public class InputBuffer : MonoBehaviour
     {
-        const int BUFFER_SIZE = 8; // 8 frame = ~133ms at 60fps
+        const int BUFFER_SIZE = 20; // 20 frame = ~333ms at 60fps
 
         struct BufferedInput
         {
@@ -21,7 +21,7 @@ namespace Volk
             head++;
         }
 
-        public bool ConsumeInput(string action, float windowSeconds = 0.133f)
+        public bool ConsumeInput(string action, float windowSeconds = 0.333f)
         {
             for (int i = head - 1; i >= head - BUFFER_SIZE && i >= 0; i--)
             {
