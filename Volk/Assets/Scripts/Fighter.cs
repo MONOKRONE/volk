@@ -62,6 +62,7 @@ public class Fighter : MonoBehaviour
     // AI state commitment
     private float stateMinDuration;
     private float stateTimer;
+    private Coroutine aiTelegraphCoroutine;
 
     // AI approach zigzag
     private float zigzagAngle;
@@ -539,6 +540,15 @@ public class Fighter : MonoBehaviour
         if (newState == currentAIState) return;
         // State commitment: don't switch if minimum duration hasn't elapsed (except Stunned)
         if (stateTimer < stateMinDuration && newState != AIState.Stunned) return;
+        // Validate transition — only allowed edges in the FSM graph
+        if (!IsValidTransition(currentAIState, newState)) return;
+
+        // Cancel telegraph coroutine when leaving Combat
+        if (currentAIState == AIState.Combat && aiTelegraphCoroutine != null)
+        {
+            StopCoroutine(aiTelegraphCoroutine);
+            aiTelegraphCoroutine = null;
+        }
 
         currentAIState = newState;
         stateTimer = 0f;
@@ -547,6 +557,21 @@ public class Fighter : MonoBehaviour
         // Reset zigzag on state change
         zigzagAngle = 0f;
         zigzagTimer = Random.Range(0.3f, 0.8f);
+    }
+
+    bool IsValidTransition(AIState from, AIState to)
+    {
+        // Stunned can be entered from any state (knockback/hit reaction)
+        if (to == AIState.Stunned) return true;
+        switch (from)
+        {
+            case AIState.Idle:     return to == AIState.Approach;
+            case AIState.Approach: return to == AIState.Combat || to == AIState.Retreat;
+            case AIState.Combat:   return to == AIState.Approach || to == AIState.Retreat;
+            case AIState.Retreat:  return to == AIState.Approach;
+            case AIState.Stunned:  return to == AIState.Approach;
+            default: return false;
+        }
     }
 
     void UpdateAI()
@@ -569,8 +594,7 @@ public class Fighter : MonoBehaviour
             knockbackTimer -= Time.deltaTime;
             if (knockbackVelocity.magnitude < 0.1f)
                 knockbackVelocity = Vector3.zero;
-            currentAIState = AIState.Stunned;
-            stateTimer = 0f;
+            SetAIState(AIState.Stunned);
             stateMinDuration = 0f; // Stunned can always be exited
             aiStunnedTimer = 0.4f;
             return;
@@ -657,9 +681,9 @@ public class Fighter : MonoBehaviour
 
                 // Attack on cooldown with telegraph
                 aiAttackCooldown -= Time.deltaTime;
-                if (aiAttackCooldown <= 0f && !isAttacking)
+                if (aiAttackCooldown <= 0f && !isAttacking && aiTelegraphCoroutine == null)
                 {
-                    StartCoroutine(AITelegraphAttack());
+                    aiTelegraphCoroutine = StartCoroutine(AITelegraphAttack());
                     aiAttackCooldown = GetReactionDelay() + Random.Range(0.1f, 0.4f);
                 }
 
@@ -709,6 +733,7 @@ public class Fighter : MonoBehaviour
         bool usePunch = Random.value < 0.6f;
         StartCoroutine(DoAttack(usePunch ? hPunch : hKick,
             usePunch ? rightHandPoint : rightFootPoint));
+        aiTelegraphCoroutine = null;
     }
 
     // PLA-125: Execute the correct combo step
@@ -1172,7 +1197,7 @@ public class Fighter : MonoBehaviour
 
                 // PLA-132: Mastery progress on hit
                 if (!isAI && characterData != null)
-                    Volk.Core.CharacterMasteryManager.Instance?.AddProgress(characterData.characterName, 1);
+                    Volk.Core.CharacterMasteryManager.Instance?.AddProgressByRequirement(characterData.characterName, "hit");
 
                 if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
                     Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(finalDmg);
