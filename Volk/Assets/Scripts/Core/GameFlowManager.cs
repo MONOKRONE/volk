@@ -832,7 +832,8 @@ namespace Volk.Core
 
             // Sound toggle
             bool soundOn = SaveManager.Instance != null ? SaveManager.Instance.Data.soundOn : true;
-            ui.CreateButton(canvas, $"Sound: {(soundOn ? \"ON\" : \"OFF\")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            string soundLabel = "Sound: " + (soundOn ? "ON" : "OFF");
+            ui.CreateButton(canvas, soundLabel, RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.70f), new Vector2(0.8f, 0.80f),
                 () => {
                     if (SaveManager.Instance != null)
@@ -845,7 +846,8 @@ namespace Volk.Core
 
             // Vibration toggle
             bool vibOn = VibrationManager.Instance != null ? VibrationManager.Instance.IsEnabled : true;
-            ui.CreateButton(canvas, $"Vibration: {(vibOn ? "ON" : "OFF")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            string vibLabel = "Vibration: " + (vibOn ? "ON" : "OFF");
+            ui.CreateButton(canvas, vibLabel, RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.56f), new Vector2(0.8f, 0.66f),
                 () => {
                     if (VibrationManager.Instance != null)
