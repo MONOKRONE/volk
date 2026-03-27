@@ -642,13 +642,16 @@ namespace Volk.Core
                 }
             }
 
-            // FIGHT button — only enabled when a character is selected
+            // FIGHT button — always present, checks selection at click time
             bool hasSelection = selectedCharacterIndex >= 0;
             Color fightBg = hasSelection ? RuntimeUIBuilder.Accent : new Color(0.3f, 0.1f, 0.1f);
-            ui.CreateButton(canvas, hasSelection ? "FIGHT!" : "SELECT A FIGHTER",
-                fightBg, Color.white,
+            string fightLabel = hasSelection ? "FIGHT!" : "SELECT A FIGHTER";
+            ui.CreateButton(canvas, fightLabel, fightBg, Color.white,
                 new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.12f),
-                () => { if (hasSelection) StartCombat(); });
+                () => {
+                    if (selectedCharacterIndex >= 0)
+                        StartCombat();
+                });
         }
 
         void BuildCharacterCard(RectTransform content, int index, ref GameObject selectedBorder)
