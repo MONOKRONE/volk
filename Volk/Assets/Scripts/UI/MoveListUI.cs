@@ -55,7 +55,7 @@ namespace Volk.UI
                     }
                     else
                     {
-                        texts[1].text = "Kesfedilmedi";
+                        texts[1].text = "Not Discovered";
                     }
                 }
 

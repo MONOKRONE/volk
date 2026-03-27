@@ -35,7 +35,19 @@ namespace Volk.UI
         public Color premiumColor = new Color(0.61f, 0.35f, 0.71f, 1f);      // purple
         public Color freeColor = new Color(0f, 0.83f, 1f, 1f);               // blue
 
-        void OnEnable() => Refresh();
+        void OnEnable()
+        {
+            // PLA-132: Wire purchase button
+            if (purchasePremiumButton != null && purchasePremiumButton.onClick != null)
+                purchasePremiumButton.onClick.AddListener(OnPurchasePremium);
+            Refresh();
+        }
+
+        void OnDisable()
+        {
+            if (purchasePremiumButton != null && purchasePremiumButton.onClick != null)
+                purchasePremiumButton.onClick.RemoveListener(OnPurchasePremium);
+        }
 
         public void Refresh()
         {

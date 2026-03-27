@@ -72,18 +72,25 @@ namespace Volk.UI
 
         void Start()
         {
+            // PLA-132: NG+ HUD hide
+            if (Volk.Core.NewGamePlusManager.Instance != null && Volk.Core.NewGamePlusManager.Instance.ShouldHideHUD())
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
             if (playerHPFill) playerHPFill.color = VTheme.Green;
             if (enemyHPFill) enemyHPFill.color = VTheme.Red;
 
             if (playerNameText)
             {
                 playerNameText.color = VTheme.TextPrimary;
-                playerNameText.text = playerFighter?.characterData?.characterName ?? "OYUNCU";
+                playerNameText.text = playerFighter?.characterData?.characterName ?? "PLAYER";
             }
             if (enemyNameText)
             {
                 enemyNameText.color = VTheme.TextPrimary;
-                enemyNameText.text = enemyFighter?.characterData?.characterName ?? "RAKIP";
+                enemyNameText.text = enemyFighter?.characterData?.characterName ?? "ENEMY";
             }
 
             if (comboGroup) comboGroup.alpha = 0;

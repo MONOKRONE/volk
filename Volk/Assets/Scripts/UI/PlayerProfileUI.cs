@@ -58,7 +58,7 @@ namespace Volk.UI
             // Level info
             if (LevelSystem.Instance != null)
             {
-                if (levelText) levelText.text = $"Seviye {LevelSystem.Instance.CurrentLevel}";
+                if (levelText) levelText.text = $"Level {LevelSystem.Instance.CurrentLevel}";
                 if (titleText) { titleText.text = LevelSystem.Instance.GetLevelTitle(); titleText.color = VTheme.Gold; }
                 if (xpBar) xpBar.value = LevelSystem.Instance.XPProgress;
             }

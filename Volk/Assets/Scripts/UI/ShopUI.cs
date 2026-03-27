@@ -188,7 +188,7 @@ namespace Volk.UI
                 var texts = card.GetComponentsInChildren<TextMeshProUGUI>();
                 if (texts.Length > 0) texts[0].text = charData.characterName;
                 if (texts.Length > 1)
-                    texts[1].text = unlocked ? "ACIK" : GetUnlockCostText(charData);
+                    texts[1].text = unlocked ? "OWNED" : GetUnlockCostText(charData);
 
                 var portrait = card.transform.Find("Portrait")?.GetComponent<Image>();
                 if (portrait != null && charData.portrait != null)
@@ -215,8 +215,8 @@ namespace Volk.UI
             {
                 UnlockCondition.Currency => $"{charData.unlockValue} gem",
                 UnlockCondition.StoryProgress => $"Bolum {charData.unlockValue}",
-                UnlockCondition.WinCount => $"{charData.unlockValue} galibiyet",
-                _ => "KILITLI"
+                UnlockCondition.WinCount => $"{charData.unlockValue} wins",
+                _ => "LOCKED"
             };
         }
 
@@ -228,7 +228,7 @@ namespace Volk.UI
             pendingCharacter = null;
             if (confirmPopup == null) { ShopManager.Instance?.TryPurchase(item); return; }
             confirmPopup.SetActive(true);
-            if (confirmText) confirmText.text = $"{item.itemName}\n{item.price} coin\nSatin al?";
+            if (confirmText) confirmText.text = $"{item.itemName}\n{item.price} coin\nPurchase?";
         }
 
         void ShowConfirmCharacter(CharacterData charData)
@@ -237,7 +237,7 @@ namespace Volk.UI
             pendingShopItem = null;
             if (confirmPopup == null) return;
             confirmPopup.SetActive(true);
-            if (confirmText) confirmText.text = $"{charData.characterName}\n{GetUnlockCostText(charData)}\nAc?";
+            if (confirmText) confirmText.text = $"{charData.characterName}\n{GetUnlockCostText(charData)}\nUnlock?";
         }
 
         void OnConfirmPurchase()
@@ -261,7 +261,7 @@ namespace Volk.UI
             bool success = CharacterUnlockManager.Instance.TryUnlock(charData);
             if (!success)
             {
-                OnFailed("Karakter acilamadi");
+                OnFailed("Character unlock failed");
                 return;
             }
             PopulateCharacters();

@@ -6,16 +6,16 @@ public class CreateGhostStages
 {
     static readonly (string name, GhostScenarioType scenario, AIDifficulty diff, string desc)[] GhostStageData = new[]
     {
-        ("Ghost_01_Mirror",      GhostScenarioType.MirrorMatch,     AIDifficulty.Easy,   "Ayna mac — kendi ghost'unla dovus"),
-        ("Ghost_02_Aggressive",  GhostScenarioType.AggressiveClone, AIDifficulty.Normal, "Agresif klon — surekli saldiri baskisi"),
-        ("Ghost_03_Defensive",   GhostScenarioType.DefensiveClone,  AIDifficulty.Normal, "Defansif klon — karsi atak uzmanı"),
-        ("Ghost_04_LowHP",       GhostScenarioType.LowHPPressure,   AIDifficulty.Normal, "Dusuk can baskisi — %30 HP ile basla"),
-        ("Ghost_05_Corner",      GhostScenarioType.CornerTrap,      AIDifficulty.Hard,   "Koseye sikistirma — dar alanda dovus"),
-        ("Ghost_06_SkillSpam",   GhostScenarioType.SkillPressure,   AIDifficulty.Hard,   "Skill baskisi — surekli ozel beceri"),
-        ("Ghost_07_Combo",       GhostScenarioType.ComboChain,      AIDifficulty.Hard,   "Combo zinciri — ardisik saldiri kaliplari"),
-        ("Ghost_08_Parry",       GhostScenarioType.ParryCounter,    AIDifficulty.Hard,   "Parry ustasi — bloklayip vurur"),
-        ("Ghost_09_Adaptive",    GhostScenarioType.AdaptiveClone,   AIDifficulty.Hard,   "Adaptif klon — senin tarzina uyum saglar"),
-        ("Ghost_10_Ultimate",    GhostScenarioType.MirrorMatch,     AIDifficulty.Hard,   "Ultimate ghost — tam guc ayna mac"),
+        ("Ghost_01_Mirror",      GhostScenarioType.MirrorMatch,     AIDifficulty.Easy,   "Mirror match — fight your own ghost"),
+        ("Ghost_02_Aggressive",  GhostScenarioType.AggressiveClone, AIDifficulty.Normal, "Aggressive clone — constant attack pressure"),
+        ("Ghost_03_Defensive",   GhostScenarioType.DefensiveClone,  AIDifficulty.Normal, "Defensive clone — counter attack expert"),
+        ("Ghost_04_LowHP",       GhostScenarioType.LowHPPressure,   AIDifficulty.Normal, "Low HP pressure — start with 30% HP"),
+        ("Ghost_05_Corner",      GhostScenarioType.CornerTrap,      AIDifficulty.Hard,   "Corner trap — fight in narrow space"),
+        ("Ghost_06_SkillSpam",   GhostScenarioType.SkillPressure,   AIDifficulty.Hard,   "Skill pressure — constant special ability"),
+        ("Ghost_07_Combo",       GhostScenarioType.ComboChain,      AIDifficulty.Hard,   "Combo chain — consecutive attack patterns"),
+        ("Ghost_08_Parry",       GhostScenarioType.ParryCounter,    AIDifficulty.Hard,   "Parry master — blocks and strikes"),
+        ("Ghost_09_Adaptive",    GhostScenarioType.AdaptiveClone,   AIDifficulty.Hard,   "Adaptive clone — adapts to your style"),
+        ("Ghost_10_Ultimate",    GhostScenarioType.MirrorMatch,     AIDifficulty.Hard,   "Ultimate ghost — full power mirror match"),
     };
 
     [MenuItem("VOLK/Create 10 Ghost Stages")]

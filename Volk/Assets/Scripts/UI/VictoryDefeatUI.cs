@@ -74,7 +74,7 @@ namespace Volk.UI
             // Title slam
             if (resultTitle)
             {
-                resultTitle.text = stats.playerWon ? "ZAFER" : "YENILGI";
+                resultTitle.text = stats.playerWon ? "VICTORY" : "DEFEAT";
                 resultTitle.color = stats.playerWon ? VTheme.Gold : VTheme.Red;
                 resultTitle.transform.localScale = Vector3.one * 2f;
                 float t = 0;
@@ -142,7 +142,7 @@ namespace Volk.UI
                 {
                     levelUpBanner.SetActive(true);
                     var bannerText = levelUpBanner.GetComponentInChildren<TextMeshProUGUI>();
-                    if (bannerText) bannerText.text = $"SEVIYE {LevelSystem.Instance.CurrentLevel}!";
+                    if (bannerText) bannerText.text = $"LEVEL {LevelSystem.Instance.CurrentLevel}!";
                     UIAudio.Instance?.PlayLevelUp();
                 }
             }

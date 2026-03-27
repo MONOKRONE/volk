@@ -122,7 +122,7 @@ namespace Volk.UI
                     }
                     else
                     {
-                        texts[1].text = "Kesfedilmedi";
+                        texts[1].text = "Not Discovered";
                     }
                 }
 
@@ -143,7 +143,7 @@ namespace Volk.UI
             if (detailDefense) detailDefense.value = data.defense / 10f;
             if (detailStatus)
             {
-                detailStatus.text = unlocked ? "ACIK" : CharacterUnlockManager.Instance?.GetUnlockDescription(data) ?? "Kilitli";
+                detailStatus.text = unlocked ? "UNLOCKED" : CharacterUnlockManager.Instance?.GetUnlockDescription(data) ?? "Locked";
                 detailStatus.color = unlocked ? VTheme.Green : VTheme.Red;
             }
 

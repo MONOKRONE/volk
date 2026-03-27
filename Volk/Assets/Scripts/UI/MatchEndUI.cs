@@ -59,7 +59,7 @@ namespace Volk.UI
             // Title
             if (resultTitle)
             {
-                resultTitle.text = stats.playerWon ? "ZAFER" : "YENILGI";
+                resultTitle.text = stats.playerWon ? "VICTORY" : "DEFEAT";
                 resultTitle.color = stats.playerWon ? gradeS : gradeD;
             }
 
@@ -86,11 +86,11 @@ namespace Volk.UI
 
             // Stats
             if (hitsText) hitsText.text = $"Vurus: {stats.totalHitsLanded}";
-            if (damageText) damageText.text = $"Hasar: {stats.totalDamageDealt:F0}";
+            if (damageText) damageText.text = $"Damage: {stats.totalDamageDealt:F0}";
             if (combosText) combosText.text = $"Kombo: {stats.combosLanded} (Max: {stats.maxComboChain})";
             int min = (int)(stats.matchDuration / 60);
             int sec = (int)(stats.matchDuration % 60);
-            if (timeText) timeText.text = $"Sure: {min:D2}:{sec:D2}";
+            if (timeText) timeText.text = $"Time: {min:D2}:{sec:D2}";
             if (scoreText) scoreText.text = $"Puan: {stats.CalculateScore():F0}/100";
 
             yield return new WaitForSecondsRealtime(0.3f);

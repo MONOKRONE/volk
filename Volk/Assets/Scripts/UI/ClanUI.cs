@@ -106,14 +106,14 @@ namespace Volk.UI
             int members = PlayerPrefs.GetInt("clan_members", 1);
             if (memberCountText)
             {
-                memberCountText.text = $"{members}/30 Uye";
+                memberCountText.text = $"{members}/30 Members";
                 memberCountText.color = VTheme.TextSecondary;
             }
 
             int level = PlayerPrefs.GetInt("clan_level", 1);
             if (clanLevelText)
             {
-                clanLevelText.text = $"Seviye {level}";
+                clanLevelText.text = $"Level {level}";
                 clanLevelText.color = VTheme.Blue;
             }
 
@@ -126,12 +126,12 @@ namespace Volk.UI
         {
             if (clanNameText)
             {
-                clanNameText.text = "Klana Katil";
+                clanNameText.text = "Join Clan";
                 clanNameText.color = VTheme.TextPrimary;
             }
             if (memberCountText)
             {
-                memberCountText.text = "Bir klan kur veya mevcut klana katil";
+                memberCountText.text = "Create or join a clan";
                 memberCountText.color = VTheme.TextSecondary;
             }
             if (clanLevelText) clanLevelText.text = "";
@@ -195,7 +195,7 @@ namespace Volk.UI
             if (texts.Length > 1) texts[1].text = $"ELO: {member.elo}";
             if (texts.Length > 2)
             {
-                texts[2].text = member.hasGhost ? "Ghost: Aktif" : "Ghost: -";
+                texts[2].text = member.hasGhost ? "Ghost: Active" : "Ghost: -";
                 texts[2].color = member.hasGhost ? VTheme.Green : VTheme.TextMuted;
             }
 
@@ -280,7 +280,7 @@ namespace Volk.UI
 
             if (warStatusText)
             {
-                warStatusText.text = warActive ? "Klan Savasi Devam Ediyor!" : "Aktif savas yok";
+                warStatusText.text = warActive ? "Clan War In Progress!" : "No active war";
                 warStatusText.color = warActive ? VTheme.Red : VTheme.TextSecondary;
             }
 
@@ -364,7 +364,7 @@ namespace Volk.UI
             PlayerPrefs.SetFloat("clan_war_progress", 0.5f);
             PlayerPrefs.SetInt("clan_war_our_score", 0);
             PlayerPrefs.SetInt("clan_war_their_score", 0);
-            PlayerPrefs.SetString("clan_war_opponent", "Rakip Klan");
+            PlayerPrefs.SetString("clan_war_opponent", "Rival Clan");
             PlayerPrefs.Save();
             Debug.Log("[Clan] War started!");
             UpdateWarStatus();
@@ -383,7 +383,7 @@ namespace Volk.UI
         List<MemberData> GeneratePlaceholderMembers(int count)
         {
             var list = new List<MemberData>();
-            string[] names = { "Oyuncu", "Savaşçı", "Gölge", "Fırtına", "Çelik", "Toprak", "Yıldız", "Kaya" };
+            string[] names = { "Player", "Warrior", "Shadow", "Storm", "Steel", "Earth", "Star", "Rock" };
             for (int i = 0; i < Mathf.Min(count, names.Length); i++)
             {
                 list.Add(new MemberData

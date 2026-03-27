@@ -80,8 +80,8 @@ namespace Volk.UI
             if (!File.Exists(path))
             {
                 // No ghost data yet — show empty state
-                if (ghostStatusText) ghostStatusText.text = "Veri toplanmadi";
-                if (totalMatchesText) totalMatchesText.text = "0 mac";
+                if (ghostStatusText) ghostStatusText.text = "No data collected";
+                if (totalMatchesText) totalMatchesText.text = "0 matches";
                 return;
             }
 
@@ -131,17 +131,17 @@ namespace Volk.UI
                 int tier = GetActivationTier(totalActions);
                 ghostStatusText.text = tier switch
                 {
-                    0 => "Ghost: Baslangiç",
-                    1 => "Ghost: Katman 1",
-                    2 => "Ghost: Katman 2",
-                    3 => "Ghost: Katman 3 (MAX)",
-                    _ => "Ghost: Aktif"
+                    0 => "Ghost: Beginner",
+                    1 => "Ghost: Layer 1",
+                    2 => "Ghost: Layer 2",
+                    3 => "Ghost: Layer 3 (MAX)",
+                    _ => "Ghost: Active"
                 };
                 ghostStatusText.color = tier >= 3 ? VTheme.Gold : tier >= 1 ? VTheme.Green : VTheme.TextSecondary;
             }
 
             if (totalMatchesText)
-                totalMatchesText.text = $"{totalActions} aksiyon kaydedildi";
+                totalMatchesText.text = $"{totalActions} actions recorded";
         }
 
         void PopulateCharacterGrid()
@@ -178,7 +178,7 @@ namespace Volk.UI
                 texts[0].color = charData.characterName == selectedCharacter ? VTheme.Gold : VTheme.TextPrimary;
             }
             if (texts.Length > 1)
-                texts[1].text = $"{stats.totalMatches} mac";
+                texts[1].text = $"{stats.totalMatches} matches";
             if (texts.Length > 2)
             {
                 float winRate = stats.totalMatches > 0 ? (float)stats.wins / stats.totalMatches * 100f : 0f;
@@ -250,7 +250,7 @@ namespace Volk.UI
             var matchGO = new GameObject("Matches", typeof(RectTransform));
             matchGO.transform.SetParent(go.transform, false);
             var matchTmp = matchGO.AddComponent<TextMeshProUGUI>();
-            matchTmp.text = $"{stats.totalMatches} mac";
+            matchTmp.text = $"{stats.totalMatches} matches";
             matchTmp.fontSize = 20;
             matchTmp.color = VTheme.TextSecondary;
             matchTmp.raycastTarget = false;
@@ -318,7 +318,7 @@ namespace Volk.UI
 
             characterStats.TryGetValue(selectedCharacter, out var stats);
             if (activeGhostPower)
-                activeGhostPower.text = $"Guc: {stats.powerScore:F0}/100";
+                activeGhostPower.text = $"Power: {stats.powerScore:F0}/100";
 
             // Try to find character portrait
             var allChars = Resources.LoadAll<CharacterData>("Characters");
@@ -344,19 +344,19 @@ namespace Volk.UI
             // Tier 1
             float t1 = Mathf.Clamp01((float)totalActions / TIER1_THRESHOLD);
             if (tier1Fill) tier1Fill.fillAmount = t1;
-            if (tier1Label) tier1Label.text = t1 >= 1f ? "Katman 1 \u2713" : $"Katman 1: {totalActions}/{TIER1_THRESHOLD}";
+            if (tier1Label) tier1Label.text = t1 >= 1f ? "Layer 1 \u2713" : $"Layer 1: {totalActions}/{TIER1_THRESHOLD}";
             if (tier1Label) tier1Label.color = t1 >= 1f ? VTheme.Green : VTheme.TextSecondary;
 
             // Tier 2
             float t2 = Mathf.Clamp01((float)totalActions / TIER2_THRESHOLD);
             if (tier2Fill) tier2Fill.fillAmount = t2;
-            if (tier2Label) tier2Label.text = t2 >= 1f ? "Katman 2 \u2713" : $"Katman 2: {totalActions}/{TIER2_THRESHOLD}";
+            if (tier2Label) tier2Label.text = t2 >= 1f ? "Layer 2 \u2713" : $"Layer 2: {totalActions}/{TIER2_THRESHOLD}";
             if (tier2Label) tier2Label.color = t2 >= 1f ? VTheme.Green : VTheme.TextSecondary;
 
             // Tier 3
             float t3 = Mathf.Clamp01((float)totalActions / TIER3_THRESHOLD);
             if (tier3Fill) tier3Fill.fillAmount = t3;
-            if (tier3Label) tier3Label.text = t3 >= 1f ? "Katman 3 \u2713 MAX" : $"Katman 3: {totalActions}/{TIER3_THRESHOLD}";
+            if (tier3Label) tier3Label.text = t3 >= 1f ? "Layer 3 \u2713 MAX" : $"Layer 3: {totalActions}/{TIER3_THRESHOLD}";
             if (tier3Label) tier3Label.color = t3 >= 1f ? VTheme.Gold : VTheme.TextSecondary;
 
             if (activationProgress)

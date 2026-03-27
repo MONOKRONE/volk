@@ -66,16 +66,19 @@ namespace Volk.Core
                 PlayerPrefs.Save();
             }
             Debug.Log($"[Unlock] {data.characterName} unlocked!");
+
+            // PLA-132: Show unlock popup
+            Volk.UI.CharacterUnlockPopup.Instance?.Show(data);
         }
 
         public string GetUnlockDescription(CharacterData data)
         {
             return data.unlockType switch
             {
-                UnlockCondition.StoryProgress => $"Chapter {data.unlockValue} tamamla",
-                UnlockCondition.WinCount => $"{data.unlockValue} mac kazan",
-                UnlockCondition.Currency => $"{data.unlockValue} coin gerekli",
-                _ => "Kilitli"
+                UnlockCondition.StoryProgress => $"Complete Chapter {data.unlockValue}",
+                UnlockCondition.WinCount => $"{data.unlockValue} wins needed",
+                UnlockCondition.Currency => $"{data.unlockValue} coins required",
+                _ => "Locked"
             };
         }
 

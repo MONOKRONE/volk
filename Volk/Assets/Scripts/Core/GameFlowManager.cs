@@ -192,26 +192,26 @@ namespace Volk.Core
 
             var cardConfigs = new (string name, Color stripe, string extra, System.Action action)[]
             {
-                ("HIKAYE MODU", RuntimeUIBuilder.Accent,
+                ("STORY MODE", RuntimeUIBuilder.Accent,
                     GetStoryProgress(),
                     () => ChangeState(GameState.StoryMap)),
 
-                ("SERBEST DOVUS", RuntimeUIBuilder.Neon, "",
+                ("QUICK FIGHT", RuntimeUIBuilder.Neon, "",
                     () => {
                         if (GameSettings.Instance != null)
                             GameSettings.Instance.currentMode = GameSettings.GameMode.QuickFight;
                         ChangeState(GameState.CharacterSelect);
                     }),
 
-                ("HAYATTA KAL", RuntimeUIBuilder.Purple,
-                    $"Rekor: {PlayerPrefs.GetInt("survival_highscore", 0)}. Round",
+                ("SURVIVAL", RuntimeUIBuilder.Purple,
+                    $"Best: Round {PlayerPrefs.GetInt("survival_highscore", 0)}",
                     () => {
                         if (GameSettings.Instance != null)
                             GameSettings.Instance.currentMode = GameSettings.GameMode.Survival;
                         ChangeState(GameState.CharacterSelect);
                     }),
 
-                ("ANTRENMAN", RuntimeUIBuilder.Green, "",
+                ("TRAINING", RuntimeUIBuilder.Green, "",
                     () => {
                         if (GameSettings.Instance != null)
                             GameSettings.Instance.currentMode = GameSettings.GameMode.Training;
@@ -228,7 +228,7 @@ namespace Volk.Core
             }
 
             // === SETTINGS BUTTON (bottom center) ===
-            ui.CreateButton(canvas, "AYARLAR", RuntimeUIBuilder.Panel, RuntimeUIBuilder.Gray,
+            ui.CreateButton(canvas, "SETTINGS", RuntimeUIBuilder.Panel, RuntimeUIBuilder.Gray,
                 new Vector2(0.38f, 0.03f), new Vector2(0.62f, 0.09f),
                 () => ChangeState(GameState.Settings));
 
@@ -401,7 +401,7 @@ namespace Volk.Core
             if (!isLocked)
             {
                 int chapterIdx = index;
-                var playBtn = ui.CreateButton(rowGO.transform, "OYNA", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
+                var playBtn = ui.CreateButton(rowGO.transform, "PLAY", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
                     new Vector2(0.75f, 0.15f), new Vector2(0.97f, 0.85f),
                     () => {
                         selectedChapterIndex = chapterIdx;
@@ -413,7 +413,7 @@ namespace Volk.Core
             else
             {
                 // Locked indicator
-                var lockText = ui.CreateText(rowGO.transform, "KILITLI", 18, RuntimeUIBuilder.Gray,
+                var lockText = ui.CreateText(rowGO.transform, "LOCKED", 18, RuntimeUIBuilder.Gray,
                     TextAlignmentOptions.Center);
                 var lockRect = lockText.GetComponent<RectTransform>();
                 lockRect.anchorMin = new Vector2(0.75f, 0);
@@ -460,11 +460,11 @@ namespace Volk.Core
             else
             {
                 // No characters found - placeholder
-                ui.CreateText(content, "Karakter bulunamadi", 24, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+                ui.CreateText(content, "No character found", 24, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
             }
 
             // FIGHT button (bottom)
-            ui.CreateButton(canvas, "SAVAS", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, "FIGHT", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
                 new Vector2(0.10f, 0.02f), new Vector2(0.90f, 0.11f),
                 () => StartCombat());
         }
@@ -508,7 +508,7 @@ namespace Volk.Core
 
                 // SELECT button
                 int charIdx = index;
-                ui.CreateButton(cardGO.transform, "SEC", RuntimeUIBuilder.Neon, RuntimeUIBuilder.BG,
+                ui.CreateButton(cardGO.transform, "SELECT", RuntimeUIBuilder.Neon, RuntimeUIBuilder.BG,
                     new Vector2(0.78f, 0.2f), new Vector2(0.97f, 0.8f),
                     () => SelectCharacter(charIdx));
             }
@@ -517,8 +517,8 @@ namespace Volk.Core
                 // Lock info
                 string desc = CharacterUnlockManager.Instance != null
                     ? CharacterUnlockManager.Instance.GetUnlockDescription(charData)
-                    : "Kilitli";
-                var lockText = ui.CreateText(cardGO.transform, $"KILITLI - {desc}", 18,
+                    : "Locked";
+                var lockText = ui.CreateText(cardGO.transform, $"LOCKED - {desc}", 18,
                     RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
                 var lockRect = lockText.GetComponent<RectTransform>();
                 lockRect.anchorMin = new Vector2(0.03f, 0.05f);
@@ -609,7 +609,7 @@ namespace Volk.Core
             MatchStats stats = MatchStatsTracker.Instance != null ? MatchStatsTracker.Instance.Current : null;
 
             // VICTORY / DEFEAT title
-            string resultText = won ? "ZAFER" : "YENILGI";
+            string resultText = won ? "VICTORY" : "DEFEAT";
             Color resultColor = won ? RuntimeUIBuilder.Gold : RuntimeUIBuilder.Accent;
             var titleTMP = ui.CreateText(canvas, resultText, 72, resultColor, TextAlignmentOptions.Center);
             titleTMP.fontStyle = FontStyles.Bold;
@@ -628,14 +628,14 @@ namespace Volk.Core
 
             if (stats != null)
             {
-                AddStatLine(statsPanel.transform, "Hasar", $"{stats.totalDamageDealt:F0}", 0.82f);
+                AddStatLine(statsPanel.transform, "Damage", $"{stats.totalDamageDealt:F0}", 0.82f);
                 AddStatLine(statsPanel.transform, "Combo", $"{stats.maxComboChain}x", 0.68f);
-                AddStatLine(statsPanel.transform, "Sure", $"{stats.matchDuration:F1}s", 0.54f);
-                AddStatLine(statsPanel.transform, "Derece", stats.Grade, 0.40f);
+                AddStatLine(statsPanel.transform, "Duration", $"{stats.matchDuration:F1}s", 0.54f);
+                AddStatLine(statsPanel.transform, "Grade", stats.Grade, 0.40f);
 
                 // Coin reward
                 int coinReward = stats.GetCoinReward();
-                AddStatLine(statsPanel.transform, "Odul", $"+{coinReward} Coin", 0.22f);
+                AddStatLine(statsPanel.transform, "Reward", $"+{coinReward} Coin", 0.22f);
 
                 // XP reward
                 int xpReward = stats.GetXPReward();
@@ -643,7 +643,7 @@ namespace Volk.Core
             }
             else
             {
-                ui.CreateText(statsPanel.transform, "Istatistik yok", 24, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+                ui.CreateText(statsPanel.transform, "No statistics", 24, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
             }
 
             // XP bar animation
@@ -656,7 +656,7 @@ namespace Volk.Core
                 .GetComponent<RectTransform>().anchorMin = new Vector2(0.15f, 0.19f);
 
             // CONTINUE button
-            ui.CreateButton(canvas, "DEVAM", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, "CONTINUE", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
                 new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.15f),
                 () => ChangeState(GameState.MainHub));
 
@@ -696,15 +696,15 @@ namespace Volk.Core
 
             // Top bar
             var topBar = ui.CreatePanel(canvas, new Vector2(0, 0.90f), Vector2.one, RuntimeUIBuilder.Panel);
-            ui.CreateButton(topBar.transform, "< GERI", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            ui.CreateButton(topBar.transform, "< BACK", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0, 0), new Vector2(0.15f, 1), () => ChangeState(GameState.MainHub));
-            var titleText = ui.CreateText(topBar.transform, "AYARLAR", 32, RuntimeUIBuilder.Accent,
+            var titleText = ui.CreateText(topBar.transform, "SETTINGS", 32, RuntimeUIBuilder.Accent,
                 TextAlignmentOptions.Center);
             titleText.fontStyle = FontStyles.Bold;
 
             // Sound toggle
             bool soundOn = SaveManager.Instance != null ? SaveManager.Instance.Data.soundOn : true;
-            ui.CreateButton(canvas, $"Ses: {(soundOn ? "ACIK" : "KAPALI")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, $"Sound: {(soundOn ? "ON" : "OFF")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.70f), new Vector2(0.8f, 0.80f),
                 () => {
                     if (SaveManager.Instance != null)
@@ -717,7 +717,7 @@ namespace Volk.Core
 
             // Vibration toggle
             bool vibOn = SaveManager.Instance != null ? SaveManager.Instance.Data.vibrationOn : true;
-            ui.CreateButton(canvas, $"Titresim: {(vibOn ? "ACIK" : "KAPALI")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, $"Vibration: {(vibOn ? "ON" : "OFF")}", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
                 new Vector2(0.2f, 0.56f), new Vector2(0.8f, 0.66f),
                 () => {
                     if (SaveManager.Instance != null)
@@ -729,7 +729,7 @@ namespace Volk.Core
                 });
 
             // Reset save
-            ui.CreateButton(canvas, "Kaydi Sifirla", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
+            ui.CreateButton(canvas, "Reset Save", RuntimeUIBuilder.Accent, RuntimeUIBuilder.White,
                 new Vector2(0.3f, 0.20f), new Vector2(0.7f, 0.30f),
                 () => {
                     if (SaveManager.Instance != null)

@@ -1078,6 +1078,11 @@ public class Fighter : MonoBehaviour
             // Super Armor: take damage but don't interrupt skill animation
             Debug.Log($"{gameObject.name} Super Armor absorbed stagger!");
         }
+        else if (isAI && Volk.Core.NewGamePlusManager.Instance != null && Volk.Core.NewGamePlusManager.Instance.EnemyHasHyperArmor())
+        {
+            // PLA-132: NG+ HyperArmor — enemies take damage but never stagger
+            Debug.Log($"{gameObject.name} NG+ HyperArmor absorbed stagger!");
+        }
         else
         {
             StopAllCoroutines();
@@ -1136,12 +1141,55 @@ public class Fighter : MonoBehaviour
     /// PLA-125: AnimationEvent callback — place on attack anim clips at impact frame.
     /// Ensures damage is only dealt once per attack, preventing double-damage on spam.
     /// </summary>
+    // PLA-132: AnimationEvent callback — deals damage via OverlapSphere
     public void OnAttackHit()
     {
         if (hasDealtDamage || !isAttackActive) return;
-        // Damage is already handled in the coroutine active phase.
-        // This callback serves as an alternative trigger point for animations
-        // that have events baked in. The coroutine's OverlapSphere handles actual damage.
+
+        Transform hp = hitPoint;
+        if (hp == null) return;
+
+        Collider[] hits = Physics.OverlapSphere(hp.position, attackRange * 0.5f);
+        foreach (var hit in hits)
+        {
+            Fighter target = hit.GetComponentInParent<Fighter>();
+            if (target != null && target != this && hit.CompareTag(enemyTag))
+            {
+                hasDealtDamage = true;
+                isAttackActive = false;
+
+                bool isHeavy = attackPhase == AttackPhase.Active && comboStep >= 3;
+                float heavyMult = isHeavy ? 1.5f : 1f;
+                float rageMult = IsRaging ? HIT_STACK_MULTIPLIER : 1f;
+                float finalDmg = attackDamage * heavyMult * rageMult * ConsumeNextAttackBonus();
+                target.TakeDamage(finalDmg, transform.position, true, this);
+
+                hitStack++;
+                hitStackTimer = HIT_STACK_DURATION;
+                comboWindowOpen = true;
+                comboWindowTimer = comboWindowDuration;
+                exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_DEALT, EX_METER_MAX);
+
+                // PLA-132: Mastery progress on hit
+                if (!isAI && characterData != null)
+                    Volk.Core.CharacterMasteryManager.Instance?.AddProgress(characterData.characterName, 1);
+
+                if (!isAI && Volk.Core.MatchStatsTracker.Instance != null)
+                    Volk.Core.MatchStatsTracker.Instance.RecordHitLanded(finalDmg);
+
+                float hitstopDur = isHeavy ? HitstopManager.HeavyHit : HitstopManager.LightHit;
+                HitstopManager.Instance?.Trigger(hitstopDur);
+                StartCoroutine(HitStop(hitstopDur));
+                if (target != null && !target.isDead) target.StartCoroutine(target.HitStop(hitstopDur));
+
+                AudioManager.Instance?.PlayPunch();
+                AudioManager.Instance?.PlayLayeredHit(isHeavy, false);
+                Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
+                HitEffectManager.Instance?.SpawnHitEffect(hitPos, false);
+                VibrationManager.Instance?.VibrateLight();
+                break;
+            }
+        }
     }
 
     void OnDestroy()

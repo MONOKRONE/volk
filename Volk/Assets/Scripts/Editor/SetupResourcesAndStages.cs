@@ -13,8 +13,8 @@ public class SetupResourcesAndStages
 {
     static readonly string[] characterNames = { "YILDIZ", "KAYA", "RUZGAR", "CELIK", "SIS", "TOPRAK" };
     static readonly string[] chapterTitles = {
-        "Uyaniş", "İlk Adımlar", "Arena Ateşi", "Gölgeler",
-        "Fırtına", "Çelik İrade", "Kayıp Dövüşçü", "Son Savaş"
+        "Awakening", "First Steps", "Arena Fire", "Shadows",
+        "Storm", "Iron Will", "Lost Fighter", "Final Battle"
     };
 
     [MenuItem("VOLK/Setup Resources and Stages")]
@@ -93,7 +93,7 @@ public class SetupResourcesAndStages
                 if (File.Exists(path)) continue;
 
                 var stage = ScriptableObject.CreateInstance<StageData>();
-                stage.stageName = $"Bolum {ch} - Sahne {st}";
+                stage.stageName = $"Chapter {ch} - Stage {st}";
                 stage.stageIndex = globalIndex;
 
                 // Assign opponent from character roster (cycle through)
@@ -160,9 +160,20 @@ public class SetupResourcesAndStages
             bool anyMissing = false;
             for (int st = 1; st <= 10; st++)
             {
-                string stagePath = $"Assets/Resources/Stages/Stage_{ch}_{st}.asset";
-                stages[st - 1] = AssetDatabase.LoadAssetAtPath<StageData>(stagePath);
-                if (stages[st - 1] == null) anyMissing = true;
+                // Try multiple naming conventions and paths
+                string[] candidates = {
+                    $"Assets/Resources/Stages/Stage_{ch}_{st}.asset",
+                    $"Assets/ScriptableObjects/Stages/Ch{ch}_Stage{st}.asset",
+                    $"Assets/Resources/Stages/Ch{ch}_Stage{st}.asset"
+                };
+                StageData found = null;
+                foreach (var candidate in candidates)
+                {
+                    found = AssetDatabase.LoadAssetAtPath<StageData>(candidate);
+                    if (found != null) break;
+                }
+                stages[st - 1] = found;
+                if (found == null) anyMissing = true;
             }
 
             if (anyMissing)

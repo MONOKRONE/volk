@@ -126,8 +126,8 @@ public class PauseMenu : MonoBehaviour
     void UpdateToggleUI()
     {
         bool vib = VibrationManager.Instance != null && VibrationManager.Instance.IsEnabled;
-        if (soundBadge) soundBadge.text = soundEnabled ? "A\u00c7IK" : "KAPALI";
-        if (vibrationBadge) vibrationBadge.text = vib ? "A\u00c7IK" : "KAPALI";
+        if (soundBadge) soundBadge.text = soundEnabled ? "ON" : "OFF";
+        if (vibrationBadge) vibrationBadge.text = vib ? "ON" : "OFF";
         if (soundBadge) soundBadge.color = soundEnabled ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.6f, 0.3f, 0.3f);
         if (vibrationBadge) vibrationBadge.color = vib ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.6f, 0.3f, 0.3f);
     }

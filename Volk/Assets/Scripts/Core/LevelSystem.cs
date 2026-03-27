@@ -122,12 +122,12 @@ namespace Volk.Core
 
         public string GetLevelTitle()
         {
-            if (CurrentLevel < 5) return "Cirak";
-            if (CurrentLevel < 10) return "Dovuscu";
-            if (CurrentLevel < 20) return "Savaşci";
-            if (CurrentLevel < 35) return "Usta";
-            if (CurrentLevel < 50) return "Efendi";
-            return "Efsane";
+            if (CurrentLevel < 5) return "Apprentice";
+            if (CurrentLevel < 10) return "Fighter";
+            if (CurrentLevel < 20) return "Warrior";
+            if (CurrentLevel < 35) return "Master";
+            if (CurrentLevel < 50) return "Grand Master";
+            return "Legend";
         }
     }
 }
