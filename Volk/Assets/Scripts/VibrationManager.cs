@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Volk.Core;
 
 public class VibrationManager : MonoBehaviour
 {

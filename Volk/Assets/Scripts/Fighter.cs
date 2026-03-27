@@ -1172,7 +1172,7 @@ public class Fighter : MonoBehaviour
     {
         if (hasDealtDamage || !isAttackActive) return;
 
-        Transform hp = hitPoint;
+        Transform hp = rightHandPoint != null ? rightHandPoint : rightFootPoint;
         if (hp == null) return;
 
         Collider[] hits = Physics.OverlapSphere(hp.position, attackRange * 0.5f, HURTBOX_LAYER_MASK);
