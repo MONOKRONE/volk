@@ -131,12 +131,16 @@ public class SetupCinematicScene
                 AssetDatabase.CreateAsset(mat, matPath);
             }
             mat.color = ch.color;
+            mat.SetColor("_BaseColor", ch.color);
+            EditorUtility.SetDirty(mat);
+            AssetDatabase.SaveAssets();
 
             // YILDIZ gets emission
             if (ch.name == "YILDIZ")
             {
                 mat.EnableKeyword("_EMISSION");
                 mat.SetColor("_EmissionColor", ch.color * 0.3f);
+                EditorUtility.SetDirty(mat);
             }
 
             // Apply material to ALL renderers
