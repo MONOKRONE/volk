@@ -1,0 +1,36 @@
+<linker>
+  <!-- Prevent IL2CPP from stripping serialized data classes used by JsonUtility -->
+  <assembly fullname="Assembly-CSharp">
+    <!-- Core data classes -->
+    <type fullname="Volk.Core.SaveData" preserve="all"/>
+    <type fullname="Volk.Core.MatchStats" preserve="all"/>
+    <type fullname="Volk.Core.OwnedEquipment" preserve="all"/>
+    <type fullname="Volk.Core.BehaviorProfile" preserve="all"/>
+    <type fullname="Volk.Core.BehaviorMetrics" preserve="all"/>
+    <type fullname="Volk.Core.SituationHistory" preserve="all"/>
+    <type fullname="Volk.Core.ActionRecord" preserve="all"/>
+    <type fullname="Volk.Core.CosmeticInventoryData" preserve="all"/>
+    <type fullname="Volk.Core.DailyChallenge" preserve="all"/>
+    <type fullname="Volk.Core.BattlePassTier" preserve="all"/>
+    <type fullname="Volk.Core.ComboInput" preserve="all"/>
+    <type fullname="Volk.Core.MasteryNode" preserve="all"/>
+    <type fullname="Volk.Core.DialogueEntry" preserve="all"/>
+    <type fullname="Volk.Core.LootBoxResult" preserve="all"/>
+    <!-- Inner serialized types -->
+    <type fullname="Volk.Core.EquipmentManager+InventoryWrapper" preserve="all"/>
+    <type fullname="Volk.Core.GhostSyncManager+GhostProfileRow" preserve="all"/>
+    <type fullname="Volk.Core.GhostProfileBuilder+ActionBucket" preserve="all"/>
+    <type fullname="Volk.Core.GhostProfileBuilder+OptimizedProfile" preserve="all"/>
+    <!-- Meta data classes -->
+    <type fullname="Volk.Meta.ActiveQuest" preserve="all"/>
+    <type fullname="Volk.Meta.DailyQuestState" preserve="all"/>
+    <type fullname="Volk.Meta.LeaderboardEntry" preserve="all"/>
+    <type fullname="Volk.Meta.LeaderboardResponse" preserve="all"/>
+    <type fullname="Volk.Meta.WeeklyEventData" preserve="all"/>
+    <type fullname="Volk.Meta.OfflineSyncQueue+SyncOperation" preserve="all"/>
+    <type fullname="Volk.Meta.OfflineSyncQueue+SyncQueue" preserve="all"/>
+    <type fullname="Volk.Meta.SupabaseManager+AuthBody" preserve="all"/>
+    <type fullname="Volk.Meta.SupabaseManager+AuthResponse" preserve="all"/>
+    <type fullname="Volk.Meta.SupabaseManager+AuthUser" preserve="all"/>
+  </assembly>
+</linker>
