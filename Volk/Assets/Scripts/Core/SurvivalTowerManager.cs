@@ -8,7 +8,9 @@ namespace Volk.Core
         None,
         AttackBoost,      // +15% attack damage
         DefenseBoost,     // +15% defense
-        SkillCooldown     // -20% skill cooldown
+        SkillCooldown,    // -20% skill cooldown
+        SpeedBoost,       // +20% movement speed
+        DamageBoost       // +25% all damage (stacks with AttackBoost)
     }
 
     public class SurvivalTowerManager : MonoBehaviour
@@ -17,12 +19,10 @@ namespace Volk.Core
 
         public int CurrentFloor { get; private set; }
         public int HighestFloor { get; private set; }
-        public int DailyAttemptsLeft { get; private set; }
         public TowerBuff ActiveBuff { get; private set; }
 
         public const int MAX_FLOOR = 50;
-        public const int DAILY_ATTEMPTS = 3;
-        public static readonly int[] CheckpointFloors = { 10, 25, 40 };
+        public static readonly int[] CheckpointFloors = { 10, 20, 30, 40 };
 
         void Awake()
         {
@@ -37,29 +37,10 @@ namespace Volk.Core
             HighestFloor = PlayerPrefs.GetInt("tower_highest", 0);
             CurrentFloor = PlayerPrefs.GetInt("tower_current", 0);
             ActiveBuff = (TowerBuff)PlayerPrefs.GetInt("tower_buff", 0);
-
-            // Daily attempt reset
-            string lastDate = PlayerPrefs.GetString("tower_last_date", "");
-            string today = DateTime.Now.ToString("yyyy-MM-dd");
-            if (lastDate != today)
-            {
-                DailyAttemptsLeft = DAILY_ATTEMPTS;
-                PlayerPrefs.SetString("tower_last_date", today);
-                PlayerPrefs.SetInt("tower_attempts", DAILY_ATTEMPTS);
-            }
-            else
-            {
-                DailyAttemptsLeft = PlayerPrefs.GetInt("tower_attempts", DAILY_ATTEMPTS);
-            }
         }
-
-        public bool CanAttempt() => DailyAttemptsLeft > 0;
 
         public void StartNewRun()
         {
-            if (!CanAttempt()) return;
-            DailyAttemptsLeft--;
-            PlayerPrefs.SetInt("tower_attempts", DailyAttemptsLeft);
             CurrentFloor = 0;
             ActiveBuff = TowerBuff.None;
             SaveState();
@@ -68,11 +49,7 @@ namespace Volk.Core
 
         public void ContinueFromCheckpoint()
         {
-            if (!CanAttempt()) return;
-            DailyAttemptsLeft--;
-            PlayerPrefs.SetInt("tower_attempts", DailyAttemptsLeft);
-
-            // Find highest checkpoint at or below current floor
+            // Find highest checkpoint at or below highest floor
             int checkpoint = 0;
             foreach (int cp in CheckpointFloors)
             {
@@ -135,9 +112,16 @@ namespace Volk.Core
         /// <summary>
         /// Get the buff multiplier to apply to fighter stats.
         /// </summary>
-        public float GetAttackMultiplier() => ActiveBuff == TowerBuff.AttackBoost ? 1.15f : 1f;
+        public float GetAttackMultiplier()
+        {
+            float mult = 1f;
+            if (ActiveBuff == TowerBuff.AttackBoost) mult *= 1.15f;
+            if (ActiveBuff == TowerBuff.DamageBoost) mult *= 1.25f;
+            return mult;
+        }
         public float GetDefenseMultiplier() => ActiveBuff == TowerBuff.DefenseBoost ? 1.15f : 1f;
         public float GetCooldownMultiplier() => ActiveBuff == TowerBuff.SkillCooldown ? 0.8f : 1f;
+        public float GetSpeedMultiplier() => ActiveBuff == TowerBuff.SpeedBoost ? 1.2f : 1f;
 
         /// <summary>
         /// Get AI difficulty for current floor.
