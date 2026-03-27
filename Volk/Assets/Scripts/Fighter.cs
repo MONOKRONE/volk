@@ -1212,36 +1212,51 @@ public class Fighter : MonoBehaviour
         }
     }
 
+    // PLA-127: Aligned with PLA-125 anti-spam + phase system
     IEnumerator DoHeavyAttack(int animHash, Transform hitPoint)
     {
         isAttacking = true;
+        isAttackActive = true;
+        hasDealtDamage = false;
         anim.applyRootMotion = false;
         anim.SetTrigger(animHash);
         AudioManager.Instance?.PlayWhoosh();
 
-        yield return new WaitForSeconds(0.2f);
+        // === STARTUP PHASE ===
+        attackPhase = AttackPhase.Startup;
+        yield return new WaitForSeconds(0.25f);
 
-        float hitWindowDuration = 0.45f;
+        // === ACTIVE PHASE ===
+        attackPhase = AttackPhase.Active;
         float hitTimer = 0f;
-        bool hitLanded = false;
         float heavyDamage = attackDamage * 2f;
 
-        while (hitTimer < hitWindowDuration)
+        while (hitTimer < 0.45f)
         {
             hitTimer += Time.deltaTime;
             anim.applyRootMotion = false;
 
-            if (!hitLanded && hitPoint != null)
+            if (!hasDealtDamage && hitPoint != null)
             {
-                // QUANTUM: Same as DoAttack — deterministic physics query needed
                 Collider[] hits = Physics.OverlapSphere(hitPoint.position, attackRange * 0.6f);
                 foreach (var hit in hits)
                 {
                     Fighter target = hit.GetComponentInParent<Fighter>();
                     if (target != null && target != this && hit.CompareTag(enemyTag))
                     {
-                        target.TakeDamage(heavyDamage, transform.position, true, this);
-                        hitLanded = true;
+                        hasDealtDamage = true;
+                        isAttackActive = false;
+
+                        float rageMult = IsRaging ? HIT_STACK_MULTIPLIER : 1f;
+                        float finalDmg = heavyDamage * rageMult * ConsumeNextAttackBonus();
+                        target.TakeDamage(finalDmg, transform.position, true, this);
+
+                        hitStack++;
+                        hitStackTimer = HIT_STACK_DURATION;
+                        comboWindowOpen = true;
+                        comboWindowTimer = comboWindowDuration;
+                        exMeter = Mathf.Min(exMeter + EX_GAIN_ON_HIT_DEALT, EX_METER_MAX);
+
                         AudioManager.Instance?.PlayLayeredHit(true, false);
                         HitstopManager.Instance?.Trigger(HitstopManager.HeavyHit);
                         AudioManager.Instance?.PauseHitSounds(HitstopManager.HeavyHit);
@@ -1249,6 +1264,7 @@ public class Fighter : MonoBehaviour
                         target.StartCoroutine(target.HitStop(HitstopManager.HeavyHit));
                         Vector3 hitPos = target.transform.position + Vector3.up * 1.2f;
                         HitEffectManager.Instance?.SpawnHitEffect(hitPos, animHash == hKick);
+                        VibrationManager.Instance?.VibrateLight();
                         break;
                     }
                 }
@@ -1256,9 +1272,22 @@ public class Fighter : MonoBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(0.9f); // 1.5x duration
+        if (!hasDealtDamage)
+        {
+            AudioManager.Instance?.PlayWhiff();
+            JuiceManager.Instance?.WhiffFreeze();
+            OnAttackWhiff?.Invoke();
+            isAttackActive = false;
+        }
+
+        // === RECOVERY PHASE ===
+        attackPhase = AttackPhase.Recovery;
+        yield return new WaitForSeconds(0.45f);
+
+        attackPhase = AttackPhase.None;
         anim.applyRootMotion = false;
         isAttacking = false;
+        isAttackActive = false;
         postAttackCooldown = 0.2f;
     }
 
