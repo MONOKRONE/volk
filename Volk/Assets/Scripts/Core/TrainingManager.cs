@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Volk.Core
 {
@@ -37,7 +38,11 @@ namespace Volk.Core
             if (GameSettings.Instance == null || GameSettings.Instance.currentMode != GameSettings.GameMode.Training)
                 return;
 
+            playerFighter = GameObject.Find("Player_Root")?.GetComponent<Fighter>();
+            enemyFighter = GameObject.Find("Enemy_Root")?.GetComponent<Fighter>();
+
             SetupTraining();
+            BuildTrainingHUD();
         }
 
         void SetupTraining()
@@ -89,6 +94,47 @@ namespace Volk.Core
                 damageInWindow = 0;
                 damageWindow = 0;
             }
+        }
+
+        public void OnEnemyDefeated()
+        {
+            if (enemyFighter != null)
+            {
+                enemyFighter.ResetForRound();
+                enemyFighter.isAI = aiActive;
+                if (aiActive) enemyFighter.InitAIDifficulty();
+            }
+            if (GameManager.Instance != null) GameManager.Instance.roundActive = true;
+        }
+
+        void BuildTrainingHUD()
+        {
+            var ui = Volk.UI.RuntimeUIBuilder.Instance;
+            if (ui == null) return;
+            ui.ShowCanvas();
+            ui.EnsureCanvas();
+
+            var canvas = ui.CanvasRect;
+
+            // Top-left: mode label
+            var modeLbl = ui.CreateText(canvas, "TRAINING MODE", 22, Volk.UI.RuntimeUIBuilder.Neon, TMPro.TextAlignmentOptions.MidlineLeft);
+            var mlRect = modeLbl.GetComponent<RectTransform>();
+            mlRect.anchorMin = new Vector2(0.02f, 0.90f);
+            mlRect.anchorMax = new Vector2(0.4f, 1f);
+            mlRect.offsetMin = mlRect.offsetMax = Vector2.zero;
+
+            // Bottom-right: EXIT button
+            ui.CreateButton(canvas, "EXIT", Volk.UI.RuntimeUIBuilder.Panel, Volk.UI.RuntimeUIBuilder.White,
+                new Vector2(0.78f, 0.02f), new Vector2(0.98f, 0.10f),
+                () => {
+                    ui.HideCanvas();
+                    SceneManager.LoadScene("MainMenu");
+                });
+
+            // Bottom-left: AI TOGGLE button
+            ui.CreateButton(canvas, aiActive ? "AI: ON" : "AI: OFF", Volk.UI.RuntimeUIBuilder.Panel, Volk.UI.RuntimeUIBuilder.White,
+                new Vector2(0.02f, 0.02f), new Vector2(0.22f, 0.10f),
+                () => ToggleAI());
         }
 
         public void OnHitLanded(float damage)

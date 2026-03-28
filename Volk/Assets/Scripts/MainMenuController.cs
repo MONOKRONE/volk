@@ -26,6 +26,8 @@ public class MainMenuController : MonoBehaviour
         EnsureSingleton<PlayerBehaviorTracker>("PlayerBehaviorTracker");
         EnsureSingleton<StageManager>("StageManager");
         EnsureSingleton<Volk.Story.StoryManager>("StoryManager");
+        EnsureSingleton<Volk.Core.TrainingManager>("TrainingManager");
+        EnsureSingleton<Volk.Core.SurvivalManager>("SurvivalManager");
 
         // Load chapter data into StoryManager from Resources
         if (Volk.Story.StoryManager.Instance != null &&

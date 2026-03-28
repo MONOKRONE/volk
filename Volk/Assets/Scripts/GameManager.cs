@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
     private int playerRoundWins = 0;
     private int enemyRoundWins = 0;
     private float roundTimer;
-    private bool roundActive = false;
+    public bool roundActive = false;
     private bool matchOver = false;
 
     public enum RoundState { Intro, Fighting, RoundEnd, MatchEnd }
@@ -154,6 +154,23 @@ public class GameManager : MonoBehaviour
     {
         if (!roundActive) return;
         roundActive = false;
+
+        // Training mode: enemy resets instead of ending round
+        if (GameSettings.Instance?.currentMode == GameSettings.GameMode.Training)
+        {
+            Volk.Core.TrainingManager.Instance?.OnEnemyDefeated();
+            return;
+        }
+
+        // Survival mode: delegate to SurvivalManager
+        if (GameSettings.Instance?.currentMode == GameSettings.GameMode.Survival)
+        {
+            if (!isPlayer)
+                Volk.Core.SurvivalManager.Instance?.OnEnemyDefeated();
+            else
+                Volk.Core.SurvivalManager.Instance?.OnPlayerDefeated();
+            return;
+        }
 
         // PLA-130: Build ghost profile on match end
         if (playerFighter != null && enemyFighter != null)
