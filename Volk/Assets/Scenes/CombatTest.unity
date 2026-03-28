@@ -6034,7 +6034,7 @@ GameObject:
   - component: {fileID: 1881575180}
   - component: {fileID: 1881575179}
   - component: {fileID: 1881575181}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Player_Root
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -6688,7 +6688,7 @@ GameObject:
   - component: {fileID: 2128801051}
   - component: {fileID: 2128801050}
   - component: {fileID: 2128801052}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Enemy_Root
   m_TagString: Enemy
   m_Icon: {fileID: 0}
