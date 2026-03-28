@@ -61,7 +61,7 @@ public class CreateMasteryAssets
                 {
                     nodeIndex = 10 + i,
                     nodeType = MasteryNodeType.LoreUnlock,
-                    description = $"{charId} Gecmisi - Bolum {i + 1}",
+                    description = $"{charId} History - Chapter {i + 1}",
                     requirement = $"lore_{i}",
                     targetValue = (i + 1) * 5, // play X matches with this char
                     rewardType = MasteryRewardType.Lore,

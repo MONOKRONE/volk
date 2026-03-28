@@ -43,7 +43,7 @@ namespace Volk.UI
             if (roundText) roundText.text = $"ROUND {SurvivalManager.Instance.CurrentRound}";
             if (scoreText) scoreText.text = $"{SurvivalManager.Instance.Score}";
             if (difficultyText) difficultyText.text = SurvivalManager.Instance.GetDifficultyLabel();
-            if (highScoreText) highScoreText.text = $"EN YUKSEK: {SurvivalManager.Instance.HighScore}";
+            if (highScoreText) highScoreText.text = $"BEST: {SurvivalManager.Instance.HighScore}";
         }
 
         public void ShowGameOver()
@@ -51,7 +51,7 @@ namespace Volk.UI
             if (gameOverPanel == null) return;
             gameOverPanel.SetActive(true);
 
-            if (finalScoreText) finalScoreText.text = $"SKOR: {SurvivalManager.Instance.Score}";
+            if (finalScoreText) finalScoreText.text = $"SCORE: {SurvivalManager.Instance.Score}";
             if (finalRoundText) finalRoundText.text = $"ROUND: {SurvivalManager.Instance.CurrentRound}";
             if (newHighScoreLabel) newHighScoreLabel.gameObject.SetActive(
                 SurvivalManager.Instance.Score >= SurvivalManager.Instance.HighScore);

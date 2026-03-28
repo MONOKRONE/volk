@@ -230,10 +230,10 @@ namespace Volk.Core
 
         public string GetDifficultyLabel()
         {
-            if (CurrentRound <= 3) return "Kolay";
+            if (CurrentRound <= 3) return "Easy";
             if (CurrentRound <= 7) return "Normal";
-            if (CurrentRound <= 12) return "Zor";
-            return "Cehennem";
+            if (CurrentRound <= 12) return "Hard";
+            return "Hell";
         }
     }
 }

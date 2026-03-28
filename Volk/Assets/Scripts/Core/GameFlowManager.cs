@@ -186,25 +186,25 @@ namespace Volk.Core
 
             // === MODE CARDS (center area) ===
             float cardStartY = 0.72f;
-            float cardHeight = 0.14f;
-            float cardGap = 0.02f;
+            float cardHeight = 0.16f;
+            float cardGap = 0.015f;
             float cardXMin = 0.10f;
             float cardXMax = 0.90f;
 
-            var cardConfigs = new (string name, Color stripe, string extra, System.Action action)[]
+            var cardConfigs = new (string name, string icon, Color stripe, string extra, System.Action action)[]
             {
-                ("STORY", RuntimeUIBuilder.Accent,
+                ("STORY", "S", RuntimeUIBuilder.Accent,
                     GetStoryProgress(),
                     () => ChangeState(GameState.StoryMap)),
 
-                ("QUICK FIGHT", RuntimeUIBuilder.Neon, "",
+                ("QUICK FIGHT", "Q", RuntimeUIBuilder.Neon, "",
                     () => {
                         if (GameSettings.Instance != null)
                             GameSettings.Instance.currentMode = GameSettings.GameMode.QuickFight;
                         ChangeState(GameState.CharacterSelect);
                     }),
 
-                ("SURVIVAL", RuntimeUIBuilder.Purple,
+                ("SURVIVAL", "X", RuntimeUIBuilder.Purple,
                     $"Best: Round {PlayerPrefs.GetInt("survival_highscore", 0)}",
                     () => {
                         if (GameSettings.Instance != null)
@@ -212,7 +212,7 @@ namespace Volk.Core
                         ChangeState(GameState.CharacterSelect);
                     }),
 
-                ("TRAINING", RuntimeUIBuilder.Green, "",
+                ("TRAINING", "T", RuntimeUIBuilder.Green, "",
                     () => {
                         if (GameSettings.Instance != null)
                             GameSettings.Instance.currentMode = GameSettings.GameMode.Training;
@@ -224,7 +224,7 @@ namespace Volk.Core
             {
                 float yMax = cardStartY - i * (cardHeight + cardGap);
                 float yMin = yMax - cardHeight;
-                BuildModeCard(canvas, cardConfigs[i].name, cardConfigs[i].stripe,
+                BuildModeCard(canvas, cardConfigs[i].name, cardConfigs[i].icon, cardConfigs[i].stripe,
                     cardConfigs[i].extra, cardXMin, cardXMax, yMin, yMax, cardConfigs[i].action, i);
             }
 
@@ -236,7 +236,7 @@ namespace Volk.Core
             Debug.Log("[GameFlow] BuildMainHub completed");
         }
 
-        void BuildModeCard(RectTransform canvas, string title, Color stripeColor, string extra,
+        void BuildModeCard(RectTransform canvas, string title, string icon, Color stripeColor, string extra,
             float xMin, float xMax, float yMin, float yMax, System.Action onClick, int index)
         {
             var ui = RuntimeUIBuilder.Instance;
@@ -249,11 +249,21 @@ namespace Volk.Core
             // Left stripe
             var stripe = ui.CreatePanel(btn.transform, new Vector2(0, 0), new Vector2(0.02f, 1), stripeColor);
 
+            // Icon letter on left side
+            var iconText = ui.CreateText(btn.transform, icon, 36, stripeColor,
+                TextAlignmentOptions.Center);
+            iconText.fontStyle = FontStyles.Bold;
+            var iconRect = iconText.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.02f, 0);
+            iconRect.anchorMax = new Vector2(0.10f, 1);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
+
             // Card title
             var titleText = ui.CreateText(btn.transform, title, 32, RuntimeUIBuilder.White,
                 TextAlignmentOptions.MidlineLeft);
             var titleRect = titleText.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.05f, 0);
+            titleRect.anchorMin = new Vector2(0.11f, 0);
             titleRect.anchorMax = new Vector2(0.7f, 1);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
@@ -354,9 +364,25 @@ namespace Volk.Core
                 var rowText = ui.CreateText(canvas, chapterTitle, 24, textColor, TextAlignmentOptions.MidlineLeft);
                 var rRect = rowText.GetComponent<RectTransform>();
                 rRect.anchorMin = new Vector2(0.05f, yMin);
-                rRect.anchorMax = new Vector2(0.65f, yMax);
+                rRect.anchorMax = new Vector2(0.24f, yMax);
                 rRect.offsetMin = Vector2.zero;
                 rRect.offsetMax = Vector2.zero;
+
+                // Enemy character name
+                string enemyName = "";
+                if (allChapters != null && i < allChapters.Length && allChapters[i] != null
+                    && allChapters[i].enemyCharacter != null)
+                    enemyName = allChapters[i].enemyCharacter.characterName;
+                if (!string.IsNullOrEmpty(enemyName))
+                {
+                    var enemyText = ui.CreateText(canvas, enemyName, 18,
+                        isLocked ? RuntimeUIBuilder.Gray : RuntimeUIBuilder.Neon, TextAlignmentOptions.MidlineLeft);
+                    var eRect = enemyText.GetComponent<RectTransform>();
+                    eRect.anchorMin = new Vector2(0.25f, yMin);
+                    eRect.anchorMax = new Vector2(0.60f, yMax);
+                    eRect.offsetMin = Vector2.zero;
+                    eRect.offsetMax = Vector2.zero;
+                }
 
                 if (!isLocked)
                 {
@@ -411,11 +437,11 @@ namespace Volk.Core
             }
 
             // Chapter number
-            string chapterName = $"Bolum {index + 1}";
+            string chapterName = $"Chapter {index + 1}";
             if (allChapters != null && index < allChapters.Length && allChapters[index] != null)
                 chapterName = allChapters[index].chapterTitle ?? chapterName;
 
-            var numText = ui.CreateText(rowGO.transform, $"Bolum {index + 1}", 22,
+            var numText = ui.CreateText(rowGO.transform, $"Chapter {index + 1}", 22,
                 isLocked ? RuntimeUIBuilder.Gray : RuntimeUIBuilder.White, TextAlignmentOptions.MidlineLeft);
             var numRect = numText.GetComponent<RectTransform>();
             numRect.anchorMin = new Vector2(0.02f, 0);
@@ -515,6 +541,21 @@ namespace Volk.Core
             }
         }
 
+        static string GetCharClass(string name)
+        {
+            if (name == null) return "";
+            switch (name.ToUpper())
+            {
+                case "YILDIZ": return "All-Rounder";
+                case "KAYA":   return "Tank";
+                case "RUZGAR": return "Speed";
+                case "CELIK":  return "Counter";
+                case "SIS":    return "Trickster";
+                case "TOPRAK": return "Zoner";
+                default:       return "";
+            }
+        }
+
         void BuildCharacterSelect()
         {
             Debug.Log("[GameFlow] BuildCharacterSelect started");
@@ -611,11 +652,24 @@ namespace Volk.Core
                 var nameTMP = ui.CreateText(card.transform, charName, 20,
                     unlocked ? Color.white : RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
                 var nRect = nameTMP.GetComponent<RectTransform>();
-                nRect.anchorMin = new Vector2(0f, 0.08f);
+                nRect.anchorMin = new Vector2(0f, 0.12f);
                 nRect.anchorMax = new Vector2(1f, 0.36f);
                 nRect.offsetMin = Vector2.zero;
                 nRect.offsetMax = Vector2.zero;
                 nameTMP.fontStyle = FontStyles.Bold;
+
+                // Class label
+                string classLabel = GetCharClass(charData.characterName);
+                if (!string.IsNullOrEmpty(classLabel))
+                {
+                    var classTMP = ui.CreateText(card.transform, classLabel, 16,
+                        RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+                    var cRect = classTMP.GetComponent<RectTransform>();
+                    cRect.anchorMin = new Vector2(0f, 0f);
+                    cRect.anchorMax = new Vector2(1f, 0.10f);
+                    cRect.offsetMin = Vector2.zero;
+                    cRect.offsetMax = Vector2.zero;
+                }
 
                 // Tap to select — NO rebuild, just update visuals
                 if (unlocked)

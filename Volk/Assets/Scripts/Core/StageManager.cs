@@ -282,7 +282,7 @@ namespace Volk.Core
 
         public string GetProgressText()
         {
-            return $"Bolum {CurrentChapter + 1} - Asama {CurrentStage + 1}/{STAGES_PER_CHAPTER}";
+            return $"Chapter {CurrentChapter + 1} - Stage {CurrentStage + 1}/{STAGES_PER_CHAPTER}";
         }
     }
 }

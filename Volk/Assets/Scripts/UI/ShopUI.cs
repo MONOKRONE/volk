@@ -209,7 +209,7 @@ namespace Volk.UI
             return charData.unlockType switch
             {
                 UnlockCondition.Currency => $"{charData.unlockValue} gem",
-                UnlockCondition.StoryProgress => $"Bolum {charData.unlockValue}",
+                UnlockCondition.StoryProgress => $"Chapter {charData.unlockValue}",
                 UnlockCondition.WinCount => $"{charData.unlockValue} wins",
                 _ => "LOCKED"
             };

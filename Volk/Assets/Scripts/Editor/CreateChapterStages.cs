@@ -100,7 +100,7 @@ public class CreateChapterStages
             AssetDatabase.DeleteAsset(chPath);
 
             var chapter = ScriptableObject.CreateInstance<ChapterData>();
-            chapter.chapterTitle = $"Bolum {ch.num}";
+            chapter.chapterTitle = $"Chapter {ch.num}";
             chapter.chapterNumber = ch.num;
             chapter.stages = stages;
             chapter.boss = boss;

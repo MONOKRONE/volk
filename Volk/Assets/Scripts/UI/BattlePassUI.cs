@@ -78,8 +78,8 @@ namespace Volk.UI
             {
                 var remaining = end - System.DateTime.Now;
                 timeRemainingText.text = remaining.TotalDays > 0
-                    ? $"{(int)remaining.TotalDays}g {remaining.Hours}s kaldi"
-                    : "Sezon bitti";
+                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h left"
+                    : "Season ended";
                 timeRemainingText.color = remaining.TotalDays <= 7 ? VTheme.Red : VTheme.TextSecondary;
             }
         }
@@ -87,7 +87,7 @@ namespace Volk.UI
         void UpdatePremiumState(BattlePassManager bp)
         {
             if (premiumPriceText)
-                premiumPriceText.text = bp.IsPremium ? "AKTIF" : "PREMIUM AL";
+                premiumPriceText.text = bp.IsPremium ? "ACTIVE" : "GET PREMIUM";
 
             if (purchasePremiumButton)
                 purchasePremiumButton.SetInteractable(!bp.IsPremium);

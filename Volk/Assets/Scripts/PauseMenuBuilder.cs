@@ -36,7 +36,7 @@ public class PauseMenuBuilder : MonoBehaviour
         prt.anchoredPosition = Vector2.zero;
 
         // Title
-        GameObject title = CreateTMP(panel, "Title", "DURAKLATILDI", 11, new Color(0.53f, 0.53f, 0.53f));
+        GameObject title = CreateTMP(panel, "Title", "PAUSED", 11, new Color(0.53f, 0.53f, 0.53f));
         RectTransform trt = title.GetComponent<RectTransform>();
         trt.anchorMin = new Vector2(0, 1); trt.anchorMax = new Vector2(1, 1);
         trt.offsetMin = new Vector2(0, -40); trt.offsetMax = Vector2.zero;
@@ -65,22 +65,22 @@ public class PauseMenuBuilder : MonoBehaviour
         vlgL.childForceExpandWidth = true;
         vlgL.childForceExpandHeight = false;
 
-        GameObject resumeBtn = CreateButton(left, "ResumeBtn", "\u25B6  DEVAM ET",
+        GameObject resumeBtn = CreateButton(left, "ResumeBtn", "\u25B6  RESUME",
             Color.white, new Color(0.08f, 0.08f, 0.08f), 13, 44);
         pauseMenu.resumeButton = resumeBtn.GetComponent<Button>();
 
-        GameObject restartBtn = CreateButton(left, "RestartBtn", "\u21BA  YEN\u0130DEN BA\u015eLA",
+        GameObject restartBtn = CreateButton(left, "RestartBtn", "\u21BA  RESTART",
             new Color(0.9f, 0.9f, 0.9f), new Color(0.16f, 0.16f, 0.16f), 13, 44);
         pauseMenu.restartButton = restartBtn.GetComponent<Button>();
 
         CreateDivider(left, new Color(0.2f, 0.2f, 0.2f));
 
-        GameObject soundBtn = CreateToggleButton(left, "SoundBtn", "Ses", "A\u00c7IK", out TextMeshProUGUI soundBadge);
+        GameObject soundBtn = CreateToggleButton(left, "SoundBtn", "Sound", "ON", out TextMeshProUGUI soundBadge);
         pauseMenu.soundBadge = soundBadge;
         pauseMenu.soundToggleButton = soundBtn.GetComponent<Button>();
         pauseMenu.soundLabel = soundBtn.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
 
-        GameObject vibBtn = CreateToggleButton(left, "VibBtn", "Titre\u015fim", "A\u00c7IK", out TextMeshProUGUI vibBadge);
+        GameObject vibBtn = CreateToggleButton(left, "VibBtn", "Vibration", "ON", out TextMeshProUGUI vibBadge);
         pauseMenu.vibrationBadge = vibBadge;
         pauseMenu.vibrationToggleButton = vibBtn.GetComponent<Button>();
         pauseMenu.vibrationLabel = vibBtn.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
@@ -97,11 +97,11 @@ public class PauseMenuBuilder : MonoBehaviour
         vlgR.childForceExpandHeight = false;
         vlgR.padding = new RectOffset(12, 0, 0, 0);
 
-        GameObject diffLabel = CreateTMP(right, "DiffLabel", "ZORLUK SEV\u0130YES\u0130", 10, new Color(0.4f, 0.4f, 0.4f));
+        GameObject diffLabel = CreateTMP(right, "DiffLabel", "DIFFICULTY", 10, new Color(0.4f, 0.4f, 0.4f));
         diffLabel.GetComponent<TextMeshProUGUI>().characterSpacing = 2;
         diffLabel.AddComponent<LayoutElement>().preferredHeight = 22;
 
-        GameObject easyBtn = CreateButton(right, "EasyBtn", "Kolay",
+        GameObject easyBtn = CreateButton(right, "EasyBtn", "Easy",
             new Color(0.67f, 0.67f, 0.67f), new Color(0.16f, 0.16f, 0.16f), 14, 50);
         pauseMenu.easyButton = easyBtn.GetComponent<Button>();
 
@@ -109,7 +109,7 @@ public class PauseMenuBuilder : MonoBehaviour
             new Color(0.08f, 0.08f, 0.08f), new Color(0.9f, 0.72f, 0f), 14, 50);
         pauseMenu.normalButton = normalBtn.GetComponent<Button>();
 
-        GameObject hardBtn = CreateButton(right, "HardBtn", "Zor",
+        GameObject hardBtn = CreateButton(right, "HardBtn", "Hard",
             new Color(0.67f, 0.67f, 0.67f), new Color(0.16f, 0.16f, 0.16f), 14, 50);
         pauseMenu.hardButton = hardBtn.GetComponent<Button>();
     }

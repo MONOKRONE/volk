@@ -56,17 +56,17 @@ namespace Volk.UI
                 yield return null;
             }
 
-            if (titleText) { titleText.text = "HAYATTA KALAMADINIZ"; titleText.color = VTheme.Red; }
+            if (titleText) { titleText.text = "GAME OVER"; titleText.color = VTheme.Red; }
             if (roundText) roundText.text = $"Round: {round}";
-            if (scoreText) scoreText.text = $"Skor: {score}";
-            if (highScoreText) highScoreText.text = $"En Yuksek: {highScore}";
+            if (scoreText) scoreText.text = $"Score: {score}";
+            if (highScoreText) highScoreText.text = $"Best: {highScore}";
 
             if (isNewRecord && newRecordBanner)
             {
                 yield return new WaitForSecondsRealtime(0.5f);
                 newRecordBanner.SetActive(true);
                 var bannerText = newRecordBanner.GetComponentInChildren<TextMeshProUGUI>();
-                if (bannerText) { bannerText.text = "YENI REKOR!"; bannerText.color = VTheme.Gold; }
+                if (bannerText) { bannerText.text = "NEW RECORD!"; bannerText.color = VTheme.Gold; }
                 UIAudio.Instance?.PlayLevelUp();
             }
 

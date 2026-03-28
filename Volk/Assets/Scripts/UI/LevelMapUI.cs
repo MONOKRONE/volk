@@ -48,7 +48,7 @@ namespace Volk.UI
         void Start()
         {
             if (backgroundImage) backgroundImage.color = VTheme.Background;
-            if (headerTitle) { headerTitle.text = "HIKAYE MODU"; headerTitle.color = VTheme.Red; }
+            if (headerTitle) { headerTitle.text = "STORY MODE"; headerTitle.color = VTheme.Red; }
             if (detailPanel) detailPanel.SetActive(false);
             if (backButton) backButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
             if (closeDetailButton) closeDetailButton.onClick.AddListener(() => detailPanel.SetActive(false));
@@ -126,20 +126,20 @@ namespace Volk.UI
             selectedIndex = index;
 
             if (detailPanel) detailPanel.SetActive(true);
-            if (detailTitle) detailTitle.text = $"Bolum {chapter.chapterNumber}: {chapter.chapterTitle}";
+            if (detailTitle) detailTitle.text = $"Chapter {chapter.chapterNumber}: {chapter.chapterTitle}";
             if (detailDescription) detailDescription.text = chapter.description;
             if (detailDifficulty)
             {
                 string diff = chapter.difficulty switch
                 {
-                    AIDifficulty.Easy => "Kolay",
+                    AIDifficulty.Easy => "Easy",
                     AIDifficulty.Normal => "Normal",
-                    AIDifficulty.Hard => "Zor",
+                    AIDifficulty.Hard => "Hard",
                     _ => "Normal"
                 };
-                detailDifficulty.text = $"Zorluk: {diff}";
+                detailDifficulty.text = $"Difficulty: {diff}";
             }
-            if (detailReward) detailReward.text = $"Odul: {chapter.coinReward} coin";
+            if (detailReward) detailReward.text = $"Reward: {chapter.coinReward} coin";
 
             if (detailEnemyPortrait && chapter.enemyCharacter != null && chapter.enemyCharacter.portrait != null)
                 detailEnemyPortrait.sprite = chapter.enemyCharacter.portrait;
@@ -157,7 +157,7 @@ namespace Volk.UI
             if (playButton)
             {
                 var playText = playButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (playText) playText.text = index < completed ? "TEKRAR OYNA" : "BASLAT";
+                if (playText) playText.text = index < completed ? "REPLAY" : "PLAY";
             }
 
             UIAudio.Instance?.PlayClick();

@@ -39,9 +39,9 @@ namespace Volk.UI
         {
             if (TrainingManager.Instance == null) return;
 
-            if (hitsText) hitsText.text = $"VURUS: {TrainingManager.Instance.TotalHits}";
-            if (combosText) combosText.text = $"KOMBO: {TrainingManager.Instance.CombosLanded}";
-            if (damageText) damageText.text = $"HASAR: {TrainingManager.Instance.TotalDamageDealt:F0}";
+            if (hitsText) hitsText.text = $"HITS: {TrainingManager.Instance.TotalHits}";
+            if (combosText) combosText.text = $"COMBOS: {TrainingManager.Instance.CombosLanded}";
+            if (damageText) damageText.text = $"DAMAGE: {TrainingManager.Instance.TotalDamageDealt:F0}";
             if (dpsText) dpsText.text = $"DPS: {TrainingManager.Instance.DPS:F1}";
             if (timerText) timerText.text = TrainingManager.Instance.GetSessionTime();
         }
@@ -60,7 +60,7 @@ namespace Volk.UI
         void UpdateAIStatus()
         {
             if (aiStatusText == null || TrainingManager.Instance == null) return;
-            aiStatusText.text = TrainingManager.Instance.aiActive ? "AI: AKTIF" : "AI: PASIF";
+            aiStatusText.text = TrainingManager.Instance.aiActive ? "AI: ON" : "AI: OFF";
         }
     }
 }
