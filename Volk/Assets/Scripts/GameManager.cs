@@ -94,7 +94,12 @@ public class GameManager : MonoBehaviour
 
     IEnumerator StartRound()
     {
+        // Restore timeScale in case hitstop/slow-mo was active when previous round ended
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
         roundActive = false;
+        matchOver = false;
         CurrentState = RoundState.Intro;
         roundTimer = roundDuration;
 
@@ -168,6 +173,10 @@ public class GameManager : MonoBehaviour
     {
         roundActive = false;
         CurrentState = RoundState.RoundEnd;
+
+        // Ensure timeScale is normal so WaitForSeconds works reliably
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
 
         bool playerWon;
         if (winner == null)
