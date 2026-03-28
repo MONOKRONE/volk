@@ -335,9 +335,17 @@ public class GameManager : MonoBehaviour
             TextAlignmentOptions.Center);
         title.fontStyle = FontStyles.Bold;
         var tr = title.GetComponent<RectTransform>();
-        tr.anchorMin = new Vector2(0, 0.6f);
+        tr.anchorMin = new Vector2(0, 0.65f);
         tr.anchorMax = Vector2.one;
         tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+        // Round score summary
+        var roundScore = ui.CreateText(canvas, $"Rounds Won: {playerRoundWins} / {playerRoundWins + enemyRoundWins}", 28,
+            Volk.UI.RuntimeUIBuilder.White, TextAlignmentOptions.Center);
+        var rsRect = roundScore.GetComponent<RectTransform>();
+        rsRect.anchorMin = new Vector2(0, 0.56f);
+        rsRect.anchorMax = new Vector2(1, 0.65f);
+        rsRect.offsetMin = rsRect.offsetMax = Vector2.zero;
 
         // REMATCH
         ui.CreateButton(canvas, "REMATCH", Volk.UI.RuntimeUIBuilder.Accent, Color.white,
