@@ -4258,6 +4258,19 @@ MonoBehaviour:
     type: 3}
   blockHitPrefab: {fileID: 4180227009678194959, guid: 6df26bc15a217446a9cea0a60ab487f0,
     type: 3}
+  lightHitPrefab: {fileID: 0}
+  mediumHitPrefab: {fileID: 0}
+  heavyHitPrefab: {fileID: 0}
+  skillHitPrefab: {fileID: 0}
+  lightColor: {r: 1, g: 1, b: 1, a: 0.8}
+  mediumColor: {r: 1, g: 0.8, b: 0.2, a: 1}
+  heavyColor: {r: 1, g: 0.3, b: 0.1, a: 1}
+  skillColor: {r: 0.4, g: 0.6, b: 1, a: 1}
+  lightScale: 0.5
+  mediumScale: 1
+  heavyScale: 1.5
+  skillScale: 1.8
+  poolPreWarm: 10
 --- !u!4 &1299745937
 Transform:
   m_ObjectHideFlags: 0
