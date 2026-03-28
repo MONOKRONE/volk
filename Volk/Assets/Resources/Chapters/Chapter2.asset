@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ddf45bf9d4db4a35a55881afe4142a3, type: 3}
   m_Name: Chapter2
   m_EditorClassIdentifier: 
-  chapterTitle: Yeralti Turnuvasi
+  chapterTitle: Underground Tournament
   description: Gercek turnuva basliyor
   chapterNumber: 2
   stages: []

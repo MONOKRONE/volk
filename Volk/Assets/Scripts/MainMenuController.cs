@@ -25,6 +25,16 @@ public class MainMenuController : MonoBehaviour
         EnsureSingleton<CharacterDLCManager>("CharacterDLCManager");
         EnsureSingleton<PlayerBehaviorTracker>("PlayerBehaviorTracker");
         EnsureSingleton<StageManager>("StageManager");
+        EnsureSingleton<Volk.Story.StoryManager>("StoryManager");
+
+        // Load chapter data into StoryManager from Resources
+        if (Volk.Story.StoryManager.Instance != null &&
+            (Volk.Story.StoryManager.Instance.chapters == null || Volk.Story.StoryManager.Instance.chapters.Length == 0))
+        {
+            var chapters = Resources.LoadAll<ChapterData>("Chapters");
+            System.Array.Sort(chapters, (a, b) => a.chapterNumber.CompareTo(b.chapterNumber));
+            Volk.Story.StoryManager.Instance.chapters = chapters;
+        }
 
         // Disable any old UI elements on this GameObject
         DisableOldUI();
