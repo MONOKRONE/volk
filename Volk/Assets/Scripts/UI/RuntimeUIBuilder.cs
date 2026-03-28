@@ -310,6 +310,16 @@ namespace Volk.UI
             }
         }
 
+        public void HideCanvas()
+        {
+            if (_canvas != null) _canvas.gameObject.SetActive(false);
+        }
+
+        public void ShowCanvas()
+        {
+            if (_canvas != null) _canvas.gameObject.SetActive(true);
+        }
+
         // --- Utility ---
 
         public static Color HexColor(string hex)

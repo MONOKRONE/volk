@@ -66,6 +66,7 @@ namespace Volk.Core
             }
             if (activeCoroutine != null) { StopCoroutine(activeCoroutine); activeCoroutine = null; }
             ui.EnsureCanvas();
+            ui.ShowCanvas(); // Ensure canvas is visible (may have been hidden during combat)
             ui.ClearUI();
 
             // Reset canvas alpha to 1 (previous FadeOut may have left it at 0)
@@ -722,6 +723,8 @@ namespace Volk.Core
             }
 
             returnFromCombat = true;
+            // Hide the persistent UI canvas before entering combat scene
+            RuntimeUIBuilder.Instance?.HideCanvas();
             SceneManager.LoadScene("CombatTest");
         }
 
