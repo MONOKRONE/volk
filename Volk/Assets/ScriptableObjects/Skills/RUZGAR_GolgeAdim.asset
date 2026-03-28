@@ -9,12 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82b47d48a3cbb4b5fa442113ef7b7ca4, type: 3}
+  m_Script: {fileID: 11500000, guid: c2947ff6ae4e446408baf784397a0eb7, type: 3}
   m_Name: RUZGAR_GolgeAdim
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   skillName: Golge Adim
   damage: 20
-  cooldown: 4
+  cooldown: 5
   animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}
+  dashSpeed: 12
+  dashDuration: 0.29

@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82b47d48a3cbb4b5fa442113ef7b7ca4, type: 3}
+  m_Script: {fileID: 11500000, guid: c1dcafaf63dd24285b139f3b97087444, type: 3}
   m_Name: YILDIZ_AlevYumruk
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   skillName: Alev Yumruk
   damage: 35
   cooldown: 6

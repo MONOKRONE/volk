@@ -9,12 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82b47d48a3cbb4b5fa442113ef7b7ca4, type: 3}
+  m_Script: {fileID: 11500000, guid: b61766229caf14fceb619e0d355d027c, type: 3}
   m_Name: CELIK_AynaKalkan
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   skillName: Ayna Kalkan
-  damage: 15
+  damage: 0
   cooldown: 6
   animationTrigger: BodyBlock
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}
+  counterWindow: 0.3
+  reflectMultiplier: 1.5

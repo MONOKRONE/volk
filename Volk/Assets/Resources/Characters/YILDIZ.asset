@@ -16,10 +16,10 @@ MonoBehaviour:
   portrait: {fileID: 0}
   prefab: {fileID: 6888124368366952114, guid: 551b5d4087b88495f91354c51eb325b2, type: 3}
   speed: 6
-  power: 6
-  defense: 6
+  power: 5
+  defense: 5
   maxHP: 100
-  attackDamage: 10.0199995
+  attackDamage: 15
   attackRange: 1.2
   walkSpeed: 4
   runSpeed: 7

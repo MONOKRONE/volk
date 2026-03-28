@@ -15,13 +15,13 @@ MonoBehaviour:
   characterName: RUZGAR
   portrait: {fileID: 0}
   prefab: {fileID: 1781377885522771029, guid: f1eff29ed9d7648abadc6d60df058567, type: 3}
-  speed: 10
-  power: 5
+  speed: 9
+  power: 4
   defense: 3
-  maxHP: 85
-  attackDamage: 8.349999
+  maxHP: 80
+  attackDamage: 10
   attackRange: 1.2
-  walkSpeed: 5.5
+  walkSpeed: 6
   runSpeed: 9
   knockbackForce: 1.5
   rotationSpeed: 1800

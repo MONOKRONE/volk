@@ -17,11 +17,11 @@ MonoBehaviour:
   prefab: {fileID: 765513308272161670, guid: 17be0327151324f9d9777272a38c1c22, type: 3}
   speed: 3
   power: 8
-  defense: 7
-  maxHP: 130
-  attackDamage: 13.4
+  defense: 8
+  maxHP: 140
+  attackDamage: 20
   attackRange: 1.2
-  walkSpeed: 3
+  walkSpeed: 2.5
   runSpeed: 5.5
   knockbackForce: 3
   rotationSpeed: 1800

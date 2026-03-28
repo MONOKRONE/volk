@@ -9,12 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82b47d48a3cbb4b5fa442113ef7b7ca4, type: 3}
+  m_Script: {fileID: 11500000, guid: 2b94421cddcd44875aacce7737d60325, type: 3}
   m_Name: KAYA_AyiKucagi
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   skillName: Ayi Kucagi
-  damage: 30
-  cooldown: 7
+  damage: 50
+  cooldown: 12
   animationTrigger: HookPunch
   vfxPrefab: {fileID: 0}
   sfxClip: {fileID: 0}
+  grabRange: 1.5
+  defenseBypass: 0.5
