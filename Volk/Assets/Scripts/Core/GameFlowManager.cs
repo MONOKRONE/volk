@@ -81,6 +81,8 @@ namespace Volk.Core
                 case GameState.CharacterSelect: BuildCharacterSelect(); break;
                 case GameState.MatchResult:     BuildMatchResult(); break;
                 case GameState.Settings:        BuildSettings(); break;
+                case GameState.Achievements:   BuildCollection(); break;
+                case GameState.Shop:           BuildShop(); break;
                 default:
                     Debug.LogWarning($"[GameFlow] No Build method for state {newState}, falling back to MainHub");
                     BuildMainHub();
@@ -184,10 +186,10 @@ namespace Volk.Core
             var xpBG = ui.CreatePanel(canvas, new Vector2(0, 0.888f), new Vector2(1, 0.895f), new Color(0.15f, 0.15f, 0.25f));
             var xpFill = ui.CreatePanel(canvas, new Vector2(0, 0.888f), new Vector2(xpProgress, 0.895f), RuntimeUIBuilder.Gold);
 
-            // === MODE CARDS (center area) ===
-            float cardStartY = 0.72f;
-            float cardHeight = 0.16f;
-            float cardGap = 0.015f;
+            // === MODE CARDS (center area, above tab bar) ===
+            float cardStartY = 0.75f;
+            float cardHeight = 0.14f;
+            float cardGap = 0.012f;
             float cardXMin = 0.10f;
             float cardXMax = 0.90f;
 
@@ -228,10 +230,22 @@ namespace Volk.Core
                     cardConfigs[i].extra, cardXMin, cardXMax, yMin, yMax, cardConfigs[i].action, i);
             }
 
-            // === SETTINGS BUTTON (bottom center) ===
-            ui.CreateButton(canvas, "SETTINGS", RuntimeUIBuilder.Panel, RuntimeUIBuilder.Gray,
-                new Vector2(0.38f, 0.03f), new Vector2(0.62f, 0.09f),
-                () => ChangeState(GameState.Settings));
+            // === BOTTOM TAB BAR ===
+            ui.CreatePanel(canvas, new Vector2(0, 0.0f), new Vector2(1, 0.13f), RuntimeUIBuilder.Panel);
+            string[] tabLabels = { "COLLECTION", "SHOP", "PROFILE" };
+            System.Action[] tabActions = {
+                () => ChangeState(GameState.Achievements),
+                () => ChangeState(GameState.Shop),
+                () => ChangeState(GameState.Settings)
+            };
+            for (int t = 0; t < 3; t++)
+            {
+                float xMin = t * (1f / 3f) + 0.005f;
+                float xMax = (t + 1) * (1f / 3f) - 0.005f;
+                int ti = t;
+                ui.CreateButton(canvas, tabLabels[ti], RuntimeUIBuilder.Panel, RuntimeUIBuilder.Gray,
+                    new Vector2(xMin, 0.02f), new Vector2(xMax, 0.11f), tabActions[ti]);
+            }
 
             Debug.Log("[GameFlow] BuildMainHub completed");
         }
@@ -871,6 +885,190 @@ namespace Volk.Core
             valRect.anchorMax = new Vector2(0.95f, yNorm + 0.06f);
             valRect.offsetMin = Vector2.zero;
             valRect.offsetMax = Vector2.zero;
+        }
+
+        // ============================================================
+        // COLLECTION
+        // ============================================================
+        void BuildCollection()
+        {
+            Debug.Log("[GameFlow] BuildCollection started");
+            var ui = RuntimeUIBuilder.Instance;
+            var canvas = ui.CanvasRect;
+
+            ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
+
+            // Back button
+            ui.CreateButton(canvas, "< BACK", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+                new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ChangeState(GameState.MainHub));
+
+            var titleTMP = ui.CreateText(canvas, "COLLECTION", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            titleTMP.fontStyle = FontStyles.Bold;
+            var tr = titleTMP.GetComponent<RectTransform>();
+            tr.anchorMin = new Vector2(0.2f, 0.89f); tr.anchorMax = Vector2.one;
+            tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+            // Currency display
+            int coins = CurrencyManager.Instance != null ? CurrencyManager.Instance.Coins : 0;
+            int gems  = CurrencyManager.Instance != null ? CurrencyManager.Instance.Gems : 0;
+            var currTMP = ui.CreateText(canvas, $"Coins: {coins}   Gems: {gems}", 20, RuntimeUIBuilder.Gold, TextAlignmentOptions.MidlineRight);
+            var cr = currTMP.GetComponent<RectTransform>();
+            cr.anchorMin = new Vector2(0.5f, 0.82f); cr.anchorMax = new Vector2(0.98f, 0.90f);
+            cr.offsetMin = cr.offsetMax = Vector2.zero;
+
+            // Achievements header
+            var ach = ui.CreateText(canvas, "ACHIEVEMENTS", 24, RuntimeUIBuilder.Neon, TextAlignmentOptions.MidlineLeft);
+            var ar2 = ach.GetComponent<RectTransform>();
+            ar2.anchorMin = new Vector2(0.02f, 0.76f); ar2.anchorMax = new Vector2(0.5f, 0.83f);
+            ar2.offsetMin = ar2.offsetMax = Vector2.zero;
+
+            // Show up to 8 achievements
+            var achievements = Resources.LoadAll<AchievementData>("Achievements");
+            if (achievements != null && achievements.Length > 0)
+            {
+                float achY = 0.73f;
+                int shown = 0;
+                foreach (var a in achievements)
+                {
+                    if (shown >= 8) break;
+                    bool unlocked = SaveManager.Instance != null && SaveManager.Instance.Data.completedAchievements.Contains(a.achievementId);
+                    Color c = unlocked ? RuntimeUIBuilder.Gold : RuntimeUIBuilder.Gray;
+                    var row = ui.CreateText(canvas, $"{(unlocked ? "\u2605" : "\u25cb")} {a.title}", 20, c, TextAlignmentOptions.MidlineLeft);
+                    var rr = row.GetComponent<RectTransform>();
+                    rr.anchorMin = new Vector2(0.03f, achY - 0.06f); rr.anchorMax = new Vector2(0.98f, achY);
+                    rr.offsetMin = rr.offsetMax = Vector2.zero;
+                    achY -= 0.065f;
+                    shown++;
+                }
+            }
+            else
+            {
+                ui.CreateText(canvas, "No achievements yet", 20, RuntimeUIBuilder.Gray, TextAlignmentOptions.Center);
+            }
+        }
+
+        // ============================================================
+        // SHOP
+        // ============================================================
+        void BuildShop()
+        {
+            Debug.Log("[GameFlow] BuildShop started");
+            var ui = RuntimeUIBuilder.Instance;
+            var canvas = ui.CanvasRect;
+
+            ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
+
+            ui.CreateButton(canvas, "< BACK", RuntimeUIBuilder.Panel, RuntimeUIBuilder.White,
+                new Vector2(0f, 0.89f), new Vector2(0.2f, 1f), () => ChangeState(GameState.MainHub));
+
+            var titleTMP = ui.CreateText(canvas, "SHOP", 36, RuntimeUIBuilder.Accent, TextAlignmentOptions.Center);
+            titleTMP.fontStyle = FontStyles.Bold;
+            var tr = titleTMP.GetComponent<RectTransform>();
+            tr.anchorMin = new Vector2(0.2f, 0.89f); tr.anchorMax = Vector2.one;
+            tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+            // Currency
+            int coins = CurrencyManager.Instance != null ? CurrencyManager.Instance.Coins : 0;
+            int gems  = CurrencyManager.Instance != null ? CurrencyManager.Instance.Gems : 0;
+            var currTMP = ui.CreateText(canvas, $"<color=#FFD700>@ {coins}</color>   <color=#00D4FF>* {gems}</color>", 22,
+                RuntimeUIBuilder.White, TextAlignmentOptions.MidlineRight);
+            currTMP.richText = true;
+            var cr = currTMP.GetComponent<RectTransform>();
+            cr.anchorMin = new Vector2(0.5f, 0.82f); cr.anchorMax = new Vector2(0.98f, 0.90f);
+            cr.offsetMin = cr.offsetMax = Vector2.zero;
+
+            // 3 lootbox tiers
+            var boxes = new (string name, string price, Color color, LootBoxTier tier, int cost, bool isGem)[]
+            {
+                ("BRONZE BOX", "100 Coins", new Color(0.8f, 0.5f, 0.2f), LootBoxTier.Bronze, 100, false),
+                ("SILVER BOX", "200 Coins", new Color(0.75f, 0.75f, 0.85f), LootBoxTier.Silver, 200, false),
+                ("GOLD BOX",   "5 Gems",    new Color(1f, 0.84f, 0f), LootBoxTier.Gold, 5, true),
+            };
+
+            float y = 0.75f;
+            foreach (var box in boxes)
+            {
+                var tier = box.tier;
+                var cost = box.cost;
+                var isGem = box.isGem;
+
+                var card = ui.CreatePanel(canvas, new Vector2(0.05f, y - 0.13f), new Vector2(0.95f, y),
+                    new Color(box.color.r * 0.2f, box.color.g * 0.2f, box.color.b * 0.2f));
+                ui.CreatePanel(card.transform, new Vector2(0f, 0f), new Vector2(0.015f, 1f), box.color);
+
+                var nameTMP = ui.CreateText(card.transform, box.name, 26, box.color, TextAlignmentOptions.MidlineLeft);
+                nameTMP.fontStyle = FontStyles.Bold;
+                var nr = nameTMP.GetComponent<RectTransform>();
+                nr.anchorMin = new Vector2(0.03f, 0.5f); nr.anchorMax = new Vector2(0.55f, 1f);
+                nr.offsetMin = nr.offsetMax = Vector2.zero;
+
+                var priceTMP = ui.CreateText(card.transform, box.price, 20, RuntimeUIBuilder.Gray, TextAlignmentOptions.MidlineLeft);
+                var pr = priceTMP.GetComponent<RectTransform>();
+                pr.anchorMin = new Vector2(0.03f, 0f); pr.anchorMax = new Vector2(0.55f, 0.5f);
+                pr.offsetMin = pr.offsetMax = Vector2.zero;
+
+                bool canAfford = isGem
+                    ? (CurrencyManager.Instance != null && CurrencyManager.Instance.Gems >= cost)
+                    : (CurrencyManager.Instance != null && CurrencyManager.Instance.Coins >= cost);
+
+                ui.CreateButton(card.transform, canAfford ? "OPEN" : "LOCKED",
+                    canAfford ? RuntimeUIBuilder.Accent : RuntimeUIBuilder.Gray, Color.white,
+                    new Vector2(0.65f, 0.1f), new Vector2(0.97f, 0.9f),
+                    () => {
+                        bool afford = isGem
+                            ? (CurrencyManager.Instance != null && CurrencyManager.Instance.Gems >= cost)
+                            : (CurrencyManager.Instance != null && CurrencyManager.Instance.Coins >= cost);
+                        if (!afford) return;
+                        if (isGem) CurrencyManager.Instance?.SpendGems(cost);
+                        else CurrencyManager.Instance?.SpendCoins(cost);
+                        var result = LootBoxManager.Instance?.OpenBox(tier);
+                        if (result != null) ShowLootBoxResult(result);
+                        else ChangeState(GameState.Shop);
+                    });
+                y -= 0.15f;
+            }
+        }
+
+        void ShowLootBoxResult(LootBoxResult result)
+        {
+            var ui = RuntimeUIBuilder.Instance;
+            var canvas = ui.CanvasRect;
+            ui.ClearUI();
+            ui.CreatePanel(canvas, Vector2.zero, Vector2.one, RuntimeUIBuilder.BG);
+
+            var titleTMP = ui.CreateText(canvas, "YOU GOT!", 48, RuntimeUIBuilder.Gold, TextAlignmentOptions.Center);
+            titleTMP.fontStyle = FontStyles.Bold;
+            var tr = titleTMP.GetComponent<RectTransform>();
+            tr.anchorMin = new Vector2(0f, 0.72f); tr.anchorMax = Vector2.one;
+            tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+            // Show item details
+            string rarityColor = result.rarity switch
+            {
+                EquipmentRarity.Common => "#8888AA",
+                EquipmentRarity.Rare => "#00D4FF",
+                EquipmentRarity.Epic => "#9B59B6",
+                EquipmentRarity.Legendary => "#FFD700",
+                _ => "#FFFFFF"
+            };
+
+            string statusText = result.isNew ? "NEW ITEM!" : "DUPLICATE (+Coins)";
+            Color statusColor = result.isNew ? RuntimeUIBuilder.Neon : RuntimeUIBuilder.Gray;
+            var statusTMP = ui.CreateText(canvas, statusText, 28, statusColor, TextAlignmentOptions.Center);
+            var sr = statusTMP.GetComponent<RectTransform>();
+            sr.anchorMin = new Vector2(0.1f, 0.55f); sr.anchorMax = new Vector2(0.9f, 0.65f);
+            sr.offsetMin = sr.offsetMax = Vector2.zero;
+
+            var itemTMP = ui.CreateText(canvas, $"<color={rarityColor}>{result.rarity}</color> Equipment", 32,
+                RuntimeUIBuilder.White, TextAlignmentOptions.Center);
+            itemTMP.richText = true;
+            var ir = itemTMP.GetComponent<RectTransform>();
+            ir.anchorMin = new Vector2(0.1f, 0.42f); ir.anchorMax = new Vector2(0.9f, 0.55f);
+            ir.offsetMin = ir.offsetMax = Vector2.zero;
+
+            ui.CreateButton(canvas, "CONTINUE", RuntimeUIBuilder.Accent, Color.white,
+                new Vector2(0.2f, 0.05f), new Vector2(0.8f, 0.16f),
+                () => ChangeState(GameState.Shop));
         }
 
         // ============================================================

@@ -366,6 +366,16 @@ public class GameManager : MonoBehaviour
         ui.CreateButton(canvas, "MAIN MENU", Volk.UI.RuntimeUIBuilder.Panel, Volk.UI.RuntimeUIBuilder.Gray,
             new Vector2(0.1f, 0.14f), new Vector2(0.9f, 0.26f),
             () => SceneManager.LoadScene("MainMenu"));
+
+        // Coin reward
+        int coinReward = playerWonMatch ? 100 : 25;
+        Volk.Core.CurrencyManager.Instance?.AddCoins(coinReward);
+        var rewardTMP = ui.CreateText(canvas, $"+ {coinReward} Coins earned!", 22,
+            Volk.UI.RuntimeUIBuilder.Gold, TMPro.TextAlignmentOptions.Center);
+        var rr = rewardTMP.GetComponent<RectTransform>();
+        rr.anchorMin = new Vector2(0f, 0.55f);
+        rr.anchorMax = new Vector2(1f, 0.63f);
+        rr.offsetMin = rr.offsetMax = Vector2.zero;
     }
 
 }
