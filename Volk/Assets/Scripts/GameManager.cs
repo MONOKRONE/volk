@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using TMPro;
 using Volk.Core;
 using Volk.Story;
 using Volk.Meta;
@@ -135,12 +136,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (matchOver)
-        {
-            if (Input.GetKeyDown(KeyCode.R) || IsTouchTap())
-                RestartMatch();
-            return;
-        }
+        if (matchOver) return;
 
         if (!roundActive) return;
 
@@ -293,11 +289,8 @@ public class GameManager : MonoBehaviour
             // Submit leaderboard score
             LeaderboardManager.Instance?.SubmitScore();
 
-            // Auto-return to MainMenu via GameFlowManager after delay
-            if (Volk.Core.GameFlowManager.Instance != null)
-            {
-                StartCoroutine(ReturnToMainMenuDelayed(playerWonMatch, 2.5f));
-            }
+            // Show match-end screen with 3 options
+            ShowMatchEndScreen(playerWonMatch);
         }
         else
         {
@@ -306,35 +299,48 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void RestartMatch()
+    void ShowMatchEndScreen(bool playerWonMatch)
     {
-        // If GameFlowManager exists, go back to MainMenu with match result
-        if (Volk.Core.GameFlowManager.Instance != null)
-        {
-            bool playerWonMatch = playerRoundWins > enemyRoundWins;
-            Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
-            Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWonMatch;
-            SceneManager.LoadScene("MainMenu");
-            return;
-        }
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        var ui = Volk.UI.RuntimeUIBuilder.Instance;
+        if (ui == null) return;
+
+        ui.ShowCanvas();
+        ui.EnsureCanvas();
+        ui.ClearUI();
+        var canvas = ui.CanvasRect;
+
+        // Background
+        ui.CreatePanel(canvas, Vector2.zero, Vector2.one, Volk.UI.RuntimeUIBuilder.BG);
+
+        // Result title
+        var title = ui.CreateText(canvas, playerWonMatch ? "VICTORY" : "DEFEAT", 80,
+            playerWonMatch ? Volk.UI.RuntimeUIBuilder.Gold : Volk.UI.RuntimeUIBuilder.Accent,
+            TextAlignmentOptions.Center);
+        title.fontStyle = FontStyles.Bold;
+        var tr = title.GetComponent<RectTransform>();
+        tr.anchorMin = new Vector2(0, 0.6f);
+        tr.anchorMax = Vector2.one;
+        tr.offsetMin = tr.offsetMax = Vector2.zero;
+
+        // REMATCH
+        ui.CreateButton(canvas, "REMATCH", Volk.UI.RuntimeUIBuilder.Accent, Color.white,
+            new Vector2(0.1f, 0.42f), new Vector2(0.9f, 0.54f),
+            () => SceneManager.LoadScene("CombatTest"));
+
+        // CHANGE FIGHTER
+        ui.CreateButton(canvas, "CHANGE FIGHTER", Volk.UI.RuntimeUIBuilder.Panel, Color.white,
+            new Vector2(0.1f, 0.28f), new Vector2(0.9f, 0.40f),
+            () => {
+                if (Volk.Core.GameFlowManager.Instance != null)
+                    Volk.Core.GameFlowManager.Instance.ChangeState(GameState.CharacterSelect);
+                else
+                    SceneManager.LoadScene("MainMenu");
+            });
+
+        // MAIN MENU
+        ui.CreateButton(canvas, "MAIN MENU", Volk.UI.RuntimeUIBuilder.Panel, Volk.UI.RuntimeUIBuilder.Gray,
+            new Vector2(0.1f, 0.14f), new Vector2(0.9f, 0.26f),
+            () => SceneManager.LoadScene("MainMenu"));
     }
 
-    IEnumerator ReturnToMainMenuDelayed(bool playerWon, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (Volk.Core.GameFlowManager.Instance != null)
-        {
-            Volk.Core.GameFlowManager.Instance.returnFromCombat = true;
-            Volk.Core.GameFlowManager.Instance.lastMatchWon = playerWon;
-        }
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    bool IsTouchTap()
-    {
-        foreach (Touch t in Input.touches)
-            if (t.phase == TouchPhase.Began) return true;
-        return false;
-    }
 }
